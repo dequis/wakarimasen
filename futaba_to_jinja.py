@@ -1,10 +1,11 @@
+import os
 import re
 try:
     from cStringIO import StringIO
 except ImportError:
     from StringIO import StringIO
 
-file = open("futaba_style.pl", "r").read()
+TEMPLATES_DIR = 'templates'
 
 TEMPLATE_RE = re.compile(r'^use constant ([A-Z_]+) => (.*?;) ?\n\n', re.M | re.S)
 TEMPLATE_SECTION_RE = re.compile(
@@ -31,6 +32,9 @@ class FutabaStyleParser(object):
 
         self.templates = {}
         self.current = None
+
+        if not os.path.exists(TEMPLATES_DIR):
+            os.mkdir(TEMPLATES_DIR)
 
         self.tl = Jinja2Translator(self)
 
@@ -67,6 +71,9 @@ class FutabaStyleParser(object):
         
         # after the self.block loop
         self.templates[name] = self.current.getvalue()
+        
+        file = open(template_filename(name), 'w')
+        file.write(self.templates[name])
 
         if len(template) != self.lastend:
             self.debug_item("NOT MATCHED (end)", template[lastend:],
@@ -115,7 +122,7 @@ class Jinja2Translator(object):
         return value
 
 def template_filename(constname):
-    return 'templates/%s.html' % constname.lower()
+    return os.path.join(TEMPLATES_DIR, '%s.html' % constname.lower())
 
 
 if __name__ == '__main__':
