@@ -19,7 +19,7 @@ TEMPLATE_SECTION_RE = re.compile(
     r')[\.;] *',
     re.S | re.M)
 
-COMPILE_TEMPLATE = re.compile(
+COMPILE_TEMPLATE_RE = re.compile(
     r'^compile_template ?\((.*?)\);$',
     re.S)
 
@@ -39,7 +39,6 @@ class FutabaStyleParser(object):
 
         self.lastend = 0
 
-        self.templates = {}
         self.current = None
 
         if not os.path.exists(TEMPLATES_DIR):
@@ -62,28 +61,28 @@ class FutabaStyleParser(object):
             print name
         
         # remove compile_template(...)
-        compile = COMPILE_TEMPLATE.match(template)
+        compile = COMPILE_TEMPLATE_RE.match(template)
         if compile:
             self.debug_item('compiled', '1')
             template = compile.group(1) + ';'
         
-        # init variables for the self.block loop
+        # init variables for the self.do_section loop
         self.lastend = 0
         self.current = StringIO()
 
-        TEMPLATE_SECTION_RE.sub(self.block, template)
+        TEMPLATE_SECTION_RE.sub(self.do_section, template)
         
-        # after the self.block loop
-        self.templates[name] = self.current.getvalue()
-        
+        # after the self.do_section loop
+        current = self.current.getvalue()
+        current = self.parse_template_tags(current)
         file = open(template_filename(name), 'w')
-        file.write(self.templates[name])
+        file.write(current)
 
         if len(template) != self.lastend:
             self.debug_item("NOT MATCHED (end)", template[lastend:],
                 span=(lastend, len(template)))
 
-    def block(self, match):
+    def do_section(self, match):
         if not match.group():
             return
 
