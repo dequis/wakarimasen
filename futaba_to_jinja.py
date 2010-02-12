@@ -102,6 +102,7 @@ class FutabaStyleParser(object):
 class Jinja2Translator(object):
     '''Just to keep jinja2-specific code separate'''
     TAG_INCLUDE = "{%% include '%s' %%}"
+    TAG_FILTER = "{%% filter %s %%}%s{%% endfilter %%}"
     
     def __init__(self, parent):
         # not sure if needed
@@ -116,6 +117,8 @@ class Jinja2Translator(object):
             return self.TAG_INCLUDE % value
         elif type == 'const':
             return self.TAG_INCLUDE % template_filename(value)
+        elif type == 'abbrtext':
+            return self.TAG_FILTER % ('reverse_format(S_ABBRTEXT)', value)
         return value
 
     def translate_tags(self, value):
