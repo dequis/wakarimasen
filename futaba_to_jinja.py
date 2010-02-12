@@ -24,8 +24,8 @@ COMPILE_TEMPLATE = re.compile(
 class FutabaStyleParser(object):
     FILENAME = "futaba_style.pl"
     
-    def __init__(self, debug=True):
-        self.debug = debug
+    def __init__(self, debuglevel=1):
+        self.debug = debuglevel
 
         self.lastend = 0
 
@@ -41,8 +41,11 @@ class FutabaStyleParser(object):
         if not self.debug:
             return
         span = match and match.span() or span
-        value = value and ': %s' % repr(value) or ''
-        print ' %14s %s%s' % (span, name, value)
+        if value and self.debug < 2:
+            value = repr(value)[1:-1]
+            if len(value) > 50:
+                value = value[:50] + "[...]"
+        print ' %14s %-8s %s' % (span, name, value)
 
     def do_constant(self, match):
         name, template = match.groups()
@@ -83,7 +86,7 @@ class FutabaStyleParser(object):
 
         for groupname, value in map(None, names, groups):
             if value:
-                self.debug_item(groupname, value[:50], match)
+                self.debug_item(groupname, value, match)
                 self.current.write(self.tl.handle_item(groupname, value))
 
         self.lastend = match.end()
