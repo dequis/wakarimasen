@@ -6,6 +6,7 @@ except ImportError:
     from StringIO import StringIO
 
 TEMPLATES_DIR = 'templates'
+FUTABA_STYLE_DEBUG = 0
 
 TEMPLATE_RE = re.compile(r'^use constant ([A-Z_]+) => (.*?;) ?\n\n', re.M | re.S)
 TEMPLATE_SECTION_RE = re.compile(
@@ -22,11 +23,19 @@ COMPILE_TEMPLATE = re.compile(
     r'^compile_template ?\((.*?)\);$',
     re.S)
 
+def debug_item(name, value='', match=None, span=''):
+    span = match and match.span() or span
+    if value:
+        value = repr(value)[1:-1]
+        if len(value) > 50:
+            value = value[:50] + "[...]"
+    print ' %14s %-8s %s' % (span, name, value)
+
 class FutabaStyleParser(object):
     FILENAME = "futaba_style.pl"
     
-    def __init__(self, debuglevel=1):
-        self.debug = debuglevel
+    def __init__(self):
+        self.debug = FUTABA_STYLE_DEBUG
 
         self.lastend = 0
 
@@ -41,15 +50,10 @@ class FutabaStyleParser(object):
         TEMPLATE_RE.sub(self.do_constant,
             open(FutabaStyleParser.FILENAME).read())
 
-    def debug_item(self, name, value='', match=None, span=''):
+    def debug_item(self, *args, **kwds):
         if not self.debug:
             return
-        span = match and match.span() or span
-        if value and self.debug < 2:
-            value = repr(value)[1:-1]
-            if len(value) > 50:
-                value = value[:50] + "[...]"
-        print ' %14s %-8s %s' % (span, name, value)
+        debug_item(*args, **kwds)
 
     def do_constant(self, match):
         name, template = match.groups()
