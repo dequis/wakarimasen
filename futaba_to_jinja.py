@@ -24,6 +24,10 @@ COMPILE_TEMPLATE_RE = re.compile(
     r'^compile_template ?\((.*?)\);$',
     re.S)
 
+REMOVE_BACKSLASHES_RE = re.compile(r'\\([^\\])')
+def remove_backslashes(string):
+    return REMOVE_BACKSLASHES_RE.sub(r'\1', string)
+
 def debug_item(name, value='', match=None, span=''):
     span = match and match.span() or span
     if value:
@@ -36,8 +40,6 @@ class FutabaStyleParser(object):
     FILENAME = "futaba_style.pl"
     
     def __init__(self):
-        self.debug = FUTABA_STYLE_DEBUG
-
         self.lastend = 0
 
         self.current = None
@@ -51,14 +53,14 @@ class FutabaStyleParser(object):
             open(FutabaStyleParser.FILENAME).read())
 
     def debug_item(self, *args, **kwds):
-        if not self.debug:
+        if not FUTABA_STYLE_DEBUG:
             return
         debug_item(*args, **kwds)
 
     def do_constant(self, match):
         name, template = match.groups()
         
-        if self.debug:
+        if FUTABA_STYLE_DEBUG:
             print name
         
         # remove compile_template(...)
@@ -114,20 +116,19 @@ class Jinja2Translator(object):
     
     def handle_item(self, type, value):
         if type == 'string':
-            return self.translate_tags(value.decode('string-escape'))
+            return value.decode('string-escape')
         elif type == 'html':
-            return self.translate_tags(value)
+            return value
         elif type == 'include':
             value = value.replace(HTDOCS_HARDCODED_PATH, '')
             return self.TAG_INCLUDE % value
         elif type == 'const':
             return self.TAG_INCLUDE % template_filename(value)
         elif type == 'abbrtext':
-            return self.TAG_FILTER % ('reverse_format(S_ABBRTEXT)', value)
+            return self.TAG_FILTER % ('reverse_format(S_ABBRTEXT)',
+                remove_backslashes(value))
         return value
 
-    def translate_tags(self, value):
-        return value
 
 def template_filename(constname):
     return os.path.join(TEMPLATES_DIR, '%s.html' % constname.lower())
