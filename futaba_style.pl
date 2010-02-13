@@ -23,7 +23,7 @@ use constant NORMAL_HEAD_INCLUDE => q{
 <link rel="shortcut icon" href="<var expand_filename($board-\>option('FAVICON'))>" />
 
 <style type="text/css">
-	#adv { background: url('/include/unblockad.png') center no-repeat;padding: 0px;margin: 0px auto;text-align:center;width:750px;height:107px;} 
+	#adv { background: url('/include/common/unblockad.png') center no-repeat;padding: 0px;margin: 0px auto;text-align:center;width:750px;height:107px;} 
 	body { margin: 0; padding: 8px; margin-bottom: auto; }
 	blockquote blockquote { margin-left: 0em }             
 	form { margin-bottom: 0px }
@@ -52,7 +52,7 @@ use constant NORMAL_HEAD_INCLUDE => q{
 <if $thread><body class="replypage"></if>
 <if !$thread><body></if>
 
-}.include("include/header.html").q{
+}.include("/home/desuchan/public_html/desuchan.net/htdocs/include/boards/header.html").q{
 
 <div class="adminbar">
 <loop $stylesheets>
@@ -81,7 +81,7 @@ use constant MINI_HEAD_INCLUDE => q{
 <link rel="shortcut icon" href="<var expand_filename($board-\>option('FAVICON'))>" />
 
 <style type="text/css">
-	#adv { background: url('/include/unblockad.png') center no-repeat;padding: 0px;margin: 0px auto;text-align:center;width:750px;height:107px;} 
+	#adv { background: url('/include/common/unblockad.png') center no-repeat;padding: 0px;margin: 0px auto;text-align:center;width:750px;height:107px;} 
 	body { margin: 0; padding: 8px; margin-bottom: auto; }
 	blockquote blockquote { margin-left: 0em }
 	form { margin-bottom: 0px }
@@ -116,7 +116,7 @@ use constant MINI_HEAD_REFRESH_INCLUDE => q{
 <link rel="shortcut icon" href="<var expand_filename($board-\>option('FAVICON'))>" />
 
 <style type="text/css">
-	#adv { background: url('/include/unblockad.png') center no-repeat; padding: 0px; margin: 0px auto; text-align: center; }
+	#adv { background: url('/include/common/unblockad.png') center no-repeat; padding: 0px; margin: 0px auto; text-align: center; }
 	body { margin: 0; padding: 8px; margin-bottom: auto; }
 	blockquote blockquote { margin-left: 0em }
 	form { margin-bottom: 0px }
@@ -142,7 +142,7 @@ use constant MINI_HEAD_REFRESH_INCLUDE => q{
 <body onload="window.opener.location.reload()">
 };
 
-use constant NORMAL_FOOT_INCLUDE => include("include/footer.html").q{
+use constant NORMAL_FOOT_INCLUDE => include("/home/desuchan/public_html/desuchan.net/htdocs/include/boards/footer.html").q{
 </body></html>
 };
 
@@ -195,7 +195,7 @@ use constant PAGE_TEMPLATE => compile_template(NORMAL_HEAD_INCLUDE.q{
 	</if>
 </if>
 
-<div class="globalannounce">}.include("include/announcements_global.html").q{</div>
+<div class="globalannounce">}.include("/home/desuchan/public_html/desuchan.net/htdocs/include/boards/announcements_global.html").q{</div>
 <div class="announcements"><var encode_string((compile_template(include($board-\>path().'/'."include/announcements.html")))-\>(board=\>$board))></div>
 
 <if $board-\>option('ENABLE_OEKAKI')>
@@ -276,7 +276,7 @@ use constant PAGE_TEMPLATE => compile_template(NORMAL_HEAD_INCLUDE.q{
 
 	<tr><td class="postblock"><const S_DELPASS></td><td><input type="password" name="password" size="8" /> <const S_DELEXPL></td></tr>
 	<tr><td colspan="2">
-	<div class="rules"><var encode_string((compile_template(include($board-\>path().'/'."include/rules.html")))-\>(board=\>$board))></div></td></tr>
+	<div class="rules"><var encode_string((compile_template(include($board-\>path().'/'."../include/boards/rules.html")))-\>(board=\>$board))></div></td></tr>
 	</tbody></table></form></div>
 	<script type="text/javascript">set_inputs("postform",false)</script>
 
@@ -329,8 +329,8 @@ use constant PAGE_TEMPLATE => compile_template(NORMAL_HEAD_INCLUDE.q{
 			<span class="filetitle"><var $subject></span>
 			<if $email><span class="postername"><a href="<var $email>"><var $name></a></span><if $trip><span class="postertrip"><a href="<var $email>"><var $trip></a></span></if></if>
 			<if !$email><span class="postername"><var $name></span><if $trip><span class="postertrip"><var $trip></span></if></if>
-			<if $stickied> <img src="<var expand_filename('include/sticky.gif')>" alt="<const S_STICKIEDALT>" title="<const S_STICKIED>" /> </if>
-			<if $locked eq 'yes'> <img src="<var expand_filename('include/locked.gif')>" alt="<const S_LOCKEDALT>" title="<const S_LOCKED>" /> </if>
+			<if $stickied> <img src="<var expand_filename('/include/boards/sticky.gif')>" alt="<const S_STICKIEDALT>" title="<const S_STICKIED>" /> </if>
+			<if $locked eq 'yes'> <img src="<var expand_filename('/include/boards/locked.gif')>" alt="<const S_LOCKEDALT>" title="<const S_LOCKED>" /> </if>
 			<var $date></label>
 			<span class="reflink">
 			<if !$thread><span><a href="<var get_reply_link($num,0)>#<var $num>">No.</a><a href="<var get_reply_link($num,0)>#i<var $num>"><var $num></a></span></if>
@@ -629,7 +629,7 @@ use constant BAN_TEMPLATE => compile_template(q{
 			    <h3><const S_BADHOST></h3>
 			</div>
 			<div class="itemcontent">
-			    <p style="text-align:center"><img src="<var expand_filename('/include/ban_images/randimg.php')>" alt="Ban Image" /></p>
+			    <p style="text-align:center"><img src="<var expand_filename('/include/boards/ban_images/randimg.php')>" alt="Ban Image" /></p>
 			    <p><em><const S_BAN_WHY></em></p>
 	                    <p><const S_BAN_REASON>: <strong><var $comment></strong></p>
 	                    <p><const S_CURRENT_IP> <strong><var $numip></strong></p>
@@ -944,8 +944,8 @@ use constant POST_PANEL_TEMPLATE => compile_template(MANAGER_HEAD_INCLUDE.q{
 			<if $email><span class="postername"><a href="<var $email>"><var $name></a></span><if $trip><span class="postertrip"><a href="<var $email>"><var $trip></a></span></if></if>
 			<if !$email><span class="postername"><var $name></span><if $trip><span class="postertrip"><var $trip></span></if></if> 
 			<span class="ipaddr">(IP: <var dec_to_dot($ip)><if $admin_post eq 'yes'>; <if !$lastedit><strong>Moderator Post</strong></if><if $lastedit><strong>Moderator Edit</strong></if></if>)</span> 
-			<if $stickied> <img src="<var expand_filename('include/sticky.gif')>" alt="<const S_STICKIEDALT>" title="<const S_STICKIED>" /> </if>
-			<if $locked eq 'yes'> <img src="<var expand_filename('include/locked.gif')>" alt="<const S_LOCKEDALT>" title="<const S_LOCKED>" /> </if>
+			<if $stickied> <img src="<var expand_filename('/include/boards/sticky.gif')>" alt="<const S_STICKIEDALT>" title="<const S_STICKIED>" /> </if>
+			<if $locked eq 'yes'> <img src="<var expand_filename('/include/boards/locked.gif')>" alt="<const S_LOCKEDALT>" title="<const S_LOCKED>" /> </if>
 			<var $date></label>
 			<span class="reflink">
 			<if !$thread><span><a href="<var get_reply_link($num,0)>#<var $num>">No.</a><a href="<var get_reply_link($num,0)>#i<var $num>"><var $num></a></span></if>
@@ -2207,7 +2207,7 @@ use constant REPORT_RESOLVED => compile_template(MANAGER_HEAD_INCLUDE.q{
 	</ul>
 </if>
 <if $referer><p align="center" style="font-size:2em"><a href="<var escamp($referer)>">Return</a></p></if>
-}.NORMAL_FOOT_INCLUDE);
+}.NORMAL_FOOT_INCLUDE);	
 
 use constant BACKUP_PANEL_TEMPLATE => compile_template(MANAGER_HEAD_INCLUDE.q{
 <div class="dellist"><h2>Trash Bin</h2></div>
@@ -2284,8 +2284,8 @@ use constant BACKUP_PANEL_TEMPLATE => compile_template(MANAGER_HEAD_INCLUDE.q{
 				<if !$email><span class="postername"><var $name></span><if $trip><span class="postertrip"><var $trip></span></if></if> 
 				<span class="ipaddr">(IP: <var dec_to_dot($ip)><if $admin_post eq 'yes'>; <if !$lastedit><strong>Moderator Post</strong></if><if $lastedit><strong>Moderator Edit</strong></if></if>)</span> 
 				<if !$parent>
-					<if $stickied> <img src="<var expand_filename('include/sticky.gif')>" alt="<const S_STICKIEDALT>" title="<const S_STICKIED>" /> </if>
-					<if $locked eq 'yes'> <img src="<var expand_filename('include/locked.gif')>" alt="<const S_LOCKEDALT>" title="<const S_LOCKED>" /> </if>
+					<if $stickied> <img src="<var expand_filename('/include/boards/sticky.gif')>" alt="<const S_STICKIEDALT>" title="<const S_STICKIED>" /> </if>
+					<if $locked eq 'yes'> <img src="<var expand_filename('/include/boards/locked.gif')>" alt="<const S_LOCKEDALT>" title="<const S_LOCKED>" /> </if>
 				</if>
 				<var $date></label>
 				<span class="reflink">
@@ -2518,7 +2518,7 @@ use constant OEKAKI_FINISH_TEMPLATE => compile_template(NORMAL_HEAD_INCLUDE.q{
 </if>
 
 <tr><td colspan="2">
-<div class="rules"><var encode_string((compile_template(include($board-\>path().'/'."include/rules.html")))-\>(board=\>$board))></div></td></tr>
+<div class="rules"><var encode_string((compile_template(include($board-\>path().'/'."../include/boards/rules.html")))-\>(board=\>$board))></div></td></tr>
 </tbody></table></form></div>
 <script type="text/javascript">set_inputs("postform",false)</script>
 

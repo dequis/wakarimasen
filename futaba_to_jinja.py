@@ -6,9 +6,10 @@ except ImportError:
     from StringIO import StringIO
 
 TEMPLATES_DIR = 'templates'
+HTDOCS_HARDCODED_PATH = '/home/desuchan/public_html/desuchan.net/htdocs/'
 FUTABA_STYLE_DEBUG = 0
 
-TEMPLATE_RE = re.compile(r'^use constant ([A-Z_]+) => (.*?;) ?\n\n', re.M | re.S)
+TEMPLATE_RE = re.compile(r'^use constant ([A-Z_]+) => (.*?;)\s*\n\n', re.M | re.S)
 TEMPLATE_SECTION_RE = re.compile(
     r'('
         r'q{((?:[^{}]|{[^{}]*})*)}|'    # allow non-nested braces inside the q{}
@@ -87,7 +88,7 @@ class FutabaStyleParser(object):
             return
 
         if match.start() > self.lastend:
-            span = (lastend, match.start())
+            span = (self.lastend, match.start())
             self.debug_item("NOT MATCHED", match.string[span[0]:span[1]],
                 span=span)
         
@@ -117,6 +118,7 @@ class Jinja2Translator(object):
         elif type == 'html':
             return self.translate_tags(value)
         elif type == 'include':
+            value = value.replace(HTDOCS_HARDCODED_PATH, '')
             return self.TAG_INCLUDE % value
         elif type == 'const':
             return self.TAG_INCLUDE % template_filename(value)
