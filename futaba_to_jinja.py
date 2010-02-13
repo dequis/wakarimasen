@@ -34,7 +34,7 @@ TAG_RE = re.compile(
 # i should write a decent tokenizer/parser instead
 PERL_EXP_RE = re.compile(
     # 1-2 board option, path
-    r'\$board->option\(\'([A-Z_]+)\'\)|'
+    r'\$board->option\((\'[A-Z_]+\'|"[A-Z_]+")\)|'
     r'\$board->(path\(?\)?)|'
     # 3 advanced include (ignore most of it)
     r'encode_string\(\(compile_template\(include\(\$board->path\(\).\'/\'.'
