@@ -18,7 +18,7 @@ TEMPLATE_SECTION_RE = re.compile(
         r'include\("([a-z_/\.]*?)"\)|'
         r'"(.*?)"|'
         r'([A-Z][A-Z_]+)|'
-        r'sprintf\(S_ABBRTEXT,[\'"](.*?)[\'"]\)'
+        r'sprintf\(S_ABBRTEXT,([\'"].*?[\'"])\)'
     r')[\.;] *',
     re.S | re.M)
 
@@ -114,6 +114,7 @@ class FutabaStyleParser(object):
         # after the self.do_section loop
         current = self.current.getvalue()
         current = self.parse_template_tags(current)
+
         file = open(template_filename(name), 'w')
         file.write(current)
 
@@ -292,8 +293,10 @@ class Jinja2Translator(object):
         elif type == 'const':
             return self.TAG_INCLUDE % template_filename(value)
         elif type == 'abbrtext':
+            if value.startswith('"'):
+                value = remove_backslashes(value)
             return self.TAG_FILTER % ('reverse_format(S_ABBRTEXT)',
-                remove_backslashes(value))
+                value.strip('\'"'))
         return value
 
 
