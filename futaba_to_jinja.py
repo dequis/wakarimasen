@@ -71,6 +71,7 @@ def debug_item(name, value='', match=None, span=''):
             value = value[:50] + "[...]"
     print ' %14s %-8s %s' % (span, name, value)
 
+
 class FutabaStyleParser(object):
     FILENAME = "futaba_style.pl"
     
@@ -176,24 +177,41 @@ class TemplateTagsParser(object):
         self.parse_expression(args)
         
         template = TemplateTagsParser.TAGS_TEMPLATES[name][0]
+
         if name == 'loop':
             # TODO
             args = ('...', args)
+
         self.output.write(template % args)
     
     def end_tag(self, name):
         self.output.write(TemplateTagsParser.TAGS_TEMPLATES[name][1])
 
-    def parse_expression(self, exp, tmp=None):
+    def parse_expression(self, exp):
         lastend = 0
 
+        if EXPRESSION_DEBUG:
+            print "Expression\t", exp
+        
+        result = self.parse_subexpression(exp)[0]
+        if EXPRESSION_DEBUG:
+            print ' ', result
+
+        return result
+
+    def parse_subexpression(self, exp, tmp=None):
+        '''return value: tuple
+            [0] list of tokens
+            [1] the remaining 
+        if tmp is set, results are appended to that list instead of returning
+        a new one (useful when parsing the remaining)
+        '''
+        lastend = 0
         if tmp is None:
             result = []
         else:
             result = tmp
 
-        if EXPRESSION_DEBUG:
-            print "Expression\t", exp
         for match in PERL_EXP_RE.finditer(exp):
             if not match.group():
                 continue
@@ -206,23 +224,52 @@ class TemplateTagsParser(object):
             names = ['option', 'path', 'advinclude', 'function', 'funcend',
                      'var', 'const', 'sprintf', 'regex', 'operator', 'comma',
                      'value', 'whitespace', 'void']
-            groups = list(match.groups())
+            groups = match.groups()
 
             for groupname, value in map(None, names, groups):
-                if value and groupname == 'function':
-                    pass
                 if value:
-                    if EXPRESSION_DEBUG:
-                        debug_item(groupname, value, match)
-                    result.append(self.handle_token(groupname, value))
+                    break
+
+            retval = self.handle_token(groupname, value, match, result)
+            if retval is not None:
+                return retval
+
             lastend = match.end()
             
         if EXPRESSION_DEBUG and len(exp) != lastend:
             debug_item("unknown token", exp[lastend:],
                 span=(lastend, len(exp)))
-    
-    def handle_token(self, type, value):
-        pass
+
+        return (result, '')
+
+    def call_function(self, name, args, result):
+        function, remaining = self.parse_subexpression(args)
+        result.append(('function', (name, function)))
+        return self.parse_subexpression(remaining, result)
+        
+    def handle_token(self, type, value, match, result):
+        if type == 'sprintf':
+            return self.call_function('sprintf', value + ')', result)
+        elif type == 'void':
+            type, value = 'function', 'void'
+            
+        if type == 'function':
+            return self.call_function(value, match.string[match.end():],
+                result)
+        elif type == 'funcend':
+            remaining = match.string[match.end():]
+            return (result, remaining)
+
+        if type == 'option':
+            value = value.strip('\'"')
+
+        if type == 'regex':
+            if value.startswith("!"):
+                result.append(('operator', '!'))
+            value = value[2:].strip(' ')
+            
+        if type != 'whitespace':
+            result.append((type, value))
 
 
 class Jinja2Translator(object):
