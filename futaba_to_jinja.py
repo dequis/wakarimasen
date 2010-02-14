@@ -9,7 +9,8 @@ TEMPLATES_DIR = 'templates'
 HTDOCS_HARDCODED_PATH = '/home/desuchan/public_html/desuchan.net/htdocs/'
 
 FUTABA_STYLE_DEBUG = 0
-EXPRESSION_DEBUG = 1
+EXPRESSION_DEBUG = 0
+EXPRESSION_TRANSLATOR_DEBUG = 1
 
 TEMPLATE_RE = re.compile(r'^use constant ([A-Z_]+) => (.*?;)\s*\n\n', re.M | re.S)
 TEMPLATE_SECTION_RE = re.compile(
@@ -142,7 +143,7 @@ class FutabaStyleParser(object):
         self.lastend = match.end()
 
     def parse_template_tags(self, template):
-        return TemplateTagsParser().run(template)
+        return TemplateTagsParser(self.tl).run(template)
 
 class TemplateTagsParser(object):
     TAGS_TEMPLATES = {
@@ -151,7 +152,8 @@ class TemplateTagsParser(object):
         'if': ('{%% if %s %%}', '{% endif %}'),
         'loop': ('{%% for %s in %s %%}', '{% endfor %}'),
     }
-    def __init__(self):
+    def __init__(self, tl):
+        self.tl = tl
         self.output = None
     
     def run(self, template):
@@ -175,14 +177,8 @@ class TemplateTagsParser(object):
         return self.output.getvalue()
 
     def start_tag(self, tag, name, args):
-        self.parse_expression(args)
-        
         template = TemplateTagsParser.TAGS_TEMPLATES[name][0]
-
-        if name == 'loop':
-            # TODO
-            args = ('...', args)
-
+        args = self.tl.translate_expression(self.parse_expression(args), name)
         self.output.write(template % args)
     
     def end_tag(self, name):
@@ -191,7 +187,7 @@ class TemplateTagsParser(object):
     def parse_expression(self, exp):
         lastend = 0
 
-        if EXPRESSION_DEBUG:
+        if EXPRESSION_DEBUG or EXPRESSION_TRANSLATOR_DEBUG:
             print "Expression\t", exp
         
         result = self.parse_subexpression(exp)[0]
@@ -278,6 +274,16 @@ class Jinja2Translator(object):
     TAG_INCLUDE = "{%% include '%s' %%}"
     TAG_FILTER = "{%% filter %s %%}%s{%% endfilter %%}"
     
+    OPERATORS = {
+        '!': 'not',
+        'eq': '==',
+        'ne': '!=',
+        '||': 'or',
+        '&&': 'and',
+        '?': 'and', # h4x
+        ':': 'or',  # ^
+        '.': '+',
+    }
     def __init__(self, parent):
         # not sure if needed
         self.parent = parent
@@ -299,6 +305,75 @@ class Jinja2Translator(object):
                 value.strip('\'"'))
         return value
 
+    def translate_expression(self, exp, tagname=None):
+        mode = None
+        if tagname == 'loop':
+            mode = 'loop'
+        
+        result = self._translate_expression(exp, mode=mode)
+        if EXPRESSION_TRANSLATOR_DEBUG:
+            print "->", repr(result)
+        return result
+
+    def _translate_expression(self, exp, mode=None):
+        parts = []
+        result = []
+
+        for type, value in exp:
+            if type == 'option':
+                value = 'board.option.%s' % value
+            elif type == 'path':
+                value = 'board.path'
+            elif type == 'advinclude':
+                # TODO: how the hell am i supposed to handle this?
+                pass
+            elif type == 'function':
+                name, subexp = value
+                parsed = self._translate_expression(subexp, mode='function')
+                if name == 'void':
+                    value = '(%s)' % ', '.join(parsed)
+                elif len(parsed) > 1:
+                    value = '%s|%s(%s)' % (parsed[0], name, ', '.join(parsed[1:]))
+                elif len(parsed) == 1 and ''.join(parsed):
+                    value = '%s|%s' % (parsed[0], name)
+                else:
+                    value = '%s()' % name
+            elif type == 'var':
+                # handle var prefixes in loops?
+                pass
+            elif type == 'const':
+                # maybe add a prefix 'const'?
+                pass
+            elif type == 'regex':
+                # TODO: check if it is startswith or find
+                pass
+            elif type == 'operator':
+                value = self.OPERATORS.get(value, value)
+            elif type == 'comma':
+                parts.append(result)
+                result = []
+                value = None
+
+            if value:
+                result.append(value)
+        
+        if mode == 'function':
+            parts.append(result)
+            return [' '.join(x) for x in parts]
+        elif mode == 'loop':
+            itervarname = 'i'
+            if len(exp) == 1:
+                type, value = exp[0]
+                if type in ('var', 'const'):
+                    if value.lower().endswith('s'):
+                        itervarname = value.lower().rstrip('s')
+                    else:
+                        itervarname = value.lower() + '_item'
+            return (itervarname, ' '.join(result))
+        else:
+            return ' '.join(result)
+            
+        
 
 def template_filename(constname):
     return os.path.join(TEMPLATES_DIR, '%s.html' % constname.lower())
