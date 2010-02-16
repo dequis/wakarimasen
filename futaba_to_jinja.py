@@ -10,7 +10,8 @@ HTDOCS_HARDCODED_PATH = '/home/desuchan/public_html/desuchan.net/htdocs/'
 
 FUTABA_STYLE_DEBUG = 0
 EXPRESSION_DEBUG = 0
-EXPRESSION_TRANSLATOR_DEBUG = 1
+EXPRESSION_TRANSLATOR_DEBUG = 0
+LOOP_TAG_DEBUG = 1
 
 TEMPLATE_RE = re.compile(r'^use constant ([A-Z_]+) => (.*?;)\s*\n\n', re.M | re.S)
 TEMPLATE_SECTION_RE = re.compile(
@@ -60,6 +61,45 @@ PERL_EXP_RE = re.compile(
     r'(\()',
     re.S | re.M)
 
+
+# post and admin table columns
+_POST_TABLE = ['num', 'parent', 'timestamp', 'lasthit', 'ip', 'date', 'name',
+    'trip', 'email', 'subject', 'password', 'comment', 'image', 'size', 'md5',
+    'width', 'height', 'thumbnail', 'tn_width', 'tn_height', 'lastedit',
+    'lastedit_ip', 'admin_post', 'stickied', 'locked']
+
+_ADMIN_TABLE = ['username', 'num', 'type', 'comment', 'ival1', 'ival2',
+    'sval1', 'total', 'expiration', 'divider']
+
+# oh god what is this
+KNOWN_LOOPS = {
+    'stylesheets': ('stylesheet', ['filename', 'title', 'default']),
+    'inputs': ('input', ['name', 'value']), #XXX?
+    'S_OEKPAINTERS': ('painters', ['painter', 'name']),
+    'threads': ('thread', ['posts', 'omit', 'omitimages']),
+    'posts': ('post', _POST_TABLE + ['abbrev']),
+    'pages': ('page', ['page', 'filename', 'current']),
+    'loop': ('post', _POST_TABLE),
+    'boards_select': ('board', ['board_entry']),
+    'reportedposts': ('rpost', ['reporter', 'offender', 'postnum',
+                                'comment', 'date', 'resolved']),
+    'users': ('user', ['username', 'account', 'password', 'reign', 'disabled']),
+    'boards': ('board', ['board_entry', 'underpower']),
+    'staff': ('account', ['username']),
+    # this is actually three different loops
+    'entries': ('entry', ['num', 'username', 'action', 'info', 'date', 'ip',
+                          'admin_id', 'timestamp', 'rowtype', 'disabled',
+                          'account', 'expiration', 'id', 'host', 'task',
+                          'boardname', 'post', 'timestamp', 'passfail']),
+    'edits': ('edit', ['username', 'date', 'info', 'num']),
+    'bans': ('ban', _ADMIN_TABLE + ['rowtype', 'expirehuman', 'browsingban']),
+    'hash': ('row', _ADMIN_TABLE),
+    'scanned': ('proxy', ['num', 'type', 'ip', 'timestamp',
+                          'date', 'divider', 'rowtype']),
+    'errors': ('error', ['error']),
+    'items': ('post', _POST_TABLE + ['mime_type']),
+}
+
 REMOVE_BACKSLASHES_RE = re.compile(r'\\([^\\])')
 def remove_backslashes(string):
     return REMOVE_BACKSLASHES_RE.sub(r'\1', string)
@@ -97,7 +137,7 @@ class FutabaStyleParser(object):
     def do_constant(self, match):
         name, template = match.groups()
         
-        if FUTABA_STYLE_DEBUG:
+        if FUTABA_STYLE_DEBUG or LOOP_TAG_DEBUG:
             print name
         
         # remove compile_template(...)
@@ -155,6 +195,8 @@ class TemplateTagsParser(object):
     def __init__(self, tl):
         self.tl = tl
         self.output = None
+
+        self.loops = []
     
     def run(self, template):
         self.output = StringIO()
@@ -178,10 +220,20 @@ class TemplateTagsParser(object):
 
     def start_tag(self, tag, name, args):
         template = TemplateTagsParser.TAGS_TEMPLATES[name][0]
-        args = self.tl.translate_expression(self.parse_expression(args), name)
+        args = self.tl.translate_expression(self.parse_expression(args),
+            name, self.loops)
+        if name == 'loop':
+            if LOOP_TAG_DEBUG:
+                print "Enter loop", args
+            self.loops.append(args[1].split('.')[-1])
+            
         self.output.write(template % args)
     
     def end_tag(self, name):
+        if name == 'loop':
+            loop = self.loops.pop()
+            if LOOP_TAG_DEBUG:
+                print "Exit loop", loop
         self.output.write(TemplateTagsParser.TAGS_TEMPLATES[name][1])
 
     def parse_expression(self, exp):
@@ -287,6 +339,8 @@ class Jinja2Translator(object):
     def __init__(self, parent):
         # not sure if needed
         self.parent = parent
+
+        self.loops = None
     
     def handle_item(self, type, value):
         if type == 'string':
@@ -305,12 +359,17 @@ class Jinja2Translator(object):
                 value.strip('\'"'))
         return value
 
-    def translate_expression(self, exp, tagname=None):
+    def translate_expression(self, exp, tagname, loops):
         mode = None
         if tagname == 'loop':
             mode = 'loop'
         
+        self.loops = loops
         result = self._translate_expression(exp, mode=mode)
+
+        if LOOP_TAG_DEBUG and loops:
+            print " > exp(%s) :: %s" % (', '.join(loops), result)
+        
         if EXPRESSION_TRANSLATOR_DEBUG:
             print "->", repr(result)
         return result
@@ -339,8 +398,9 @@ class Jinja2Translator(object):
                 else:
                     value = '%s()' % name
             elif type == 'var':
-                # handle var prefixes in loops?
-                pass
+                for loop in self.loops[::-1]:
+                    if loop in KNOWN_LOOPS and value in KNOWN_LOOPS[loop][1]:
+                        value = '%s.%s' % (KNOWN_LOOPS[loop][0], value)
             elif type == 'const':
                 # maybe add a prefix 'const'?
                 pass
@@ -365,7 +425,9 @@ class Jinja2Translator(object):
             if len(exp) == 1:
                 type, value = exp[0]
                 if type in ('var', 'const'):
-                    if value.lower().endswith('s'):
+                    if value in KNOWN_LOOPS:
+                        itervarname = KNOWN_LOOPS[value][0]
+                    elif value.lower().endswith('s'):
                         itervarname = value.lower().rstrip('s')
                     else:
                         itervarname = value.lower() + '_item'
