@@ -44,7 +44,7 @@ PERL_EXP_RE = re.compile(
     r'([a-z_]+)\(|'
     r'(\))|'
     # 6-7 variables and constants
-    r'\$([A-Za-z_{}]+)|'
+    r'\$([A-Za-z0-9_{}]+)|'
     r'([A-Z_]+)|'
     # 8 sprintf without brackets
     r'sprintf (.+)$|'
