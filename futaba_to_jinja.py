@@ -74,7 +74,7 @@ _ADMIN_TABLE = ['username', 'num', 'type', 'comment', 'ival1', 'ival2',
 # oh god what is this
 KNOWN_LOOPS = {
     'stylesheets': ('stylesheet', ['filename', 'title', 'default']),
-    'inputs': ('input', ['name', 'value']), #XXX?
+    'inputs': ('input', ['name', 'value']),
     'S_OEKPAINTERS': ('painters', ['painter', 'name']),
     'threads': ('thread', ['posts', 'omit', 'omitimages']),
     'posts': ('post', _POST_TABLE + ['abbrev']),
@@ -405,8 +405,19 @@ class Jinja2Translator(object):
                 # maybe add a prefix 'const'?
                 pass
             elif type == 'regex':
-                # TODO: check if it is startswith or find
-                pass
+                do_lower = value.endswith('i')
+                action = value.startswith('/^') and 'startswith' or 'count'
+                value = value.strip('/i^')
+
+                variable = result.pop()
+
+                if variable == 'not':
+                    variable = result.pop()
+                    result.append('not')
+
+                result.append('%s.%s("%s")' % (variable, action, value))
+                value = None
+
             elif type == 'operator':
                 value = self.OPERATORS.get(value, value)
             elif type == 'comma':
