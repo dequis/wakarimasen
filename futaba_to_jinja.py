@@ -186,12 +186,6 @@ class FutabaStyleParser(object):
         return TemplateTagsParser(self.tl).run(template)
 
 class TemplateTagsParser(object):
-    TAGS_TEMPLATES = {
-        'var': ('{{ %s }}', ''),
-        'const': ('{{ %s }}', ''),
-        'if': ('{%% if %s %%}', '{% endif %}'),
-        'loop': ('{%% for %s in %s %%}', '{% endfor %}'),
-    }
     def __init__(self, tl):
         self.tl = tl
         self.output = None
@@ -219,9 +213,14 @@ class TemplateTagsParser(object):
         return self.output.getvalue()
 
     def start_tag(self, tag, name, args):
-        template = TemplateTagsParser.TAGS_TEMPLATES[name][0]
-        args = self.tl.translate_expression(self.parse_expression(args),
-            name, self.loops)
+        template = self.tl.TAGS[name][0]
+        try:
+            args = self.tl.translate_expression(self.parse_expression(args),
+                name, self.loops)
+        except AdvInclude, e:
+            template = self.tl.TAGS['include']
+            args = e.value
+
         if name == 'loop':
             if LOOP_TAG_DEBUG:
                 print "Enter loop", args
@@ -234,7 +233,7 @@ class TemplateTagsParser(object):
             loop = self.loops.pop()
             if LOOP_TAG_DEBUG:
                 print "Exit loop", loop
-        self.output.write(TemplateTagsParser.TAGS_TEMPLATES[name][1])
+        self.output.write(self.tl.TAGS[name][1])
 
     def parse_expression(self, exp):
         lastend = 0
@@ -323,8 +322,14 @@ class TemplateTagsParser(object):
 
 class Jinja2Translator(object):
     '''Just to keep jinja2-specific code separate'''
-    TAG_INCLUDE = "{%% include '%s' %%}"
-    TAG_FILTER = "{%% filter %s %%}%s{%% endfilter %%}"
+    TAGS = {
+        'var': ('{{ %s }}', ''),
+        'const': ('{{ %s }}', ''),
+        'if': ('{%% if %s %%}', '{% endif %}'),
+        'loop': ('{%% for %s in %s %%}', '{% endfor %}'),
+        'include': "{%% include '%s' %%}",
+        'filter': '{%% filter %s %%}%s{%% endfilter %%}',
+    }
     
     OPERATORS = {
         '!': 'not',
@@ -349,13 +354,13 @@ class Jinja2Translator(object):
             return value
         elif type == 'include':
             value = value.replace(HTDOCS_HARDCODED_PATH, '')
-            return self.TAG_INCLUDE % value
+            return self.TAGS['include'] % value
         elif type == 'const':
-            return self.TAG_INCLUDE % template_filename(value)
+            return self.TAGS['include'] % template_filename(value)
         elif type == 'abbrtext':
             if value.startswith('"'):
                 value = remove_backslashes(value)
-            return self.TAG_FILTER % ('reverse_format(S_ABBRTEXT)',
+            return self.TAGS['filter'] % ('reverse_format(S_ABBRTEXT)',
                 value.strip('\'"'))
         return value
 
@@ -381,11 +386,13 @@ class Jinja2Translator(object):
         for type, value in exp:
             if type == 'option':
                 value = 'board.option.%s' % value
+
             elif type == 'path':
                 value = 'board.path'
+
             elif type == 'advinclude':
-                # TODO: how the hell am i supposed to handle this?
-                pass
+                raise AdvInclude(value)
+
             elif type == 'function':
                 name, subexp = value
                 parsed = self._translate_expression(subexp, mode='function')
@@ -445,8 +452,14 @@ class Jinja2Translator(object):
             return (itervarname, ' '.join(result))
         else:
             return ' '.join(result)
-            
-        
+
+class AdvInclude(Exception):
+    '''This is not an exception but an exceptional condition
+    Advincludes are complete includes with template tags parsing
+    and everything, but inside a <var> tag, so the most sensible
+    way to handle them was to raise an exception'''
+    def __init__(self, value):
+        self.value = value
 
 def template_filename(constname):
     return os.path.join(TEMPLATES_DIR, '%s.html' % constname.lower())
