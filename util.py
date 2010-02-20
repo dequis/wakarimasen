@@ -1,4 +1,5 @@
 import os
+import sys
 import mimetypes
 import functools
 
@@ -23,3 +24,12 @@ def wrap_static(application, *app_paths):
             return ['404 Not found: %s' % filename]
     
     return wrapper
+
+def module_default(modulename, defaults):
+    '''Set default values to modulename
+    Keys which start with underscores are ignored'''
+
+    module = __import__(modulename)
+    for key in defaults:
+        if not key.startswith('_') and not hasattr(module, key):
+            setattr(module, key, defaults[key])
