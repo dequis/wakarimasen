@@ -100,6 +100,11 @@ KNOWN_LOOPS = {
     'items': ('post', _POST_TABLE + ['mime_type']),
 }
 
+RENAME = {
+    'sprintf': 'reverse_format',
+    'OEKAKI_DEFAULT_PAINTER': 'board.options.OEKAKI_DEFAULT_PAINTER',
+}
+
 REMOVE_BACKSLASHES_RE = re.compile(r'\\([^\\])')
 def remove_backslashes(string):
     return REMOVE_BACKSLASHES_RE.sub(r'\1', string)
@@ -395,6 +400,9 @@ class Jinja2Translator(object):
 
             elif type == 'function':
                 name, subexp = value
+                if name in RENAME:
+                    name = RENAME[name]
+
                 parsed = self._translate_expression(subexp, mode='function')
                 if name == 'void':
                     value = '(%s)' % ', '.join(parsed)
@@ -405,12 +413,15 @@ class Jinja2Translator(object):
                 else:
                     value = '%s()' % name
             elif type == 'var':
+                if value in RENAME:
+                    value = RENAME[value]
+
                 for loop in self.loops[::-1]:
                     if loop in KNOWN_LOOPS and value in KNOWN_LOOPS[loop][1]:
                         value = '%s.%s' % (KNOWN_LOOPS[loop][0], value)
             elif type == 'const':
-                # maybe add a prefix 'const'?
-                pass
+                if value in RENAME:
+                    value = RENAME[value]
             elif type == 'regex':
                 do_lower = value.endswith('i')
                 action = value.startswith('/^') and 'startswith' or 'count'
