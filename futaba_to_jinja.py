@@ -126,20 +126,19 @@ def debug_item(name, value='', match=None, span=''):
 
 
 class FutabaStyleParser(object):
-    FILENAME = "futaba_style.pl"
-    
-    def __init__(self):
-        self.lastend = 0
+    def __init__(self, filename="futaba_style.pl", only=None, dry_run=False):
+        self.only = only
+        self.dry_run = dry_run
 
+        self.lastend = 0
         self.current = None
 
-        if not os.path.exists(TEMPLATES_DIR):
+        if not os.path.exists(TEMPLATES_DIR) and not self.dry_run:
             os.mkdir(TEMPLATES_DIR)
 
         self.tl = Jinja2Translator(self)
 
-        TEMPLATE_RE.sub(self.do_constant,
-            open(FutabaStyleParser.FILENAME).read())
+        TEMPLATE_RE.sub(self.do_constant, open(filename).read())
 
     def debug_item(self, *args, **kwds):
         if not FUTABA_STYLE_DEBUG:
@@ -148,6 +147,9 @@ class FutabaStyleParser(object):
 
     def do_constant(self, match):
         name, template = match.groups()
+        
+        if self.only and self.only != name:
+            return
         
         if FUTABA_STYLE_DEBUG or LOOP_TAG_DEBUG or VARIABLES_DEBUG:
             print name
@@ -168,8 +170,9 @@ class FutabaStyleParser(object):
         current = self.current.getvalue()
         current = self.parse_template_tags(current)
 
-        file = open(template_filename(name), 'w')
-        file.write(current)
+        if not self.dry_run:
+            file = open(template_filename(name), 'w')
+            file.write(current)
 
         if len(template) != self.lastend:
             self.debug_item("NOT MATCHED (end)", template[lastend:],
@@ -502,13 +505,24 @@ def template_filename(constname):
 
 def main():
     parser = optparse.OptionParser()
-    parser.add_option("--futaba-style-debug", action="store_true")
-    parser.add_option("--expression-debug", action="store_true")
-    parser.add_option("--translator-debug", action="store_true")
-    parser.add_option("--loop-debug", action="store_true")
-    parser.add_option("--variables-debug", action="store_true")
+    parser.add_option("-f", "--filename", default="futaba_style.pl",
+        help="Location of the futaba_style.pl file")
+    parser.add_option("-o", "--only", default=None, metavar="CONST",
+        help="Parse only one constant in futaba_style.pl")
+    parser.add_option("-n", "--dry-run", action="store_true", 
+        help="Don't write templates to disk")
+
+    group = optparse.OptionGroup(parser, "Debug channels")
+    group.add_option("--futaba-style-debug", action="store_true")
+    group.add_option("--expression-debug", action="store_true")
+    group.add_option("--translator-debug", action="store_true")
+    group.add_option("--loop-debug", action="store_true")
+    group.add_option("--variables-debug", action="store_true")
+    parser.add_option_group(group)
+    
     (options, args) = parser.parse_args()
 
+    # set debug channels. oh god h4x
     global FUTABA_STYLE_DEBUG, EXPRESSION_DEBUG, EXPRESSION_TRANSLATOR_DEBUG
     global LOOP_TAG_DEBUG, VARIABLES_DEBUG
     FUTABA_STYLE_DEBUG = options.futaba_style_debug
@@ -517,7 +531,9 @@ def main():
     LOOP_TAG_DEBUG = options.loop_debug
     VARIABLES_DEBUG = options.variables_debug
 
-    FutabaStyleParser()
+    FutabaStyleParser(filename=options.filename,
+                      only=options.only,
+                      dry_run=options.dry_run)
 
 
 if __name__ == '__main__':
