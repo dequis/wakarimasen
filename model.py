@@ -1,8 +1,9 @@
+import config, config_defaults
 from sqlalchemy import create_engine
 from sqlalchemy import Table, Column, Integer, String, MetaData
 from sqlalchemy.orm import sessionmaker
 
-engine = create_engine('mysql://desu:desu@localhost/desu', echo=True, pool_size=100, max_overflow=10)
+engine = create_engine(config.SQL_ENGINE, echo=True, pool_size=100, max_overflow=10)
 Session = sessionmaker(bind=engine)
 metadata = MetaData()
 
