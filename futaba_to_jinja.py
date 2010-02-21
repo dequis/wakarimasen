@@ -1,5 +1,6 @@
 import os
 import re
+import optparse
 try:
     from cStringIO import StringIO
 except ImportError:
@@ -17,7 +18,7 @@ FUTABA_STYLE_DEBUG = 0
 EXPRESSION_DEBUG = 0
 EXPRESSION_TRANSLATOR_DEBUG = 0
 LOOP_TAG_DEBUG = 0
-VARIABLES_DEBUG = 1
+VARIABLES_DEBUG = 0
 
 TEMPLATE_RE = re.compile(r'^use constant ([A-Z_]+) => (.*?;)\s*\n\n', re.M | re.S)
 TEMPLATE_SECTION_RE = re.compile(
@@ -499,6 +500,25 @@ class AdvInclude(Exception):
 def template_filename(constname):
     return os.path.join(TEMPLATES_DIR, '%s.html' % constname.lower())
 
+def main():
+    parser = optparse.OptionParser()
+    parser.add_option("--futaba-style-debug", action="store_true")
+    parser.add_option("--expression-debug", action="store_true")
+    parser.add_option("--translator-debug", action="store_true")
+    parser.add_option("--loop-debug", action="store_true")
+    parser.add_option("--variables-debug", action="store_true")
+    (options, args) = parser.parse_args()
+
+    global FUTABA_STYLE_DEBUG, EXPRESSION_DEBUG, EXPRESSION_TRANSLATOR_DEBUG
+    global LOOP_TAG_DEBUG, VARIABLES_DEBUG
+    FUTABA_STYLE_DEBUG = options.futaba_style_debug
+    EXPRESSION_DEBUG = options.expression_debug
+    EXPRESSION_TRANSLATOR_DEBUG = options.translator_debug
+    LOOP_TAG_DEBUG = options.loop_debug
+    VARIABLES_DEBUG = options.variables_debug
+
+    FutabaStyleParser()
+
 
 if __name__ == '__main__':
-    FutabaStyleParser()
+    main()
