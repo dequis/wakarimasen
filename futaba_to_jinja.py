@@ -5,6 +5,11 @@ try:
 except ImportError:
     from StringIO import StringIO
 
+try:
+    import config, config_defaults
+except ImportError:
+    config = None
+
 TEMPLATES_DIR = 'templates'
 HTDOCS_HARDCODED_PATH = '/home/desuchan/public_html/desuchan.net/htdocs/'
 
@@ -366,7 +371,7 @@ class Jinja2Translator(object):
         elif type == 'abbrtext':
             if value.startswith('"'):
                 value = remove_backslashes(value)
-            return self.TAGS['filter'] % ('reverse_format(S_ABBRTEXT)',
+            return self.TAGS['filter'] % ('reverse_format(strings.ABBRTEXT)',
                 value.strip('\'"'))
         return value
 
@@ -431,6 +436,11 @@ class Jinja2Translator(object):
             elif type == 'const':
                 if value in RENAME:
                     value = RENAME[value]
+
+                if value.startswith("S_"):
+                    value = 'strings.%s' % value[2:]
+                elif config and hasattr(config, value):
+                    value = 'config.%s' % value
 
                 if VARIABLES_DEBUG:
                     print " const", value
