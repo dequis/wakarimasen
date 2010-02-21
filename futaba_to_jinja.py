@@ -11,7 +11,8 @@ HTDOCS_HARDCODED_PATH = '/home/desuchan/public_html/desuchan.net/htdocs/'
 FUTABA_STYLE_DEBUG = 0
 EXPRESSION_DEBUG = 0
 EXPRESSION_TRANSLATOR_DEBUG = 0
-LOOP_TAG_DEBUG = 1
+LOOP_TAG_DEBUG = 0
+VARIABLES_DEBUG = 1
 
 TEMPLATE_RE = re.compile(r'^use constant ([A-Z_]+) => (.*?;)\s*\n\n', re.M | re.S)
 TEMPLATE_SECTION_RE = re.compile(
@@ -142,7 +143,7 @@ class FutabaStyleParser(object):
     def do_constant(self, match):
         name, template = match.groups()
         
-        if FUTABA_STYLE_DEBUG or LOOP_TAG_DEBUG:
+        if FUTABA_STYLE_DEBUG or LOOP_TAG_DEBUG or VARIABLES_DEBUG:
             print name
         
         # remove compile_template(...)
@@ -412,6 +413,10 @@ class Jinja2Translator(object):
                     value = '%s|%s' % (parsed[0], name)
                 else:
                     value = '%s()' % name
+                
+                if VARIABLES_DEBUG and name != 'void':
+                    print " filter", name
+
             elif type == 'var':
                 if value in RENAME:
                     value = RENAME[value]
@@ -419,9 +424,17 @@ class Jinja2Translator(object):
                 for loop in self.loops[::-1]:
                     if loop in KNOWN_LOOPS and value in KNOWN_LOOPS[loop][1]:
                         value = '%s.%s' % (KNOWN_LOOPS[loop][0], value)
+
+                if VARIABLES_DEBUG:
+                    print " var", value
+
             elif type == 'const':
                 if value in RENAME:
                     value = RENAME[value]
+
+                if VARIABLES_DEBUG:
+                    print " const", value
+
             elif type == 'regex':
                 do_lower = value.endswith('i')
                 action = value.startswith('/^') and 'startswith' or 'count'
@@ -438,6 +451,7 @@ class Jinja2Translator(object):
 
             elif type == 'operator':
                 value = self.OPERATORS.get(value, value)
+
             elif type == 'comma':
                 parts.append(result)
                 result = []
