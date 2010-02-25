@@ -10,3 +10,4 @@ fi
 ./config.sed $1/config.pl > config.py
 ./config_defaults.sed $1/config_defaults.pl > config_defaults.py
 ./strings.sed $1/strings_en.pl > strings_en.py
+./board_config.sed $!/board_config.pl > board_config.py
