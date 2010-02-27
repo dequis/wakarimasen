@@ -14,17 +14,13 @@ def application(environ, start_response):
     request = werkzeug.BaseRequest(environ)
     task = request.args.get('task', request.args.get('action', None))
     board = request.args.get('board', None)
+    environ['waka.task'] = task
+    environ['waka.board'] = board
 
-    if task is None:
-        return app.no_task(environ, start_response)
-    elif task:
-        funcname = 'task_' + task
-        if hasattr(app, funcname):
-            return getattr(app, funcname)(environ, start_response)
-    
-    return werkzeug.Response('task=%s board=%s' % (task, board)) \
-        (environ, start_response)
-    
+    # the task function if it exists, otherwise no_task()
+    function = getattr(app, 'task_%s' % task, app.no_task)
+
+    return function(environ, start_response)
 
 def main():
     server = sys.argv[1:] and sys.argv[1] or 'fcgi'
