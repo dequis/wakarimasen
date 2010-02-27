@@ -9,6 +9,8 @@ import werkzeug
 import app
 import util
 
+from util import WakaError
+
 def application(environ, start_response):
     '''Main routing application'''
     request = werkzeug.BaseRequest(environ)
@@ -20,7 +22,10 @@ def application(environ, start_response):
     # the task function if it exists, otherwise no_task()
     function = getattr(app, 'task_%s' % task, app.no_task)
 
-    return function(environ, start_response)
+    try:
+        return function(environ, start_response)
+    except WakaError, e:
+        return app.error(environ, start_response, e)
 
 def main():
     server = sys.argv[1:] and sys.argv[1] or 'fcgi'

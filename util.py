@@ -3,6 +3,15 @@ import sys
 import mimetypes
 import functools
 
+class WakaError(Exception):
+    '''Error to be reported to the user'''
+    def __init__(self, message, fromwindow=False):
+        self.message = message
+        self.fromwindow = fromwindow
+
+    def __str__(self):
+        return self.message
+
 def wrap_static(application, *app_paths):
     '''Application used in the development server to serve static files
     (i.e. everything except the CGI filename). DO NOT USE IN PRODUCTION'''
