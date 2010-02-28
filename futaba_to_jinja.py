@@ -110,6 +110,9 @@ KNOWN_LOOPS = {
 RENAME = {
     'sprintf': 'reverse_format',
     'OEKAKI_DEFAULT_PAINTER': 'board.options.OEKAKI_DEFAULT_PAINTER',
+    'ENV{SERVER_NAME}': "environ['SERVER_NAME']",
+    'ENV{HTTP_REFERER}': "environ['HTTP_REFERER']",
+    'escamp': 'escape',
 }
 
 REMOVE_BACKSLASHES_RE = re.compile(r'\\([^\\])')
@@ -371,7 +374,7 @@ class Jinja2Translator(object):
             value = value.replace(HTDOCS_HARDCODED_PATH, '')
             return self.TAGS['include'] % value
         elif type == 'const':
-            return self.TAGS['include'] % template_filename(value)
+            return self.TAGS['include'] % (value.lower() + '.html')
         elif type == 'abbrtext':
             if value.startswith('"'):
                 value = remove_backslashes(value)
@@ -400,7 +403,7 @@ class Jinja2Translator(object):
 
         for type, value in exp:
             if type == 'option':
-                value = 'board.option.%s' % value
+                value = 'board.options.%s' % value
 
             elif type == 'path':
                 value = 'board.path'
