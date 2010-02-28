@@ -8,16 +8,21 @@ import werkzeug
 
 import app
 import util
-
+from board import Board
 from util import WakaError
 
 def application(environ, start_response):
     '''Main routing application'''
     request = werkzeug.BaseRequest(environ)
     task = request.args.get('task', request.args.get('action', None))
-    board = request.args.get('board', None)
+    boardname = request.args.get('board', None)
     environ['waka.task'] = task
-    environ['waka.board'] = board
+    environ['waka.boardname'] = boardname
+    if boardname:
+        environ['waka.board'] = Board(boardname)
+    else:
+        # temporary
+        environ['waka.board'] = Board('9001')
 
     # the task function if it exists, otherwise no_task()
     function = getattr(app, 'task_%s' % task, app.no_task)

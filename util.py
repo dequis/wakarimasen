@@ -1,5 +1,6 @@
 import os
 import sys
+import imp
 import mimetypes
 import functools
 
@@ -42,3 +43,16 @@ def module_default(modulename, defaults):
     for key in defaults:
         if not key.startswith('_') and not hasattr(module, key):
             setattr(module, key, defaults[key])
+
+def import2(name, path):
+    '''Imports a module from path without requiring a __init__.py file'''
+
+    fullname = '%s.%s' % (path, name)
+
+    if fullname in sys.modules:
+        return sys.modules[fullname]
+    else:
+        modinfo = imp.find_module(name, [path])
+        module = imp.load_module(fullname, *modinfo)
+        modinfo[0].close() # the docs say i must close this :(
+        return module
