@@ -56,3 +56,28 @@ def import2(name, path):
         module = imp.load_module(fullname, *modinfo)
         modinfo[0].close() # the docs say i must close this :(
         return module
+
+def headers(f):
+    '''Decorator that allows sending output without calling start_response
+    It replaces start_response with a backwards-compatible version that
+    doesn't do anything if called more than once.'''
+
+    @functools.wraps(f)
+    def wrapper(environ, start_response):
+        environ['waka.status'] = '200 OK'
+        environ['waka.headers'] = {'Content-Type': 'text/html'}
+        environ['waka.response_sent'] = False
+
+        def new_start_response(status, headers):
+            if environ['waka.response_sent']:
+                return
+            environ['waka.response_sent'] = True
+
+            # merge parameter headers with the environ ones
+            environ['waka.headers'].update(dict(headers))
+            start_response(status, environ['waka.headers'].items())
+            
+        appiter = f(environ, new_start_response)
+        new_start_response(environ['waka.status'], environ['waka.headers'])
+        return appiter
+    return wrapper

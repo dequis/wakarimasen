@@ -11,6 +11,7 @@ import util
 from board import Board
 from util import WakaError
 
+@util.headers
 def application(environ, start_response):
     '''Main routing application'''
     request = werkzeug.BaseRequest(environ)
