@@ -8,6 +8,7 @@ import werkzeug
 
 import app
 import util
+import model
 from board import Board
 from util import WakaError
 
@@ -32,6 +33,15 @@ def application(environ, start_response):
         return function(environ, start_response)
     except WakaError, e:
         return app.error(environ, start_response, e)
+
+def cleanup(environ, start_response):
+    '''Destroy the thread-local session'''
+    session = model.Session()
+    session.commit()
+    session.transaction = None  # fix for a circular reference
+    model.Session.remove()
+
+application = util.cleanup(application, cleanup)
 
 def main():
     server = sys.argv[1:] and sys.argv[1] or 'fcgi'

@@ -1,11 +1,11 @@
 import config, config_defaults
 from sqlalchemy import create_engine
 from sqlalchemy import Table, Column, Integer, Text, String, MetaData
-from sqlalchemy.orm import sessionmaker, mapper
+from sqlalchemy.orm import sessionmaker, mapper, scoped_session
 from sqlalchemy.ext.declarative import declarative_base
 
 engine = create_engine(config.SQL_ENGINE, echo=True, pool_size=100, max_overflow=10)
-Session = sessionmaker(bind=engine)
+Session = scoped_session(sessionmaker(bind=engine))
 metadata = MetaData()
 Base = declarative_base(metadata=metadata)
 

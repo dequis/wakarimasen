@@ -81,3 +81,18 @@ def headers(f):
         new_start_response(environ['waka.status'], environ['waka.headers'])
         return appiter
     return wrapper
+
+def cleanup(application, cleanup_function):
+    '''Pseudo-decorator that calls a cleanup function always after an app
+    is run. This is needed because the apps may return the iterator before
+    execution is done'''
+
+    @functools.wraps(application)
+    def wrapper(environ, start_response):
+        try:
+            appiter = application(environ, start_response)
+            for item in appiter:
+                yield item
+        finally:
+            cleanup_function(environ, start_response)
+    return wrapper
