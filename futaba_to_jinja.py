@@ -113,6 +113,7 @@ RENAME = {
     'ENV{SERVER_NAME}': "environ['SERVER_NAME']",
     'ENV{HTTP_REFERER}': "environ['HTTP_REFERER']",
     'escamp': 'escape',
+    'expand_filename': 'expand_url'
 }
 
 REMOVE_BACKSLASHES_RE = re.compile(r'\\([^\\])')

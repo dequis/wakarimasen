@@ -14,8 +14,25 @@ class Board(object):
         self.options = module.config
         
         self.ormclass = model.board(board)
-        session = model.Session()
 
-        # TODO: check if the database exists?
-        # if not, build cache and redirect
+        # TODO customize these
+        self.path = os.path.abspath(board)
+        self.url = '/%s/' % board
+
+    def expand_url(self, filename, force_http=False, environ={}):
+        '''When force_http is true, the environ parameter is required
+        TODO: have a SERVER_NAME entry in config'''
+
+        # TODO: is this the same as the intended in wakaba?
+        if filename.startswith("/") or filename.startswith("http"):
+            return filename
+
+        self_path = self.url
+
+        if force_http:
+            self_path = 'http://' + environ['SERVER_NAME'] + self_path
+
+        return self_path + filename
+
+
 

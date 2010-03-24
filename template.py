@@ -58,21 +58,8 @@ class Template(object):
         return tplstring % value
 
     @filter
-    def expand_filename(self, filename, force_http=False):
-        # TODO: what does this function do?
-        if filename.startswith("/") or filename.startswith("http"):
-            return filename
-
-        self_path = '/' # TODO
-
-        if force_http:
-            self_path = 'http://' + self.environ['SERVER_NAME'] + self_path
-
-        board_path = ''
-        if False:
-            board_path = self.board.path + "/"
-
-        return self_path + board_path + filename
+    def expand_url(self, filename, force_http=False):
+        return self.board.expand_url(filename, force_http, self.environ)
 
     @filter
     def root_path_to_filename(self, filename):
