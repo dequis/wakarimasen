@@ -17,6 +17,30 @@ class BoardBase(object):
         if self.parent:
             parent = ' in thread %s' % self.parent
         return '<Post >>>/%s/%s%s>' % (self.boardname, self.num, parent)
+    
+class CompactPost(object):
+    '''A prematurely optimized post object'''
+
+    __slots__ = [
+        # columns copied directly from rowproxy
+        'num', 'parent', 'timestamp', 'lasthit', 'ip', 'date', 'name', 'trip',
+        'email', 'subject', 'password', 'comment', 'image', 'size', 'md5',
+        'width', 'height', 'thumbnail', 'tn_width', 'tn_height', 'lastedit',
+        'lastedit_ip', 'admin_post', 'stickied', 'locked',
+        # extensions
+        'abbrev',
+    ]
+
+    def __init__(self, rowproxy):
+        for key, value in rowproxy.items():
+            setattr(self, key, value)
+        self.abbrev = 0
+    
+    def __repr__(self):
+        parent = ''
+        if self.parent:
+            parent = ' in thread %s' % self.parent
+        return '<Post >>%s%s>' % (self.num, parent)
 
 def board(name):
     '''Generates board classes to use with the ORM'''
