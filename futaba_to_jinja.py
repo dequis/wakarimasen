@@ -113,7 +113,10 @@ RENAME = {
     'ENV{SERVER_NAME}': "environ['SERVER_NAME']",
     'ENV{HTTP_REFERER}': "environ['HTTP_REFERER']",
     'escamp': 'escape',
-    'expand_filename': 'expand_url'
+    'expand_filename': 'expand_url',
+    'include/boards/announcements_global.html': 'announcements_global.html',
+    'include/announcements.html': 'announcements.html',
+    '../include/boards/rules.html': 'rules.html',
 }
 
 REMOVE_BACKSLASHES_RE = re.compile(r'\\([^\\])')
@@ -238,7 +241,7 @@ class TemplateTagsParser(object):
                 name, self.loops)
         except AdvInclude, e:
             template = self.tl.TAGS['include']
-            args = e.value
+            args = self.tl.handle_include(e.value)
 
         if name == 'loop':
             if LOOP_TAG_DEBUG:
@@ -372,8 +375,7 @@ class Jinja2Translator(object):
         elif type == 'html':
             return value
         elif type == 'include':
-            value = value.replace(HTDOCS_HARDCODED_PATH, '')
-            return self.TAGS['include'] % value
+            return self.TAGS['include'] % self.handle_include(value)
         elif type == 'const':
             return self.TAGS['include'] % (value.lower() + '.html')
         elif type == 'abbrtext':
@@ -381,6 +383,12 @@ class Jinja2Translator(object):
                 value = remove_backslashes(value)
             return self.TAGS['filter'] % ('reverse_format(strings.ABBRTEXT)',
                 value.strip('\'"'))
+        return value
+
+    def handle_include(self, value):
+        value = value.replace(HTDOCS_HARDCODED_PATH, '')
+        if value in RENAME:  
+            value = RENAME[value]
         return value
 
     def translate_expression(self, exp, tagname, loops):
