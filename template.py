@@ -56,6 +56,10 @@ class Template(object):
     def __iter__(self):
         yield self.template.render(**self.vars).encode("utf-8")
 
+    def render_to_file(self, filename):
+        with open(filename, "w") as rc:
+            rc.write(self.template.render(**self.vars).encode("utf-8"))
+
     @filter
     def reverse_format(self, value, tplstring):
         return tplstring % value
