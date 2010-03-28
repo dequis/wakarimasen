@@ -2,6 +2,7 @@ import os
 import sys
 import glob
 import jinja2
+import urllib
 
 import config, config_defaults
 import strings_en as strings
@@ -69,6 +70,11 @@ class Template(object):
         return self.board.expand_url(filename, force_http, self.environ)
 
     @filter
+    def expand_image_url(self, filename):
+        # TODO: load balancing support?
+	return self.expand_url(urllib.quote(filename))
+
+    @filter
     def root_path_to_filename(self, filename):
         if filename.startswith("/") or filename.startswith("http"):
             return filename
@@ -76,6 +82,15 @@ class Template(object):
         self_path = '/' # TODO
 
         return self_path + filename
+
+    @filter
+    def basename(self, path):
+        return os.path.basename(path)
+
+    @filter
+    def get_captcha_key(self, thread):
+        # TODO: captcha not implemented
+        pass
 
     @function
     def get_script_name(self):
@@ -87,6 +102,18 @@ class Template(object):
             return 'https://' + self.environ['SERVER_NAME'] + self.environ['SCRIPT_NAME']
 	return self.environ['SCRIPT_NAME']
 
+    @filter
+    def get_reply_link(self, reply, parent, abbreviated=False, force_http=False):
+        path_tpl = (self.board.options['RES_DIR'] + "%s" +
+                    ("_abbr" if abbreviated else "") +
+                    config.PAGE_EXT + "%s")
+        if parent:
+            path = path_tpl % (parent, "#" + reply)
+        else:
+            path = path_tpl % (reply, '')
+
+        return self.board.expand_url(path, force_http, self.environ)
+    
     def get_stylesheets(self):
         # FIXME: don't hardcode the path
         for file in glob.glob("include/common/css/*.css"):
