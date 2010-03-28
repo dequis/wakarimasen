@@ -31,12 +31,12 @@ def board(name):
         Column("ip", Text),                             # IP number of poster, in integer form!
 
         Column("date", Text),                           # The date, as a string
-        Column("name", Text),                           # Name of the poster
+        Column("name", Text(convert_unicode=True)),     # Name of the poster
         Column("trip", Text),                           # Tripcode (encoded)
         Column("email", Text),                          # Email address
-        Column("subject", Text),                        # Subject
+        Column("subject", Text(convert_unicode=True)),  # Subject
         Column("password", Text),                       # Deletion password (in plaintext) 
-        Column("comment", Text),                        # Comment text, HTML encoded.
+        Column("comment", Text(convert_unicode=True)),  # Comment text, HTML encoded.
 
         Column("image", Text),                          # Image filename with path and extension (IE, src/1081231233721.jpg)
         Column("size", Integer),                        # File size in bytes
