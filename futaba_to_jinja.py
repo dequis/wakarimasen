@@ -83,7 +83,7 @@ KNOWN_LOOPS = {
     'stylesheets': ('stylesheet', ['filename', 'title', 'default']),
     'inputs': ('input', ['name', 'value']),
     'S_OEKPAINTERS': ('painters', ['painter', 'name']),
-    'threads': ('thread', ['posts', 'omit', 'omitimages']),
+    'threads': ('currentthread', ['posts', 'omit', 'omitimages']),
     'posts': ('post', _POST_TABLE + ['abbrev']),
     'pages': ('page', ['page', 'filename', 'current']),
     'loop': ('post', _POST_TABLE),
@@ -108,7 +108,7 @@ KNOWN_LOOPS = {
 }
 
 RENAME = {
-    'sprintf': 'reverse_format',
+    'sprintf': 'format',
     'OEKAKI_DEFAULT_PAINTER': 'board.options.OEKAKI_DEFAULT_PAINTER',
     'ENV{SERVER_NAME}': "environ['SERVER_NAME']",
     'ENV{HTTP_REFERER}': "environ['HTTP_REFERER']",
