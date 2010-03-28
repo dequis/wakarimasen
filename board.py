@@ -18,7 +18,7 @@ class Board(object):
 
         self.options = module.config
         
-        self.ormclass = model.board(board)
+        self.table = model.board(self.options['SQL_TABLE'])
 
         # TODO customize these
         self.path = os.path.abspath(board)
@@ -29,7 +29,7 @@ class Board(object):
         where each thread is a list of CompactPost instances'''
 
         session = model.Session()
-        table = self.ormclass.__table__
+        table = self.table
         sql = table.select().order_by(table.c.stickied.desc(),
             table.c.lasthit.desc(),
             case({0: table.c.num}, table.c.parent, table.c.parent).asc(),

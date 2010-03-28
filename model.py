@@ -11,13 +11,6 @@ Base = declarative_base(metadata=metadata)
 
 _boards = {}
 
-class BoardBase(object):
-    def __repr__(self):
-        parent = ''
-        if self.parent:
-            parent = ' in thread %s' % self.parent
-        return '<Post >>>/%s/%s%s>' % (self.boardname, self.num, parent)
-    
 class CompactPost(object):
     '''A prematurely optimized post object'''
 
@@ -77,14 +70,7 @@ def board(name):
         Column("locked", Text),                         # ADDED - Locked?
     )
 
-    # generates the equivalent to: class board_desu(BoardBase):
-    ormclass = type('board_%s' % name, (BoardBase,), {
-        '__table__': table,
-        'boardname': name,
-    })
-    mapper(ormclass, table)
-
-    _boards[name] = ormclass
+    _boards[name] = table
     return _boards[name]
 
 
