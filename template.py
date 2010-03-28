@@ -40,11 +40,14 @@ class Template(object):
         # Current template init
         self.template = self.env.get_template(name + '.html')
 
-        if 'environ' in vars:
-            self.environ = vars['environ']
+        self.board = vars.get('board', None)
+        self.environ = vars.get('environ', {})
+
+        if not self.board and self.environ:
             self.board = self.environ['waka.board']
-            vars['stylesheets'] = list(self.get_stylesheets())
             vars['board'] = self.board
+
+        vars['stylesheets'] = list(self.get_stylesheets())
         self.env.globals['config'] = config
         self.env.globals['strings'] = strings
 
