@@ -3,11 +3,10 @@ from template import Template
 from util import WakaError
 
 def no_task(environ, start_response):
-    raise WakaError('Nothing here yet')
-
-def task_gen_cache(environ, start_response):
     board = environ['waka.board']
     board.build_cache(environ)
+    start_response('302 Found', [('Location', board.url)])
+    return []
 
 def init_database():
     model.metadata.create_all()
