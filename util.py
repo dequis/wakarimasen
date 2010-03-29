@@ -13,7 +13,7 @@ class WakaError(Exception):
     def __str__(self):
         return self.message
 
-def wrap_static(application, *app_paths):
+def wrap_static(application, *app_paths, **kwds):
     '''Application used in the development server to serve static files
     (i.e. everything except the CGI filename). DO NOT USE IN PRODUCTION'''
     
@@ -23,7 +23,12 @@ def wrap_static(application, *app_paths):
 
         if filename in app_paths or not filename:
             return application(environ, start_response)
-        elif os.path.exists(filename):
+
+        if os.path.isdir(filename):
+            index = kwds.get('index', 'index.html')
+            filename = os.path.join(filename, index)
+
+        if os.path.exists(filename):
             content, encoding = mimetypes.guess_type(filename)
             headers = [('Content-Type', content),
                        ('Content-Encoding', encoding)]

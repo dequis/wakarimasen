@@ -49,7 +49,7 @@ def main():
         fcgi.WSGIServer(application).run()
     else:
         werkzeug.run_simple('', 8000,
-            util.wrap_static(application, __file__),
+            util.wrap_static(application, __file__, index='wakaba.html'),
             use_reloader=True, use_debugger=True)
 
 if __name__ == '__main__':
