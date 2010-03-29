@@ -35,6 +35,9 @@ def wrap_static(application, *app_paths, **kwds):
             start_response('200 OK', [x for x in headers if x[1]])
             return open(filename)
         else:
+            handler = kwds.get('not_found_handler', None)
+            if handler:
+                return handler(environ, start_response)
             start_response('404 Not found', [('Content-Type', 'text/plain')])
             return ['404 Not found: %s' % filename]
     
