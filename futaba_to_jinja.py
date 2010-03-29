@@ -112,6 +112,7 @@ RENAME = {
     'OEKAKI_DEFAULT_PAINTER': 'board.options.OEKAKI_DEFAULT_PAINTER',
     'ENV{SERVER_NAME}': "environ['SERVER_NAME']",
     'ENV{HTTP_REFERER}': "environ['HTTP_REFERER']",
+    'self': "environ['SCRIPT_NAME']",
     'escamp': 'escape',
     'expand_filename': 'expand_url',
     'expand_image_filename': 'expand_image_url',
@@ -418,7 +419,7 @@ class Jinja2Translator(object):
                 value = 'board.options.%s' % value
 
             elif type == 'path':
-                value = 'board.path'
+                value = 'board.url'
 
             elif type == 'advinclude':
                 raise AdvInclude(value)
