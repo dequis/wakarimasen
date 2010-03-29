@@ -1,8 +1,10 @@
 import os
 import sys
 import glob
-import jinja2
 import urllib
+import random
+
+import jinja2
 
 import config, config_defaults
 import strings_en as strings
@@ -58,8 +60,22 @@ class Template(object):
         yield self.template.render(**self.vars).encode("utf-8")
 
     def render_to_file(self, filename):
-        with open(filename, "w") as rc:
-            rc.write(self.template.render(**self.vars).encode("utf-8"))
+        contents = self.template.render(**self.vars).encode("utf-8")
+
+        if config.USE_TEMPFILES:
+            tempname = os.path.join(self.board.path,
+                self.board.options['RES_DIR'],
+                'tmp' + str(random.randint(1, 1000000000)))
+
+            with open(tempname, "w") as rc:
+                rc.write(contents)
+
+            os.rename(tempname, filename)
+        else:
+            with open(filename, "w") as rc:
+                rc.write(contents)
+
+        os.chmod(filename, 0644)
 
     @filter
     def reverse_format(self, value, tplstring):
