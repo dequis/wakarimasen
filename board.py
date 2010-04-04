@@ -6,7 +6,7 @@ import strings_en as strings
 from util import WakaError, import2
 from template import Template
 
-from sqlalchemy.sql import case, or_
+from sqlalchemy.sql import case, or_, select
 
 class Board(object):
     def __init__(self, board):
@@ -111,7 +111,7 @@ class Board(object):
             p['filename'] = self.get_page_url(page)
             p['current'] = page == i
             pages.append(p)
-	
+        
         prevpage = nextpage = None
         if page != 0:
             prevpage = pages[page - 1]['filename']
@@ -186,6 +186,19 @@ class Board(object):
         else:
             if os.path.exists(abbreviated_filename):
                 os.unlink(abbreviated_filename)
+
+    def delete_thread_cache(self, parent):
+        base = os.path.join(self.path, self.options['RES_DIR'], '')
+        os.unlink(base + "%s%s" % (parent, config.PAGE_EXT))
+        os.unlink(base + "%s_abbr%s" % (parent, config.PAGE_EXT))
+
+    def build_thread_cache_all(self, environ={}):
+        session = model.Session()
+        sql = select([self.table.c.num], self.table.c.parent == 0)
+        query = session.execute(sql)
+        
+        for row in query:
+            self.build_thread_cache(row[0], environ)
 
     def _get_page_filename(self, page):
         '''Returns either wakaba.html or (page).html'''
