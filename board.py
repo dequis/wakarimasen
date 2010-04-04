@@ -2,10 +2,11 @@ import os
 
 import model
 import config, config_defaults
+import strings_en as strings
 from util import WakaError, import2
 from template import Template
 
-from sqlalchemy.sql import case
+from sqlalchemy.sql import case, or_
 
 class Board(object):
     def __init__(self, board):
@@ -65,6 +66,7 @@ class Board(object):
             page += 1
 
     def build_cache_page(self, page, total, pagethreads, environ={}):
+        '''Build /board/$page.html'''
         filename = self.get_page_filename(page)
         
         threads = []
@@ -127,6 +129,63 @@ class Board(object):
             board=self,
             environ=environ
         ).render_to_file(filename)
+
+    def build_thread_cache(self, threadid, environ={}):
+        '''Build /board/res/$threadid.html'''
+
+        session = model.Session()
+        sql = self.table.select(
+            or_(
+                self.table.c.num == threadid,
+                self.table.c.parent == threadid
+            )).order_by(self.table.c.num.asc())
+        query = session.execute(sql)
+
+        thread = []
+
+        for post in query:
+            thread.append(model.CompactPost(post))
+
+        if thread[0].parent:
+            raise WakaError(strings.NOTHREADERR)
+
+        filename = os.path.join(self.path, self.options['RES_DIR'],
+            "%s%s" % (threadid, config.PAGE_EXT))
+
+        def print_thread(thread, filename, **kwargs):
+            '''Function to avoid duplicating code with abbreviated pages'''
+            Template('page_template',
+                threads=[{'posts': thread}],
+                thread=threadid,
+                postform=self.options['ALLOW_TEXT_REPLIES'] or self.options['ALLOW_IMAGE_REPLIES'],
+                image_inp=self.options['ALLOW_IMAGE_REPLIES'],
+                textonly_inp=0,
+                dummy=thread[-1].num,
+                lockedthread=thread[0].locked,
+                board=self,
+                environ=environ,
+                **kwargs
+            ).render_to_file(filename)
+
+        print_thread(thread, filename)
+
+        # Determine how many posts need to be cut.
+        posts_to_trim = len(thread) - config.POSTS_IN_ABBREVIATED_THREAD_PAGES
+
+        # Filename for Last xx Posts Page.
+        abbreviated_filename = os.path.join(self.path, self.options['RES_DIR'], 
+            "%s_abbr%s" % (threadid, config.PAGE_EXT))
+
+        if config.ENABLE_ABBREVIATED_THREAD_PAGES and posts_to_trim > 1:
+            op = thread[0]
+            thread = thread[posts_to_trim:]
+            thread.insert(0, op)
+
+            print_thread(thread, abbreviated_filename,
+                omit=posts_to_trim - 1)
+        else:
+            if os.path.exists(abbreviated_filename):
+                os.unlink(abbreviated_filename)
 
     def _get_page_filename(self, page):
         '''Returns either wakaba.html or (page).html'''
