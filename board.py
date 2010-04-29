@@ -24,6 +24,40 @@ class Board(object):
         # TODO customize these
         self.path = os.path.abspath(board)
         self.url = '/%s/' % board
+        self.name = board
+
+    def make_path(self, file='', dir='', page=None, thread=None,
+                  add_ext=True, abbr=False, url=False):
+        '''Builds an url or a path'''
+        if url:
+            base = self.url
+        else:
+            base = self.path
+
+        if page is not None:
+            if page == 0:
+                file = self.options['HTML_SELF']
+                add_ext = False
+            else:
+                file = str(page)
+
+        if thread is not None:
+            dir = self.options['RES_DIR']
+            file = str(thread)
+        
+        if file:
+            if abbr:
+                file += '_abbr'
+            if add_ext:
+                file += config.PAGE_EXT
+            return os.path.join(base, dir, file)
+        else:
+            return os.path.join(base, dir)
+
+    def make_url(self, **kwargs):
+        '''Alias for make_path to build urls'''
+        kwargs['url'] = True
+        return self.make_path(**kwargs)
 
     def _get_all_threads(self):
         '''Build a list of threads from the database,
