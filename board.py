@@ -1,4 +1,5 @@
 import os
+import time
 
 import model
 import config, config_defaults
@@ -233,6 +234,334 @@ class Board(object):
         
         for row in query:
             self.build_thread_cache(row[0], environ)
+
+    def post_stuff(self, parent, name, email, subject, comment, file,
+                   uploadname, password, nofile, captcha, admin, no_captcha,
+                   no_format, oekaki_post, srcinfo, pch, sticky, lock,
+                   admin_post_mode, environ={}):
+    
+        session = model.Session()
+
+        # get a timestamp for future use
+        timestamp = time.time()
+
+        # Initialize admin_post variable--tells whether or not this post has fallen under the hand of a mod/admin
+        admin_post = ''
+
+        # check that the request came in as a POST, or from the command line
+        if environ.get('REQUEST_METHOD', '') != 'POST':
+            raise WakaError(strings.UNJUST)
+
+        # check whether the parent thread is stickied
+        if parent:
+            sticky_check = session.execute(
+                select([self.table.c.stickied, self.table.c.locked],
+                    self.table.c.num == parent)).fetchone()
+
+            if sticky_check['stickied']:
+                sticky = 1
+            elif not admin_post_mode:
+                sticky = 0
+
+            # TODO use True/False instead of 'yes'?
+            if sticky_check['locked'] == 'yes' and not admin_post_mode:
+                raise WakaError(strings.THREADLOCKEDERROR)
+
+        username = accounttype = ''
+
+        # check admin password - allow both encrypted and non-encrypted
+        if admin_post_mode:
+            # TODO check_password not implemented
+            username, accounttype = check_password(admin, 'mpost')
+            admin_post = 'yes' # TODO use True/False?
+        else:
+            if no_captcha or no_format or (sticky and not parent) or lock:
+                raise WakaError(strings.WRONGPASS)
+
+            if parent:
+                if file and not self.options['ALLOW_IMAGE_REPLIES']:
+                    raise WakaError(strings.NOTALLOWED)
+                if not file and not self.options['ALLOW_TEXT_REPLIES']:
+                    raise WakaError(strings.NOTALLOWED)
+            else:
+                if file and not self.options['ALLOW_IMAGES']:
+                    raise WakaError(strings.NOTALLOWED)
+                if not file and nofile and self.options['ALLOW_TEXTONLY']:
+                    raise WakaError(strings.NOTALLOWED)
+
+
+        threadupdate = self.table.update().where(
+            or_(self.table.c.num == parent, self.table.c.parent == parent))
+            
+        if sticky and parent:
+            threadupdate = threadupdate.values(stickied=1)
+
+        if lock:
+            if parent:
+                threadupdate = threadupdate.values(locked='yes')
+            lock = 'yes' # TODO use True/False?
+
+        if (sticky or lock) and parent:
+            session.execute(threadupdate)
+
+        has_crlf = lambda x: '\n' in x or '\r' in x
+
+        # check for weird characters
+        if (not parent.isdigit() or len(parent) > 10 or
+           has_crlf(name) or has_crlf(email) or has_crlf(subject)):
+            raise WakaError(strings.UNUSUAL)
+
+        # check for excessive amounts of text
+        if (len(name) > self.options['MAX_FIELD_LENGTH'] or
+           len(email) > self.options['MAX_FIELD_LENGTH'] or
+           len(subject) > self.options['MAX_FIELD_LENGTH'] or
+           len(comment) > self.options['MAX_COMMENT_LENGTH']):
+            raise WakaError(strings.TOOLONG)
+
+        # check to make sure the user selected a file, or clicked the checkbox
+        if not parent and not file and not nofile:
+            raise WakaError(strings.NOPIC)
+
+        # check for empty reply or empty text-only post
+        if not comment.strip() and not file:
+            raise WakaError(strings.NOTEXT)
+
+        # get file size, and check for limitations.
+        size = 0
+        if file:
+            size = get_file_size(file) # TODO get_file_size not implemented
+
+        ip = environ['REMOTE_ADDR']
+        numip = dot_to_dec(ip) # TODO dot_to_dec not implemented
+
+        # set up cookies
+        c_name = name
+        c_email = email
+        c_password = password
+
+        # check if IP is whitelisted
+        # TODO is_whitelisted not implemented
+        whitelisted = is_whitelisted(numip)
+
+        # process the tripcode - maybe the string should be decoded later
+        # TODO process_tripcode not implemented
+        name, trip = process_tripcode(name, self.options['TRIPKEY'],
+            config.SECRET, config.CHARSET)
+
+        if not whitelisted:
+            # check for bans (TODO ban_check not implemented)
+            ban_check(numip, c_name, subject, comment)
+
+            trap_fields = []
+            if self.options['SPAM_TRAP']:
+                trap_fields = ['name', 'link']
+
+            # spam check (TODO spam_engine not implemented)
+            spam_engine(
+                query=query, # TODO translate this
+                trap_fields=trap_fields,
+                spam_files=config.SPAM_FILES,
+                charset=config.CHARSET,
+            )
+
+        # TODO is_trusted not implemented
+        if self.options['ENABLE_CAPTCHA'] and not no_captcha and \
+           not is_trusted(trip):
+            # TODO check_captcha not implemented
+            check_captcha(captcha, ip, parent)
+
+        if not whitelisted and self.options['ENABLE_PROXY_CHECK']:
+            # TODO proxy_check not implemented
+            proxy_check(ip)
+
+        # check if thread exists, and get lasthit value
+        parent_res = lasthit = ''
+        if parent:
+            # TODO get_parent_post not implemented
+            parent_res = get_parent_post(parent)
+            if not parent_res:
+                raise WakaError(strings.NOTHREADERR)
+            lasthit = parent_res.lasthit
+        else:
+            lasthit = timestamp
+
+        # kill the name if anonymous posting is being enforced
+        if self.options['FORCED_ANON']:
+            name = ''
+            trip = ''
+            if email.lower().count('sage'):
+                email = 'sage'
+            else:
+                email = ''
+
+        # clean up the inputs
+        # TODO clean_string, decode_string not implemented
+        email = clean_string(decode_string(email, config.CHARSET))
+        subject = clean_string(decode_string(subject, config.CHARSET))
+
+        noko = False
+        # check subject field for 'noko' (legacy)
+        if subject.lower() == 'noko':
+            subject = ''
+            noko = True
+        # and the link field (proper)
+        elif email.lower() == 'noko':
+            noko = True
+
+        # fix up the email/link
+        # TODO support URLs instead of emails too (wakaba uses a regexp here)
+        if email:
+            email = "mailto:%s" % email
+
+        # format comment
+        # TODO format_comment, clean_string, decode_string not implemented
+        if not no_format:
+            comment = format_comment(clean_string(
+                decode_string(comment, config.CHARSET)))
+
+        # insert default values for empty fields
+        if not parent:
+            parent = 0
+
+        if not (name or trip):
+            # TODO make_anonymous not implemented
+            name = make_anonymous(ip, timestamp)
+
+        subject = subject or self.options['S_ANOTITLE']
+        comment = comment or self.options['S_ANOTEXT']
+
+        # flood protection - must happen after inputs have been cleaned up
+        # TODO flood_check not implemented
+        flood_check(numip, timestamp, comment, file, 1, 0)
+
+        # Manager and deletion stuff - duuuuuh?
+
+        # generate date (TODO make_date not implemented)
+        date = make_date(timestamp + config.TIME_OFFSET, config.DATE_STYLE)
+
+        # generate ID code if enabled
+        if self.options['DISPLAY_ID']:
+            # TODO make_id_code not implemented
+            date += ' ID:' + make_id_code(ip, timestamp, email)
+
+        # copy file, do checksums, make thumbnail, etc
+        # TODO process_file not implemented
+        if file:
+            filename, md5, width, height, thumbnail, tn_width, tn_height = \
+                process_file(file, uploadname, timestamp, parent)
+
+            # TODO: i don't know what the hell is this pch stuff
+            if oekaki_post and self.options['ENABLE_OEKAKI']:
+                new_pch_filename = source_file = source_pch = ''
+
+                # Check to see, if it is a modification of a source,
+                # if the source has an animation file.
+                srcinfo_array = srcinfo.split(",")
+                if len(srcinfo_array) >= 3:
+                    source_file = srcinfo_array[2].lstrip("/")
+                    # TODO find_pch not implemented
+                    source_pch = find_pch(source_file)
+
+                # If applicable, copy PCH file with the same filename base
+                # as the file we just copied.
+                if pch and (not source_file or os.path.exists(source_pch)):
+                    # TODO copy_animation_file not implemented
+                    new_pch_filename = copy_animation_file(pch, filename)
+                    # TODO create postfix from OEKAKI_INFO_TEMPLATE
+                    postfix = 'TODO'
+                    #my $postfix = OEKAKI_INFO_TEMPLATE->(decode_srcinfo($srcinfo,$uploadname,$new_pch_filename));
+                    comment += postfix
+
+        # Make sure sticky is a numeric 0. TODO: do we need this in python?
+        if not sticky:
+            sticky = 0
+
+        # finally, write to the database
+        session = model.Session()
+        result = session.execute(self.table.insert().values(parent=parent,
+            timestamp=timestamp, lasthit=lasthit, ip=numip, date=date,
+            name=name, trip=trip, email=email, subject=subject,
+            password=password, comment=comment, image=filename, size=size,
+            md5=md5, width=width, height=height, thumbnail=thumbnail,
+            tn_width=tn_width, tn_height=tn_height, admin_post=admin_post,
+            stickied=sticky, locked=lock))
+        num = result.last_inserted_ids()[0]
+
+        if parent: # bumping
+            # check for sage, or too many replies
+            # TODO sage_count not implemented
+            if not (email.lower().count("sage") or
+                    sage_count(parent_res) > self.options['MAX_RES']):
+                t = self.table
+                session.execute(t.update()
+                    .where(or_(t.c.num == parent, t.c.parent == parent))
+                    .values(lasthit=timestamp))
+
+        # remove old threads from the database
+        # TODO trim_database not implemented
+        trim_database()
+
+        # update the cached HTML pages
+        # TODO build_cache wait no it is implemented
+        build_cache()
+
+        # update the individual thread cache
+        if parent:
+            # TODO call the right one
+            build_thread_cache(parent)
+        else: # new thread, id is in num
+            if admin_post_mode:
+                # TODO add_log_entry not implemented
+                add_log_entry(username, 'admin_post',
+                    '%s,%s' % (self.name, num),
+                    date, numip, 0, timestamp)
+            if num == 1:
+                # If this is the first post on a board recently cleared
+                # of posts, the post count will reset; so should our
+                # reports, then.
+                # TODO init_report_database not implemented
+                # TODO maybe it shouldn't be implemented
+                init_report_database()
+
+            build_thread_cache(num)
+
+            parent = num    # For use with "noko" below
+
+        # set the name, email and password cookies
+        # TODO make_cookies not implemented
+        make_cookies(name=c_name, email=c_email, password=c_password,
+            _charset=config.CHARSET,
+            _autopath=self.options['COOKIE_PATH']) # yum!
+
+        if not admin_post_mode:
+            if not noko:
+                # forward back to the main page
+                # TODO make_http_forward not implemented
+                make_http_forward(self.make_path(page=0, url=True),
+                    config.ALTERNATE_REDIRECT)
+            else:
+                # ...unless we have "noko" (a la 4chan)--then forward to thread
+                # ("parent" contains current post number if a new thread was posted)
+                # TODO make_http_forward not implemented
+                if not os.path.exists(self.make_path(thread=parent, abbr=True)):
+                    make_http_forward(self.make_url(thread=parent),
+                        config.ALTERNATE_REDIRECT)
+                else:
+                    make_http_forward(self.make_url(thread=parent, abbr=True),
+                        config.ALTERNATE_REDIRECT)
+        else:
+            # TODO make_http_forward, get_secure_script_name not implemented
+            # forward back to the mod panel
+            if not noko:
+                make_http_forward(get_secure_script_name() +
+                    '?task=mpanel&board=' + self.name,
+                    config.ALTERNATE_REDIRECT)
+            else:
+                make_http_forward(get_secure_script_name() +
+                    '?task=mpanel&board=%s&page=t%s' % (self.name, parent),
+                    config.ALTERNATE_REDIRECT)
+
+        # end of this function. fuck yeah
 
     def _get_page_filename(self, page):
         '''Returns either wakaba.html or (page).html'''
