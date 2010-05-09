@@ -1,13 +1,19 @@
 import os
+import re
 import time
+import random
+import hashlib
+from subprocess import Popen, PIPE
 
+import misc
+import util
 import model
 import config, config_defaults
 import strings_en as strings
-from util import WakaError, import2
+from util import WakaError
 from template import Template
 
-from sqlalchemy.sql import case, or_, select
+from sqlalchemy.sql import case, or_, and_, select, func
 
 class Board(object):
     def __init__(self, board):
@@ -16,7 +22,7 @@ class Board(object):
         if not os.path.exists(os.path.join(board, 'board_config.py')):
             raise WakaError('Board configuration not found.')
         
-        module = import2('board_config', board)
+        module = util.import2('board_config', board)
 
         self.options = module.config
         
@@ -239,7 +245,7 @@ class Board(object):
             self.build_thread_cache(row[0], environ)
 
     def post_stuff(self, parent, name, email, subject, comment, file,
-                   uploadname, password, nofile, captcha, admin, no_captcha,
+                   password, nofile, captcha, admin, no_captcha,
                    no_format, oekaki_post, srcinfo, pch, sticky, lock,
                    admin_post_mode, environ={}):
     
@@ -312,6 +318,8 @@ class Board(object):
         if (not parent.isdigit() or len(parent) > 10 or
            has_crlf(name) or has_crlf(email) or has_crlf(subject)):
             raise WakaError(strings.UNUSUAL)
+
+        parent = int(parent)
 
         # check for excessive amounts of text
         if (len(name) > self.options['MAX_FIELD_LENGTH'] or
@@ -541,8 +549,165 @@ class Board(object):
         return util.make_http_forward(environ, forward, config.ALTERNATE_REDIRECT)
         # end of this function. fuck yeah
 
-    def process_file(self, file, timestamp, parent):
-        pass
+
+    def process_file(self, filestorage, timestamp, parent):
+        filetypes = self.options['FILETYPES']
+
+        # analyze file and check that it's in a supported format
+        ext, width, height = misc.analyze_image(filestorage.stream,
+            filestorage.filename)
+
+        known = (width != 0 or ext in filetypes)
+        if not (self.options['ALLOW_UNKNOWN'] or known) or \
+           ext in self.options['FORBIDDEN_EXTENSIONS']:
+            raise WakaError(strings.BADFORMAT)
+
+        maxw, maxh, maxp = self.options['MAX_IMAGE_WIDTH'], \
+            self.options['MAX_IMAGE_HEIGHT'], self.options['MAX_IMAGE_PIXELS']
+        if (maxw and width > maxw) or (maxh and height > maxh) or \
+           (maxp and (width * height) > maxp):
+            raise WakaError(strings.BADFORMAT)
+
+        # generate "random" filename
+        filebase = ("%.3f" % timestamp).replace(".", "")
+        filename = self.make_path(filebase, dirc='IMG_DIR', ext=ext)
+        thumbnail = self.make_path(filebase + "s", dirc='THUMB_DIR', ext='jpg')
+
+        print "*" * 30, filename, thumbnail
+
+        if not known:
+            filename += self.options['MUNGE_UNKNOWN']
+
+        # copy file
+        try:
+            filestorage.save(filename)
+        except IOError:
+            raise WakaError(strings.NOTWRITE)
+
+        # Check file type with UNIX utility file()
+        file_response = Popen(["file", filename], stdout=PIPE).communicate()[0]
+        if re.match("\:.*(?:script|text|executable)", file_response):
+            os.unlink(filename)
+            raise WakaError(strings.BADFORMAT + " Potential Exploit")
+
+        # get the checksum
+        md5h = hashlib.md5()
+        filestorage.stream.seek(0)
+        while True:
+            buffer = filestorage.stream.read(16 * 1024)
+            if not buffer:
+                break
+            md5h.update(buffer)
+        md5 = md5h.hexdigest()
+
+        # check for duplicate files
+        if ((parent and self.options['DUPLICATE_DETECTION'] == 'thread') or
+             self.options['DUPLICATE_DETECTION'] == 'board'):
+            session = model.Session()
+
+            # Check dupes in same thread
+            if self.options['DUPLICATE_DETECTION'] == 'thread':
+                sql = self.table.select("md5=:md5 AND (parent=:parent OR "
+                    "num=:num)").params(md5=md5, parent=parent, num=parent)
+                result = session.execute(sql)
+            else: # Check dupes throughout board
+                sql = self.table.select("md5=:md5").params(md5=md5)
+                result = session.execute(sql)
+
+            match = result.fetchone()
+            if match:
+                os.unlink(filename) # make sure to remove the file
+                raise WakaError(strings.DUPE %
+                    self.get_reply_link(match['num'], parent))
+
+        # do thumbnail
+        tn_width = tn_height = 0
+        tn_ext = ''
+
+        if not width:  # unsupported file
+            if ext in filetypes: # externally defined filetype
+                # Compensate for absolute paths, if given.
+                if filetypes[ext].startswith("/"):
+                    icon = filetypes[ext][1:] # FIXME: wtf is wakaba doing here
+                else:
+                    icon = os.path.join(self.path, filetypes[ext])
+
+                tn_ext, tn_width, tn_height = \
+                    analyze_image(open(icon, "rb"), icon)
+
+                # was that icon file really there?
+                if tn_width:
+                    thumbnail = filetypes[ext]
+                else:
+                    thumbnail = ''
+            else:
+                thumbnail = ''
+        elif width > self.options['MAX_W'] or \
+             height > self.options['MAX_H'] or \
+             self.options['THUMBNAIL_SMALL']:
+
+            if width <= self.options['MAX_W'] and \
+               height <= self.options['MAX_H']:
+                tn_width = width
+                tn_height = height
+            else:
+                tn_width = self.options['MAX_W']
+                tn_height = height * self.options['MAX_W'] / width
+                if tn_height > self.options['MAX_H']:
+                    tn_width = width * self.options['MAX_H'] / height
+                    tn_height = self.options['MAX_H']
+
+            if self.options['STUPID_THUMBNAILING']:
+                thumbnail = filename
+            else:
+                print "hi there"
+                result = misc.make_thumbnail(filename, thumbnail, tn_width,
+                   tn_height, self.options['THUMBNAIL_QUALITY'],
+                   self.options['CONVERT_COMMAND'])
+                print "result is", result
+                if not result:
+                    thumbnail = ''
+        else:
+            tn_width = width
+            tn_height = height
+            thumbnail = filename
+
+        # externally defined filetype - restore the name
+        if ext in filetypes and (ext not in ('gif', 'jpg', 'png') or
+                                 filetypes[ext] == '.'):
+            # cut off any directory in the original filename
+            newfilename = self.make_path(filestorage.filename.split("/")[-1],
+                dirc='IMG_DIR', ext=None)
+
+            # verify no name clash
+            if not os.path.exists(newfilename):
+                os.rename(filename, newfilename)
+                if thumbnail == filename:
+                    thumbnail = newfilename 
+                filename = newfilename
+            else:
+                os.unlink(filename)
+                raise WakaError(strings.DUPENAME)
+
+        if self.options['ENABLE_LOAD']:
+            # TODO, some day
+            raise NotImplementedError('ENABLE_LOAD not implemented')
+
+        # Make file and thumbnailworld-readable
+        os.chmod(filename, 0644)
+        if thumbnail:
+            os.chmod(thumbnail, 0644)
+
+        # Clear out the board path name.
+        filename = filename.replace(self.path, '').lstrip('/')
+        thumbnail = thumbnail.replace(self.path, '').lstrip('/')
+
+        return (filename, md5, width, height, thumbnail, tn_width, tn_height)
+
+    def get_reply_link(self, reply, parent, abbreviated=False, force_http=False):
+        raise NotImplementedError() # TODO
+        #return expand_filename($board->option('RES_DIR').$parent.(($abbreviated) ? "_abbr" : "").$page_ext,$force_http).'#'.$reply if($parent);
+        #return expand_filename($board->option('RES_DIR').$reply.(($abbreviated) ? "_abbr" : "").$page_ext,$force_http);
 
     def _get_page_filename(self, page):
         '''Returns either wakaba.html or (page).html'''
