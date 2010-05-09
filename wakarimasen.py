@@ -16,8 +16,8 @@ from util import WakaError
 def application(environ, start_response):
     '''Main routing application'''
     request = werkzeug.BaseRequest(environ)
-    task = request.args.get('task', request.args.get('action', None))
-    boardname = request.args.get('board', None)
+    task = request.values.get('task', request.values.get('action', None))
+    boardname = request.values.get('board', '')
     environ['waka.task'] = task
     environ['waka.boardname'] = boardname
     if boardname:
