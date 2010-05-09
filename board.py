@@ -27,8 +27,8 @@ class Board(object):
         self.url = '/%s/' % board
         self.name = board
 
-    def make_path(self, file='', dir='', page=None, thread=None,
-                  add_ext=True, abbr=False, url=False):
+    def make_path(self, file='', dir='', dirc=None, page=None, thread=None,
+                  ext=config.PAGE_EXT, abbr=False, url=False):
         '''Builds an url or a path'''
         if url:
             base = self.url
@@ -38,9 +38,12 @@ class Board(object):
         if page is not None:
             if page == 0:
                 file = self.options['HTML_SELF']
-                add_ext = False
+                ext = None
             else:
                 file = str(page)
+
+        if dirc:
+            dir = self.options[dirc]
 
         if thread is not None:
             dir = self.options['RES_DIR']
@@ -49,8 +52,8 @@ class Board(object):
         if file:
             if abbr:
                 file += '_abbr'
-            if add_ext:
-                file += config.PAGE_EXT
+            if ext is not None:
+                file += '.' + ext.lstrip(".")
             return os.path.join(base, dir, file)
         else:
             return os.path.join(base, dir)
