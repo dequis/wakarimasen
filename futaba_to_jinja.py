@@ -419,7 +419,7 @@ class Jinja2Translator(object):
                 value = 'board.options.%s' % value
 
             elif type == 'path':
-                value = 'board.url'
+                value = 'board.name'
 
             elif type == 'advinclude':
                 raise AdvInclude(value)
