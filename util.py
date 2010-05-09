@@ -22,6 +22,7 @@ def wrap_static(application, *app_paths, **kwds):
         filename = environ['PATH_INFO'].strip('/')
 
         if filename in app_paths or not filename:
+            environ['SCRIPT_NAME'] = '/' + filename
             return application(environ, start_response)
 
         if os.path.isdir(filename):
