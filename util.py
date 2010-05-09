@@ -104,3 +104,17 @@ def cleanup(application, cleanup_function):
         finally:
             cleanup_function(environ, start_response)
     return wrapper
+
+def make_http_forward(environ, location, alternate_method=False):
+    '''Pseudo-application to redirect to another location'''
+    if alternate_method:
+        return ['<html><head>'
+                '<meta http-equiv="refresh" content="0; url=%s" />'
+                '<script type="text/javascript">document.location="%s";</script>'
+                '</head><body><a href="%s">%s</a></body></html>' % 
+                ((location, ) * 4)]
+    else:
+        environ['waka.status'] = '303 Go West'
+        environ['waka.headers']['Location'] = location
+        return ['<html><body><a href="%s">%s</a></body></html>' %
+                ((location, ) * 2)]
