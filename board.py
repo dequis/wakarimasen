@@ -271,8 +271,7 @@ class Board(object):
 
         # check admin password - allow both encrypted and non-encrypted
         if admin_post_mode:
-            # TODO check_password not implemented
-            username, accounttype = check_password(admin, 'mpost')
+            username, accounttype = misc.check_password(admin, 'mpost')
             admin_post = 'yes' # TODO use True/False?
         else:
             if no_captcha or no_format or (sticky and not parent) or lock:
@@ -329,10 +328,10 @@ class Board(object):
         # get file size, and check for limitations.
         size = 0
         if file:
-            size = get_file_size(file) # TODO get_file_size not implemented
+            size = misc.get_file_size(file)
 
         ip = environ['REMOTE_ADDR']
-        numip = dot_to_dec(ip) # TODO dot_to_dec not implemented
+        numip = misc.dot_to_dec(ip)
 
         # set up cookies
         c_name = name
@@ -340,45 +339,34 @@ class Board(object):
         c_password = password
 
         # check if IP is whitelisted
-        # TODO is_whitelisted not implemented
-        whitelisted = is_whitelisted(numip)
+        whitelisted = misc.is_whitelisted(numip)
 
         # process the tripcode - maybe the string should be decoded later
-        # TODO process_tripcode not implemented
-        name, trip = process_tripcode(name, self.options['TRIPKEY'],
+        name, trip = misc.process_tripcode(name, self.options['TRIPKEY'],
             config.SECRET, config.CHARSET)
 
         if not whitelisted:
-            # check for bans (TODO ban_check not implemented)
-            ban_check(numip, c_name, subject, comment)
+            # check for bans
+            misc.ban_check(numip, c_name, subject, comment)
 
             trap_fields = []
             if self.options['SPAM_TRAP']:
                 trap_fields = ['name', 'link']
 
-            # spam check (TODO spam_engine not implemented)
-            spam_engine(
-                query=query, # TODO translate this
-                trap_fields=trap_fields,
-                spam_files=config.SPAM_FILES,
-                charset=config.CHARSET,
-            )
+            misc.spam_engine(environ, trap_fields, config.SPAM_FILES,
+                config.CHARSET)
 
-        # TODO is_trusted not implemented
         if self.options['ENABLE_CAPTCHA'] and not no_captcha and \
-           not is_trusted(trip):
-            # TODO check_captcha not implemented
-            check_captcha(captcha, ip, parent)
+           not misc.is_trusted(trip):
+            misc.check_captcha(captcha, ip, parent)
 
         if not whitelisted and self.options['ENABLE_PROXY_CHECK']:
-            # TODO proxy_check not implemented
-            proxy_check(ip)
+            misc.proxy_check(ip)
 
         # check if thread exists, and get lasthit value
         parent_res = lasthit = ''
         if parent:
-            # TODO get_parent_post not implemented
-            parent_res = get_parent_post(parent)
+            parent_res = self.get_parent_post(parent)
             if not parent_res:
                 raise WakaError(strings.NOTHREADERR)
             lasthit = parent_res.lasthit
@@ -395,9 +383,8 @@ class Board(object):
                 email = ''
 
         # clean up the inputs
-        # TODO clean_string, decode_string not implemented
-        email = clean_string(decode_string(email, config.CHARSET))
-        subject = clean_string(decode_string(subject, config.CHARSET))
+        email = misc.clean_string(misc.decode_string(email, config.CHARSET))
+        subject = misc.clean_string(misc.decode_string(subject, config.CHARSET))
 
         noko = False
         # check subject field for 'noko' (legacy)
@@ -414,44 +401,42 @@ class Board(object):
             email = "mailto:%s" % email
 
         # format comment
-        # TODO format_comment, clean_string, decode_string not implemented
         if not no_format:
-            comment = format_comment(clean_string(
-                decode_string(comment, config.CHARSET)))
+            comment = misc.format_comment(misc.clean_string(
+                misc.decode_string(comment, config.CHARSET)))
 
         # insert default values for empty fields
         if not parent:
             parent = 0
 
         if not (name or trip):
-            # TODO make_anonymous not implemented
-            name = make_anonymous(ip, timestamp)
+            name = self.make_anonymous(ip, timestamp)
 
         subject = subject or self.options['S_ANOTITLE']
         comment = comment or self.options['S_ANOTEXT']
 
         # flood protection - must happen after inputs have been cleaned up
-        # TODO flood_check not implemented
-        flood_check(numip, timestamp, comment, file, 1, 0)
+        misc.flood_check(numip, timestamp, comment, file, 1, 0)
 
         # Manager and deletion stuff - duuuuuh?
 
-        # generate date (TODO make_date not implemented)
-        date = make_date(timestamp + config.TIME_OFFSET, config.DATE_STYLE)
+        # generate date
+        date = misc.make_date(timestamp + config.TIME_OFFSET, config.DATE_STYLE)
 
         # generate ID code if enabled
         if self.options['DISPLAY_ID']:
-            # TODO make_id_code not implemented
-            date += ' ID:' + make_id_code(ip, timestamp, email)
+            date += ' ID:' + self.make_id_code(ip, timestamp, email)
+
 
         # copy file, do checksums, make thumbnail, etc
-        # TODO process_file not implemented
         if file:
             filename, md5, width, height, thumbnail, tn_width, tn_height = \
-                process_file(file, uploadname, timestamp, parent)
+                self.process_file(file, timestamp, parent)
 
-            # TODO: i don't know what the hell is this pch stuff
             if oekaki_post and self.options['ENABLE_OEKAKI']:
+                # TODO: oekaki not supported
+                raise NotImplementedError()
+                # i don't know what the hell is this pch stuff
                 new_pch_filename = source_file = source_pch = ''
 
                 # Check to see, if it is a modification of a source,
@@ -459,18 +444,19 @@ class Board(object):
                 srcinfo_array = srcinfo.split(",")
                 if len(srcinfo_array) >= 3:
                     source_file = srcinfo_array[2].lstrip("/")
-                    # TODO find_pch not implemented
-                    source_pch = find_pch(source_file)
+                    source_pch = misc.find_pch(source_file)
 
                 # If applicable, copy PCH file with the same filename base
                 # as the file we just copied.
                 if pch and (not source_file or os.path.exists(source_pch)):
-                    # TODO copy_animation_file not implemented
-                    new_pch_filename = copy_animation_file(pch, filename)
+                    new_pch_filename = misc.copy_animation_file(pch, filename)
                     # TODO create postfix from OEKAKI_INFO_TEMPLATE
                     postfix = 'TODO'
                     #my $postfix = OEKAKI_INFO_TEMPLATE->(decode_srcinfo($srcinfo,$uploadname,$new_pch_filename));
                     comment += postfix
+        else:
+            filename = md5 = thumbnail = ''
+            width = height = tn_width = tn_height = 0
 
         # Make sure sticky is a numeric 0. TODO: do we need this in python?
         if not sticky:
@@ -489,26 +475,22 @@ class Board(object):
 
         if parent: # bumping
             # check for sage, or too many replies
-            # TODO sage_count not implemented
             if not (email.lower().count("sage") or
-                    sage_count(parent_res) > self.options['MAX_RES']):
+                    self.sage_count(parent_res) > self.options['MAX_RES']):
                 t = self.table
                 session.execute(t.update()
                     .where(or_(t.c.num == parent, t.c.parent == parent))
                     .values(lasthit=timestamp))
 
         # remove old threads from the database
-        # TODO trim_database not implemented
-        trim_database()
+        self.trim_database()
 
         # update the cached HTML pages
-        # TODO build_cache wait no it is implemented
-        build_cache()
+        self.build_cache(environ)
 
         # update the individual thread cache
         if parent:
-            # TODO call the right one
-            build_thread_cache(parent)
+            self.build_thread_cache(parent, environ)
         else: # new thread, id is in num
             if admin_post_mode:
                 # TODO add_log_entry not implemented
@@ -521,47 +503,43 @@ class Board(object):
                 # reports, then.
                 # TODO init_report_database not implemented
                 # TODO maybe it shouldn't be implemented
-                init_report_database()
+                #init_report_database()
+                pass
 
-            build_thread_cache(num)
+            self.build_thread_cache(num, environ)
 
             parent = num    # For use with "noko" below
 
         # set the name, email and password cookies
-        # TODO make_cookies not implemented
-        make_cookies(name=c_name, email=c_email, password=c_password,
-            _charset=config.CHARSET,
-            _autopath=self.options['COOKIE_PATH']) # yum!
+        misc.make_cookies(c_name, c_email, c_password, config.CHARSET,
+            self.options['COOKIE_PATH'], environ) # yum !
 
+        forward = ''
         if not admin_post_mode:
             if not noko:
                 # forward back to the main page
-                # TODO make_http_forward not implemented
-                make_http_forward(self.make_path(page=0, url=True),
-                    config.ALTERNATE_REDIRECT)
+                forward = self.make_path(page=0, url=True)
             else:
                 # ...unless we have "noko" (a la 4chan)--then forward to thread
                 # ("parent" contains current post number if a new thread was posted)
-                # TODO make_http_forward not implemented
                 if not os.path.exists(self.make_path(thread=parent, abbr=True)):
-                    make_http_forward(self.make_url(thread=parent),
-                        config.ALTERNATE_REDIRECT)
+                    forward = self.make_url(thread=parent)
                 else:
-                    make_http_forward(self.make_url(thread=parent, abbr=True),
-                        config.ALTERNATE_REDIRECT)
+                    forward = self.make_url(thread=parent, abbr=True)
         else:
-            # TODO make_http_forward, get_secure_script_name not implemented
             # forward back to the mod panel
             if not noko:
-                make_http_forward(get_secure_script_name() +
-                    '?task=mpanel&board=' + self.name,
-                    config.ALTERNATE_REDIRECT)
+                forward = '%s?task=mpanel&board=%s' % \
+                    (misc.get_secure_script_name(), self.name)
             else:
-                make_http_forward(get_secure_script_name() +
-                    '?task=mpanel&board=%s&page=t%s' % (self.name, parent),
-                    config.ALTERNATE_REDIRECT)
+                forward = '%s?task=mpanel&board=%s&page=t%s' % \
+                    (misc.get_secure_script_name(), self.name, parent)
 
+        return util.make_http_forward(environ, forward, config.ALTERNATE_REDIRECT)
         # end of this function. fuck yeah
+
+    def process_file(self, file, timestamp, parent):
+        pass
 
     def _get_page_filename(self, page):
         '''Returns either wakaba.html or (page).html'''
@@ -591,6 +569,34 @@ class Board(object):
             self_path = 'http://' + environ['SERVER_NAME'] + self_path
 
         return self_path + filename
+
+    def make_anonymous(self, ip, time):
+        # TODO: SILLY_ANONYMOUS not supported
+        return self.options['S_ANONAME']
+
+    def make_id_code(self, ip, timestamp, link):
+        # TODO not implemented
+        raise NotImplementedError()
+
+    def get_parent_post(self, parentid):
+        session = model.Session()
+        sql = self.table.select(and_(self.table.c.num == parentid,
+            self.table.c.parent == 0))
+        query = session.execute(sql)
+        return model.CompactPost(query.fetchone())
+
+    def sage_count(self, parent):
+        session = model.Session()
+        sql = select([func.count()], 'parent=:parent AND '
+            'NOT (timestamp<:timestamp AND ip=:ip)', self.table).params(
+                parent=parent.num,
+                timestamp=parent.timestamp + self.options['NOSAGE_WINDOW'],
+                ip=parent.ip)
+        row = session.execute(sql).fetchone()
+        return row[0]
+
+    def trim_database(self):
+        pass
 
 # utility functions
 
