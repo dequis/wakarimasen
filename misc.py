@@ -1,5 +1,6 @@
 # misc.py: Temporary place for new functions
 import os
+import re
 import struct
 from subprocess import Popen, PIPE
 
@@ -26,8 +27,49 @@ def process_tripcode(name, tripkey='', secret='', charset='', nonamedecoding='')
 def ban_check(numip, name, subject, comment):
     pass
 
+def compile_spam_checker(spam_files):
+    # TODO caching this by timestamps would be nice
+    regexps = []
+    for file in spam_files:
+        for line in open(file).readlines():
+            line = re.sub("(^|\s+)#.*", "", line).strip()
+            if not line:
+                continue
+
+            match = re.match("^/(.*)/([xism]*)$", line)
+            if match:
+                pattern, modifiers = match.groups()
+                flags = sum([getattr(re, x.upper()) for x in modifiers])
+            else:
+                pattern = re.escape(line)
+                flags = re.I
+            regexps.append(re.compile(pattern, flags))
+
+    def spam_checker(string):
+        for regexp in regexps:
+            if regexp.search(string) is not None:
+                return True
+        return False
+
+    return spam_checker
+
 def spam_engine(environ, trap_fields, spam_files, charset):
-    pass
+    def spam_screen():
+        raise util.WakaError("Anti-spam filters triggered.")
+
+    request = environ['werkzeug.request']
+    for field in trap_fields:
+        if request.values.get('request', None) is not None:
+            spam_screen()
+
+    spam_checker = compile_spam_checker(spam_files)
+    fields = request.values.keys() 
+    
+    fulltext = '\n'.join([decode_string(request.values[x], charset)
+                          for x in fields])
+
+    if spam_checker(fulltext):
+        spam_screen()
 
 def is_trusted(trip):
     # needed only when captcha is enabled?
@@ -147,7 +189,6 @@ def make_thumbnail(filename, thumbnail, width, height, quality, convert):
         magickname += '[0]'
 
     convert = convert or 'convert' # lol
-    print quality
     process = Popen([convert, "-size", "%sx%s" % (width, height),
         "-geometry", "%sx%s!" % (width, height), "-quality", str(quality),
         magickname, thumbnail])
