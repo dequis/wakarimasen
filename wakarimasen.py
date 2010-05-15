@@ -32,7 +32,7 @@ def application(environ, start_response):
     try:
         return function(environ, start_response)
     except WakaError, e:
-        return app.error(environ, start_response, e)
+        return app.fffffff(environ, start_response, e)
 
 def cleanup(environ, start_response):
     '''Destroy the thread-local session'''

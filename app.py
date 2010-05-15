@@ -32,7 +32,7 @@ def task_post(environ, start_response):
     
     return board.post_stuff(**kwargs)
 
-def error(environ, start_response, error):
+def fffffff(environ, start_response, error):
     start_response('200 OK', [('Content-Type', 'text/html')])
     return Template('error_template', error=error.message, environ=environ)
 
