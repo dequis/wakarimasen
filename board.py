@@ -339,7 +339,11 @@ class Board(object):
         # get file size, and check for limitations.
         size = 0
         if file:
-            size = misc.get_file_size(file)
+            size = misc.get_filestorage_size(file)
+            if size > (self.options['MAX_KB'] * 1024):
+                raise WakaError(strings.TOOBIG)
+            if size == 0:
+                raise WakaError(strings.TOOBIGORNONE)
 
         ip = environ['REMOTE_ADDR']
         numip = misc.dot_to_dec(ip)

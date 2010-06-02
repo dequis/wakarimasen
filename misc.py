@@ -9,9 +9,6 @@ import util
 def check_password(admin, task_redirect, editing=None):
     raise NotImplementedError()
 
-def get_file_size(file):
-    return 0
-
 def dot_to_dec(ip):
     parts = [int(x) for x in ip.split(".")]
     return struct.unpack('>L', struct.pack('>4B', *parts))[0]
@@ -111,6 +108,12 @@ def make_cookies(name, email, password, _charset, _autopath, environ):
 
 def get_secure_script_name():
     return 'wakaba.pl'
+
+def get_filestorage_size(filestorage):
+    filestorage.stream.seek(0, 2)
+    size = filestorage.stream.tell()
+    filestorage.stream.seek(0, 0)
+    return size
 
 def analyze_image(file, name):
     types = [("jpg", analyze_jpeg), ("png", analyze_png), ("gif", analyze_gif)]
