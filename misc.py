@@ -13,10 +13,12 @@ def get_file_size(file):
     return 0
 
 def dot_to_dec(ip):
-    return 0
+    parts = [int(x) for x in ip.split(".")]
+    return struct.unpack('>L', struct.pack('>4B', *parts))[0]
 
 def dec_to_dot(numip):
-    return '0.0.0.0'
+    parts = struct.unpack('>4B', struct.pack('>L', numip))
+    return '.'.join([str(x) for x in parts])
 
 def is_whitelisted(numip):
     return False
