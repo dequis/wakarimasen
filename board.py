@@ -357,8 +357,7 @@ class Board(object):
         whitelisted = misc.is_whitelisted(numip)
 
         # process the tripcode - maybe the string should be decoded later
-        name, trip = misc.process_tripcode(name, self.options['TRIPKEY'],
-            config.SECRET, config.CHARSET)
+        name, trip = misc.process_tripcode(name, self.options['TRIPKEY'])
 
         if not whitelisted:
             # check for bans

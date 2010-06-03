@@ -1,6 +1,7 @@
 # misc.py: Temporary place for new functions
 import os
 import re
+import crypt
 import struct
 from subprocess import Popen, PIPE
 
@@ -24,8 +25,47 @@ def dec_to_dot(numip):
 def is_whitelisted(numip):
     return False
 
-def process_tripcode(name, tripkey='', secret='', charset='', nonamedecoding=''):
-    return (name, '')
+TRIP_RE = '^(.*?)((?<!&)#|%s)(.*)$'
+SECURE_TRIP_RE = '(?:%s)(?<!&#)(?:%s)*(.*)$'
+SALT_CLEAN_RE = re.compile('[^\.-z]')
+
+def process_tripcode(name, tripkey='!'):
+    match = re.match(TRIP_RE % re.escape(tripkey), name)
+    if not match:
+        return (clean_string(decode_string(name)), '')
+
+    trip = ''
+    namepart, marker, trippart = match.groups()
+    namepart = clean_string(decode_string(namepart))
+
+    # do we want secure trips, and is there one?
+    if config.SECRET:
+        regexp = re.compile(SECURE_TRIP_RE.replace("%s", re.escape(marker)))
+        smatch = regexp.match(trippart)
+        if smatch:
+            trippart = regexp.sub('', trippart)
+            maxlen = 255 - len(config.SECRET)
+            string = smatch.group(1)[:maxlen]
+            trip = tripkey * 2 + hide_data(smatch.group(1), 6, "trip",
+                config.SECRET, 1)
+
+            if not trippart: # return directly if there's no normal tripcode
+                return (namepart, trip)
+
+    # 2ch trips are processed as Shift_JIS whenever possible
+    trippart = decode_string(trippart).encode("shiftjis", "xmlcharrefreplace")
+
+    trippar = clean_string(trippart)
+    salt = (trippart + "H..")[1:3]
+    salt = SALT_CLEAN_RE.sub('.', salt)
+    for old, new in map(None, ':;<=>?@[\\]^_`', 'ABCDEFGabcdef'):
+        salt = salt.replace(old, new)
+    trip = tripkey + crypt.crypt(trippart, salt)[-10:] + trip
+
+    return (namepart, trip)
+
+def hide_data(data, bytes, key, secret, base64=False):
+    raise NotImplementedError()
 
 def ban_check(numip, name, subject, comment):
     pass
