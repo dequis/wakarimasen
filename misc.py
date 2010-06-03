@@ -85,11 +85,42 @@ def check_captcha(*args):
 def proxy_check(ip):
     pass
 
+CONTROL_CHARS_RE = re.compile('[\x00-\x08\x0b\x0c\x0e-\x1f]')
+ENTITIES_CLEAN_RE = re.compile('&(#([0-9]+);|#x([0-9a-fA-F]+);|)')
+ENTITY_REPLACES = {
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;',
+    ',': '&44;', # "clean up commas for some reason I forgot"
+}
+
 def clean_string(string, cleanentities=False):
+    if cleanentities:
+        string = string.replace("&", "&amp;") # clean up &
+    else:
+        def repl(match):
+            g = match.groups()
+            if not g[0]:                    # change simple ampersands
+                return '&amp;'
+            ordinal = int(g[1] or int(g[2], 16))
+            if forbidden_unicode(ordinal):  # strip forbidden unicode chars
+                return ''
+            else:                           # and leave the rest as-is.
+                return '&' + g[0]
+
+        string = ENTITIES_CLEAN_RE.sub(repl, string)
+
+    # replace <, >, ", ' and "," with html entities
+    for old, new in ENTITY_REPLACES.iteritems():
+        string = string.replace(old, new)
+
+    # remove control chars
+    string = CONTROL_CHARS_RE.sub('', string)
+
     return string
 
 ENTITIES_DECODE_RE = re.compile('(&#([0-9]*)([;&])|&#([x&])([0-9a-f]*)([;&]))', re.I)
-CONTROL_CHARS_RE = re.compile('[\x00-\x08\x0b\x0c\x0e-\x1f]')
 
 def decode_string(string, noentities=False):
     '''Returns unicode string'''
