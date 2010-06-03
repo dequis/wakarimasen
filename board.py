@@ -368,8 +368,7 @@ class Board(object):
             if self.options['SPAM_TRAP']:
                 trap_fields = ['name', 'link']
 
-            misc.spam_engine(environ, trap_fields, config.SPAM_FILES,
-                config.CHARSET)
+            misc.spam_engine(environ, trap_fields, config.SPAM_FILES)
 
         if self.options['ENABLE_CAPTCHA'] and not no_captcha and \
            not misc.is_trusted(trip):
@@ -398,8 +397,8 @@ class Board(object):
                 email = ''
 
         # clean up the inputs
-        email = misc.clean_string(misc.decode_string(email, config.CHARSET))
-        subject = misc.clean_string(misc.decode_string(subject, config.CHARSET))
+        email = misc.clean_string(misc.decode_string(email))
+        subject = misc.clean_string(misc.decode_string(subject))
 
         noko = False
         # check subject field for 'noko' (legacy)
@@ -418,7 +417,7 @@ class Board(object):
         # format comment
         if not no_format:
             comment = misc.format_comment(misc.clean_string(
-                misc.decode_string(comment, config.CHARSET)))
+                misc.decode_string(comment)))
 
         # insert default values for empty fields
         if not parent:

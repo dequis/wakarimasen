@@ -6,6 +6,10 @@ from subprocess import Popen, PIPE
 
 import util
 
+import config, config_defaults
+
+MAX_UNICODE = 1114111
+
 def check_password(admin, task_redirect, editing=None):
     raise NotImplementedError()
 
@@ -52,7 +56,7 @@ def compile_spam_checker(spam_files):
 
     return spam_checker
 
-def spam_engine(environ, trap_fields, spam_files, charset):
+def spam_engine(environ, trap_fields, spam_files):
     def spam_screen():
         raise util.WakaError("Anti-spam filters triggered.")
 
@@ -64,7 +68,7 @@ def spam_engine(environ, trap_fields, spam_files, charset):
     spam_checker = compile_spam_checker(spam_files)
     fields = request.values.keys() 
     
-    fulltext = '\n'.join([decode_string(request.values[x], charset)
+    fulltext = '\n'.join([decode_string(request.values[x])
                           for x in fields])
 
     if spam_checker(fulltext):
@@ -84,8 +88,39 @@ def proxy_check(ip):
 def clean_string(string, cleanentities=False):
     return string
 
-def decode_string(string, charset='', noentities=False):
+ENTITIES_DECODE_RE = re.compile('(&#([0-9]*)([;&])|&#([x&])([0-9a-f]*)([;&]))', re.I)
+CONTROL_CHARS_RE = re.compile('[\x00-\x08\x0b\x0c\x0e-\x1f]')
+
+def decode_string(string, noentities=False):
+    '''Returns unicode string'''
+
+    string = string.decode(config.CHARSET, "ignore")
+
+    def repl(match):
+        g = match.groups()
+        ordinal = int(g[1] or int(g[4], 16))
+        if '&' in g: # nested entities, leave as-is.
+            return g[0]
+        elif ordinal in (35, 38): # don't convert & or #
+            return g[0]
+        elif forbidden_unicode(ordinal): # strip forbidden unicode chars
+            return ''
+        else: # convert all entities to unicode chars
+            return unichr(ordinal)
+
+    if not noentities:
+        string = ENTITIES_DECODE_RE.sub(repl, string)
+
+    # remove control chars
+    string = CONTROL_CHARS_RE.sub('', string)
     return string
+
+def forbidden_unicode(num):
+    return ((len(str(num)) > 7) or               # too long numbers
+            (num > MAX_UNICODE) or               # outside unicode range
+            (num < 32) or                        # control chars
+            (num >= 0xd800 and num <= 0xdfff) or # surrogate code points
+            (num >= 0x202a and num <= 0x202e))   # text direction
 
 def format_comment(comment):
     return comment
