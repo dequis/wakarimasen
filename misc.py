@@ -6,6 +6,7 @@ import struct
 from subprocess import Popen, PIPE
 
 import util
+import crypto  # part of wakarimasen
 
 import config, config_defaults
 
@@ -47,7 +48,7 @@ def process_tripcode(name, tripkey='!'):
             maxlen = 255 - len(config.SECRET)
             string = smatch.group(1)[:maxlen]
             trip = tripkey * 2 + hide_data(smatch.group(1), 6, "trip",
-                config.SECRET, 1)
+                config.SECRET, True)
 
             if not trippart: # return directly if there's no normal tripcode
                 return (namepart, trip)
@@ -64,8 +65,14 @@ def process_tripcode(name, tripkey='!'):
 
     return (namepart, trip)
 
+def make_key(key, secret, length):
+    return crypto.rc4('\0' * length, key + secret)
+
 def hide_data(data, bytes, key, secret, base64=False):
-    raise NotImplementedError()
+    ret = crypto.rc4('\0' * bytes, make_key(key, secret, 32) + str(data))
+    if base64:
+        return ret.encode("base64").rstrip('\n')
+    return ret
 
 def ban_check(numip, name, subject, comment):
     pass
