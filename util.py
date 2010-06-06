@@ -1,8 +1,14 @@
 import os
 import sys
 import imp
+import threading
 import mimetypes
 import functools
+
+class DefaultLocal(threading.local):
+    environ = {}
+
+local = DefaultLocal()
 
 class WakaError(Exception):
     '''Error to be reported to the user'''

@@ -10,14 +10,17 @@ import app
 import util
 import model
 from board import Board
-from util import WakaError
+from util import WakaError, local
 
 @util.headers
 def application(environ, start_response):
     '''Main routing application'''
+    local.environ = environ
     request = werkzeug.BaseRequest(environ)
+
     task = request.values.get('task', request.values.get('action', None))
     boardname = request.values.get('board', '')
+
     environ['waka.task'] = task
     environ['waka.boardname'] = boardname
     if boardname:
@@ -35,11 +38,12 @@ def application(environ, start_response):
         return app.fffffff(environ, start_response, e)
 
 def cleanup(environ, start_response):
-    '''Destroy the thread-local session'''
+    '''Destroy the thread-local session and environ'''
     session = model.Session()
     session.commit()
     session.transaction = None  # fix for a circular reference
     model.Session.remove()
+    local.environ = {}
 
 application = util.cleanup(application, cleanup)
 
