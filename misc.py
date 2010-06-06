@@ -7,8 +7,8 @@ from subprocess import Popen, PIPE
 
 import util
 import crypto  # part of wakarimasen
-
 import config, config_defaults
+from util import local
 
 MAX_UNICODE = 1114111
 
@@ -103,11 +103,11 @@ def compile_spam_checker(spam_files):
 
     return spam_checker
 
-def spam_engine(environ, trap_fields, spam_files):
+def spam_engine(trap_fields, spam_files):
     def spam_screen():
         raise util.WakaError("Anti-spam filters triggered.")
 
-    request = environ['werkzeug.request']
+    request = local.environ['werkzeug.request']
     for field in trap_fields:
         if request.values.get('request', None) is not None:
             spam_screen()
@@ -215,7 +215,7 @@ def find_pch(filename):
 def copy_animation_file(pch, image_filename):
     pass
 
-def make_cookies(name, email, password, _charset, _autopath, environ):
+def make_cookies(name, email, password, _charset, _autopath):
     # yum!
     pass
 

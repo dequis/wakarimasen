@@ -10,7 +10,7 @@ import util
 import model
 import config, config_defaults
 import strings_en as strings
-from util import WakaError
+from util import WakaError, local
 from template import Template
 
 from sqlalchemy.sql import case, or_, and_, select, func
@@ -93,7 +93,7 @@ class Board(object):
 
         return threads
 
-    def build_cache(self, environ={}):
+    def build_cache(self):
         threads = self._get_all_threads()
         
         per_page = self.options['IMAGES_PER_PAGE']
@@ -101,7 +101,7 @@ class Board(object):
 
         for page in xrange(total):
             pagethreads = threads[page * per_page:(page + 1) * per_page]
-            self.build_cache_page(page, total, pagethreads, environ)
+            self.build_cache_page(page, total, pagethreads)
 
         # check for and remove old pages
         page += 1
@@ -109,7 +109,7 @@ class Board(object):
             os.unlink(self.get_page_filename(page))
             page += 1
 
-    def build_cache_page(self, page, total, pagethreads, environ={}):
+    def build_cache_page(self, page, total, pagethreads):
         '''Build /board/$page.html'''
         filename = self.get_page_filename(page)
         
@@ -170,11 +170,9 @@ class Board(object):
             prevpage=prevpage,
             nextpage=nextpage,
             threads=threads,
-            board=self,
-            environ=environ
         ).render_to_file(filename)
 
-    def build_thread_cache(self, threadid, environ={}):
+    def build_thread_cache(self, threadid):
         '''Build /board/res/$threadid.html'''
 
         session = model.Session()
@@ -206,8 +204,6 @@ class Board(object):
                 textonly_inp=0,
                 dummy=thread[-1].num,
                 lockedthread=thread[0].locked,
-                board=self,
-                environ=environ,
                 **kwargs
             ).render_to_file(filename)
 
@@ -236,18 +232,18 @@ class Board(object):
         os.unlink(base + "%s%s" % (parent, config.PAGE_EXT))
         os.unlink(base + "%s_abbr%s" % (parent, config.PAGE_EXT))
 
-    def build_thread_cache_all(self, environ={}):
+    def build_thread_cache_all(self):
         session = model.Session()
         sql = select([self.table.c.num], self.table.c.parent == 0)
         query = session.execute(sql)
         
         for row in query:
-            self.build_thread_cache(row[0], environ)
+            self.build_thread_cache(row[0])
 
     def post_stuff(self, parent, name, email, subject, comment, file,
                    password, nofile, captcha, admin, no_captcha,
                    no_format, oekaki_post, srcinfo, pch, sticky, lock,
-                   admin_post_mode, environ={}):
+                   admin_post_mode):
     
         session = model.Session()
 
@@ -258,7 +254,7 @@ class Board(object):
         admin_post = ''
 
         # check that the request came in as a POST, or from the command line
-        if environ.get('REQUEST_METHOD', '') != 'POST':
+        if local.environ.get('REQUEST_METHOD', '') != 'POST':
             raise WakaError(strings.UNJUST)
 
         # check whether the parent thread is stickied
@@ -345,7 +341,7 @@ class Board(object):
             if size == 0:
                 raise WakaError(strings.TOOBIGORNONE)
 
-        ip = environ['REMOTE_ADDR']
+        ip = local.environ['REMOTE_ADDR']
         numip = misc.dot_to_dec(ip)
 
         # set up cookies
@@ -367,7 +363,7 @@ class Board(object):
             if self.options['SPAM_TRAP']:
                 trap_fields = ['name', 'link']
 
-            misc.spam_engine(environ, trap_fields, config.SPAM_FILES)
+            misc.spam_engine(trap_fields, config.SPAM_FILES)
 
         if self.options['ENABLE_CAPTCHA'] and not no_captcha and \
            not misc.is_trusted(trip):
@@ -499,11 +495,11 @@ class Board(object):
         self.trim_database()
 
         # update the cached HTML pages
-        self.build_cache(environ)
+        self.build_cache()
 
         # update the individual thread cache
         if parent:
-            self.build_thread_cache(parent, environ)
+            self.build_thread_cache(parent)
         else: # new thread, id is in num
             if admin_post_mode:
                 # TODO add_log_entry not implemented
@@ -519,13 +515,13 @@ class Board(object):
                 #init_report_database()
                 pass
 
-            self.build_thread_cache(num, environ)
+            self.build_thread_cache(num)
 
             parent = num    # For use with "noko" below
 
         # set the name, email and password cookies
         misc.make_cookies(c_name, c_email, c_password, config.CHARSET,
-            self.options['COOKIE_PATH'], environ) # yum !
+            self.options['COOKIE_PATH']) # yum !
 
         forward = ''
         if not admin_post_mode:
@@ -548,7 +544,7 @@ class Board(object):
                 forward = '%s?task=mpanel&board=%s&page=t%s' % \
                     (misc.get_secure_script_name(), self.name, parent)
 
-        return util.make_http_forward(environ, forward, config.ALTERNATE_REDIRECT)
+        return util.make_http_forward(forward, config.ALTERNATE_REDIRECT)
         # end of this function. fuck yeah
 
 

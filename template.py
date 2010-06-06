@@ -8,6 +8,7 @@ import jinja2
 
 import config, config_defaults
 import strings_en as strings
+from util import local
 
 TEMPLATES_DIR = 'templates'
 CACHE_DIR = os.path.join(TEMPLATES_DIR, '.cache')
@@ -43,13 +44,11 @@ class Template(object):
         # Current template init
         self.template = self.env.get_template(name + '.html')
 
-        self.board = vars.get('board', None)
-        self.environ = vars.get('environ', {})
+        self.environ = local.environ
+        self.board = self.environ['waka.board']
 
-        if not self.board and self.environ:
-            self.board = self.environ['waka.board']
-            vars['board'] = self.board
-
+        vars['environ'] = self.environ
+        vars['board'] = self.board
         vars['stylesheets'] = list(self.get_stylesheets())
         self.env.globals['config'] = config
         self.env.globals['strings'] = strings
