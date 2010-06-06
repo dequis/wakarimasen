@@ -24,6 +24,7 @@ def application(environ, start_response):
     environ['waka.task'] = task
     environ['waka.boardname'] = boardname
     environ['waka.board'] = Board(boardname)
+    environ['waka.fromwindow'] = False
 
     # the task function if it exists, otherwise no_task()
     function = getattr(app, 'task_%s' % task, app.no_task)

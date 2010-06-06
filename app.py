@@ -34,7 +34,9 @@ def task_post(environ, start_response):
 
 def fffffff(environ, start_response, error):
     start_response('200 OK', [('Content-Type', 'text/html')])
-    return Template('error_template', error=error.message)
+
+    mini = '_mini' if environ['waka.fromwindow'] else ''
+    return Template('error_template' + mini, error=error.message)
 
 MAIN_SITE_URL = 'http://www.desuchan.net'
 def not_found(environ, start_response):
