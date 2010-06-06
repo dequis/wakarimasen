@@ -19,15 +19,11 @@ def application(environ, start_response):
     request = werkzeug.BaseRequest(environ)
 
     task = request.values.get('task', request.values.get('action', None))
-    boardname = request.values.get('board', '')
+    boardname = request.values.get('board', '9001') # temp. default value
 
     environ['waka.task'] = task
     environ['waka.boardname'] = boardname
-    if boardname:
-        environ['waka.board'] = Board(boardname)
-    else:
-        # temporary
-        environ['waka.board'] = Board('9001')
+    environ['waka.board'] = Board(boardname)
 
     # the task function if it exists, otherwise no_task()
     function = getattr(app, 'task_%s' % task, app.no_task)
