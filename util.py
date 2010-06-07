@@ -1,6 +1,7 @@
 import os
 import sys
 import imp
+import Cookie
 import threading
 import mimetypes
 import functools
@@ -82,6 +83,7 @@ def headers(f):
         environ['waka.status'] = '200 OK'
         environ['waka.headers'] = {'Content-Type': 'text/html'}
         environ['waka.response_sent'] = False
+        environ['waka.cookies'] = Cookie.BaseCookie()
 
         def new_start_response(status, headers):
             if environ['waka.response_sent']:
@@ -90,7 +92,13 @@ def headers(f):
 
             # merge parameter headers with the environ ones
             environ['waka.headers'].update(dict(headers))
-            start_response(status, environ['waka.headers'].items())
+
+            # Set-cookie can be repeated, so it's handled separately
+            headerlist = environ['waka.headers'].items()
+            for cookie in environ['waka.cookies']:
+                headerlist.append(tuple(cookie.output().split(": ", 1)))
+
+            start_response(status, headerlist)
             
         appiter = f(environ, new_start_response)
         new_start_response(environ['waka.status'], environ['waka.headers'])

@@ -1,6 +1,7 @@
 # misc.py: Temporary place for new functions
 import os
 import re
+import time
 import crypt
 import struct
 from subprocess import Popen, PIPE
@@ -215,9 +216,29 @@ def find_pch(filename):
 def copy_animation_file(pch, image_filename):
     pass
 
-def make_cookies(name, email, password, _charset, _autopath):
-    # yum!
-    pass
+def make_cookies(**kwargs):
+    expires = kwargs.pop('expires', time.time() + 14 * 24 * 3600)
+    autopath = kwargs.pop('autopath', None)
+    path = kwargs.pop('path', None)
+
+    expire_date = make_date(expires, "cookie")
+
+    environ = local.environ
+
+    if not path:
+        scriptname = local.environ['SCRIPT_NAME']
+        if autopath == 'current':
+            path = os.path.dirname(scriptname) + "/"
+        elif autopath == 'parent':
+            path = os.path.dirname(os.path.dirname(scriptname)) + "/"
+        else:
+            path = "/"
+
+    cookies = environ['waka.cookies']
+    for key, value in kwargs.iteritems():
+        cookies[key] = str(value)
+        cookies[key]['expires'] = expire_date
+        cookies[key]['path'] = path
 
 def get_secure_script_name():
     return 'wakaba.pl'
