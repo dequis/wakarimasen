@@ -75,6 +75,15 @@ def hide_data(data, bytes, key, secret, base64=False):
         return ret.encode("base64").rstrip('\n')
     return ret
 
+def hide_critical_data(string, key):
+    rc6 = crypto.RC6(key)
+    ret = ''
+    i = 0
+    while i < len(string):
+        ret += rc6.encrypt(string[i:i+15]).encode("base64")[:-1]
+        i += 15
+    return ret
+
 def ban_check(numip, name, subject, comment):
     pass
 
