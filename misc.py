@@ -4,6 +4,7 @@ import re
 import time
 import crypt
 import struct
+import strings
 from subprocess import Popen, PIPE
 
 import util
@@ -115,7 +116,7 @@ def compile_spam_checker(spam_files):
 
 def spam_engine(trap_fields, spam_files):
     def spam_screen():
-        raise util.WakaError("Anti-spam filters triggered.")
+        raise util.WakaError(strings.SPAM)
 
     request = local.environ['werkzeug.request']
     for field in trap_fields:
@@ -219,8 +220,9 @@ def flood_check(ip, timestamp, comment, file, no_repeat, report_check):
 def make_date(timestamp, style, locdays=[]):
     return 'today'
 
-def find_pch(filename):
-    pass
+PCH_RE = re.compile('\.[^\.]+$')
+def find_pch(image_filename):
+    return re.sub(PCH_RE, '.pch', image_filename)
 
 def copy_animation_file(pch, image_filename):
     pass

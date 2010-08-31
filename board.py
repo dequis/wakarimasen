@@ -251,7 +251,7 @@ class Board(object):
         timestamp = time.time()
 
         # Initialize admin_post variable--tells whether or not this post has fallen under the hand of a mod/admin
-        admin_post = ''
+        admin_post = False
 
         # check that the request came in as a POST, or from the command line
         if local.environ.get('REQUEST_METHOD', '') != 'POST':
@@ -268,8 +268,7 @@ class Board(object):
             elif not admin_post_mode:
                 sticky = 0
 
-            # TODO use True/False instead of 'yes'?
-            if sticky_check['locked'] == 'yes' and not admin_post_mode:
+            if sticky_check['locked'] and not admin_post_mode:
                 raise WakaError(strings.THREADLOCKEDERROR)
 
         username = accounttype = ''
@@ -277,7 +276,7 @@ class Board(object):
         # check admin password - allow both encrypted and non-encrypted
         if admin_post_mode:
             username, accounttype = misc.check_password(admin, 'mpost')
-            admin_post = 'yes' # TODO use True/False?
+            admin_post = True
         else:
             if no_captcha or no_format or (sticky and not parent) or lock:
                 raise WakaError(strings.WRONGPASS)
@@ -302,8 +301,8 @@ class Board(object):
 
         if lock:
             if parent:
-                threadupdate = threadupdate.values(locked='yes')
-            lock = 'yes' # TODO use True/False?
+                threadupdate = threadupdate.values(locked=True)
+            lock = True
 
         if (sticky or lock) and parent:
             session.execute(threadupdate)
@@ -625,10 +624,7 @@ class Board(object):
         if not width:  # unsupported file
             if ext in filetypes: # externally defined filetype
                 # Compensate for absolute paths, if given.
-                if filetypes[ext].startswith("/"):
-                    icon = filetypes[ext][1:] # FIXME: wtf is wakaba doing here
-                else:
-                    icon = os.path.join(self.path, filetypes[ext])
+                icon = os.path.join(self.path, filetypes[ext].lstrip("/"))
 
                 tn_ext, tn_width, tn_height = \
                     analyze_image(open(icon, "rb"), icon)

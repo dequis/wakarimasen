@@ -8,9 +8,7 @@ def rc4(message, key, skip=256):
     message = [ord(x) for x in message]
 
     def swap(x, y):
-        temp = s[x]
-        s[x] = s[y]
-        s[y] = temp
+        s[x], s[y] = s[y], s[x]
 
     x = y = 0
     for x in xrange(256):

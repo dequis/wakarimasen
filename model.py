@@ -1,6 +1,6 @@
 import config, config_defaults
 from sqlalchemy import create_engine
-from sqlalchemy import Table, Column, Integer, Text, String, MetaData
+from sqlalchemy import Table, Column, Integer, Text, String, MetaData, Boolean
 from sqlalchemy.orm import sessionmaker, mapper, scoped_session
 from sqlalchemy.ext.declarative import declarative_base
 
@@ -64,9 +64,10 @@ def board(name):
         Column("tn_height", Text),                      # Thumbnail height in pixels
         Column("lastedit", Text),                       # ADDED - Date of previous edit, as a string 
         Column("lastedit_ip", Text),                    # ADDED - Previous editor of the post, if any
-        Column("admin_post", Text),                     # ADDED - Admin post?
+        Column("admin_post", Boolean),                  # ADDED - Admin post?
+        # TODO: Probably should make this Boolean. Keeping as int for now to maintain compatibility with sorting functions.
         Column("stickied", Integer),                    # ADDED - Stickied?
-        Column("locked", Text),                         # ADDED - Locked?
+        Column("locked", Boolean),                      # ADDED - Locked?
     )
 
     _boards[name] = table
