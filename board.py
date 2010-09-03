@@ -13,7 +13,7 @@ import strings_en as strings
 from util import WakaError, local
 from template import Template
 
-from sqlalchemy.sql import case, or_, and_, select, func
+from sqlalchemy.sql import case, or_, and_, select, func, null()
 
 class Board(object):
     def __init__(self, board):
@@ -545,7 +545,57 @@ class Board(object):
 
         return util.make_http_forward(forward, config.ALTERNATE_REDIRECT)
         # end of this function. fuck yeah
+        # no kidding! --K
 
+    def delete_post(self, post, password, file_only, archiving, from_window):
+        thumb = self.options['THUMB_DIR']
+        archive = self.options['ARCHIVE']
+        src = self.options['IMG_DIR']
+
+        table = self.table
+
+        sql = table.select().where(table.c.num == post)
+        session = model.Session()
+        query = session.execute(sql)
+
+        row = query.fetchone()
+
+        if row is None:
+            raise WakaError(strings.POSTNOTFOUND % (post, self.board))
+
+        if password and post_admin_mode:
+            raise WakaError(strings.MODDELETEONLY)
+
+        if file_only:
+            # remove just the image and update the database
+            delete_image(row.file)
+
+            postupdate = table.update().where(table.c.num == post).values(
+                size=0, md5=null(), thumbnail=null())
+            session.execute(postupdate)
+        else:
+            select_thread_images = table.select(or_(
+                table.c.num == post,
+                table.c.parent == post)).column(table.image, table.thumbnail)
+            images_to_baleet = session.execute(images_to_baleet)
+            
+            for i in images_to_baleet:
+                delete_file(i.image, i.thumbnail)
+
+         if not row.parent:
+             if not file_only:
+                 # removing an entire thread
+                 delete_thread_cache(post)
+             else:
+                 # removing parent (OP) image
+                 delete_thread_cache(post)
+         else:
+             # removing a reply, or a reply's image
+             delete_thread_cache(row.parent)
+
+    def delete_file(relative_file_path, relative_thumb_path):
+        pch = oekaki.find_pch(row.image)
+        return
 
     def process_file(self, filestorage, timestamp, parent):
         filetypes = self.options['FILETYPES']

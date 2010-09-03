@@ -186,6 +186,8 @@ PROMPTPASSWORDADMIN = "This post was created and/or edited by a moderator."
 PROMPTPASSWORD = "Please enter the deletion/editing password. "
 NEWFILE = "New File"                                         # Prompt for replacement file in post-editing window
 STRINGFIELDMISSING = "Please input string to ban."
+MODDELETEONLY = "This was posted by a moderator or admin and cannot be deleted this way."
+POSTNOTFOUND = "Post %d not found on %s."
 
 #
 # Oekaki

@@ -220,13 +220,6 @@ def flood_check(ip, timestamp, comment, file, no_repeat, report_check):
 def make_date(timestamp, style, locdays=[]):
     return 'today'
 
-PCH_RE = re.compile('\.[^\.]+$')
-def find_pch(image_filename):
-    return re.sub(PCH_RE, '.pch', image_filename)
-
-def copy_animation_file(pch, image_filename):
-    pass
-
 def make_cookies(**kwargs):
     expires = kwargs.pop('expires', time.time() + 14 * 24 * 3600)
     autopath = kwargs.pop('autopath', None)
