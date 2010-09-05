@@ -14,7 +14,7 @@ import strings_en as strings
 from util import WakaError, local
 from template import Template
 
-from sqlalchemy.sql import case, or_, and_, select, func, null()
+from sqlalchemy.sql import case, or_, and_, select, func, null
 
 class Board(object):
     def __init__(self, board):
