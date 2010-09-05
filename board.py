@@ -765,11 +765,11 @@ class Board(object):
             filename_str = '%s%s'
 
         if parent:
-            return expand_url(os.path.join(self.path, self.options['RES_DIR'],\ 
-                filename_str % (parent, config.PAGE_EXT))
-        else:
             return expand_url(os.path.join(self.path, self.options['RES_DIR'],\
-                filename_str % (reply, config.PAGE_EXT))
+                filename_str % (parent, config.PAGE_EXT)))
+
+        return expand_url(os.path.join(self.path, self.options['RES_DIR'],\
+            filename_str % (reply, config.PAGE_EXT)))
 
     def _get_page_filename(self, page):
         '''Returns either wakaba.html or (page).html'''
