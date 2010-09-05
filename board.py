@@ -584,16 +584,16 @@ class Board(object):
             for i in images_to_baleet:
                 delete_file(i.image, i.thumbnail)
 
-         if not row.parent:
-             if not file_only:
-                 # removing an entire thread
-                 delete_thread_cache(post)
-             else:
-                 # removing parent (OP) image
-                 delete_thread_cache(post)
-         else:
-             # removing a reply, or a reply's image
-             delete_thread_cache(row.parent)
+        if not row.parent:
+            if not file_only:
+                # removing an entire thread
+                delete_thread_cache(post)
+            else:
+                # removing parent (OP) image
+                delete_thread_cache(post)
+        else:
+            # removing a reply, or a reply's image
+            delete_thread_cache(row.parent)
 
     def delete_file(relative_file_path, relative_thumb_path):
         # TODO: Add archiving-related stuff.
@@ -756,10 +756,20 @@ class Board(object):
 
         return (filename, md5, width, height, thumbnail, tn_width, tn_height)
 
-    def get_reply_link(self, reply, parent, abbreviated=False, force_http=False):
-        raise NotImplementedError() # TODO
-        #return expand_filename($board->option('RES_DIR').$parent.(($abbreviated) ? "_abbr" : "").$page_ext,$force_http).'#'.$reply if($parent);
-        #return expand_filename($board->option('RES_DIR').$reply.(($abbreviated) ? "_abbr" : "").$page_ext,$force_http);
+    def get_reply_link(self, reply, parent='', abbreviated=False, force_http=False):
+        # Should abbr_ be appended to the filename?
+        filename_str = ''
+        if abbreviated:
+            filename_str = '%sabbr_%s'
+        else:
+            filename_str = '%s%s'
+
+        if parent:
+            return expand_url(os.path.join(self.path, self.options['RES_DIR'],\ 
+                filename_str % (parent, config.PAGE_EXT))
+        else:
+            return expand_url(os.path.join(self.path, self.options['RES_DIR'],\
+                filename_str % (reply, config.PAGE_EXT))
 
     def _get_page_filename(self, page):
         '''Returns either wakaba.html or (page).html'''
@@ -779,8 +789,9 @@ class Board(object):
         '''When force_http is true, the environ parameter is required
         TODO: have a SERVER_NAME entry in config'''
 
-        # TODO: is this the same as the intended in wakaba?
-        if filename.startswith("/") or filename.startswith("http"):
+        # Is the filename already expanded?
+        # The generic regex tests for http://, https://, ftp://, etc.
+        if filename.startswith("/") or re.match('\w+:', filename):
             return filename
 
         self_path = self.url
