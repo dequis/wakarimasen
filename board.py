@@ -6,6 +6,7 @@ import hashlib
 from subprocess import Popen, PIPE
 
 import misc
+import oekaki
 import util
 import model
 import config, config_defaults
@@ -548,6 +549,7 @@ class Board(object):
         # no kidding! --K
 
     def delete_post(self, post, password, file_only, archiving, from_window):
+        # TODO: Add archiving-related stuff.
         thumb = self.options['THUMB_DIR']
         archive = self.options['ARCHIVE']
         src = self.options['IMG_DIR']
@@ -594,8 +596,14 @@ class Board(object):
              delete_thread_cache(row.parent)
 
     def delete_file(relative_file_path, relative_thumb_path):
+        # TODO: Add archiving-related stuff.
         pch = oekaki.find_pch(row.image)
         return
+
+    def edit_stuff():
+        # TODO: Figure out a clean implementation for this.
+        # (We should still have at least an alias function, though.)
+        pass
 
     def process_file(self, filestorage, timestamp, parent):
         filetypes = self.options['FILETYPES']
