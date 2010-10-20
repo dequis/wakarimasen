@@ -10,7 +10,7 @@ import oekaki
 import util
 import model
 import config, config_defaults
-import strings_en as strings
+import strings as strings
 from util import WakaError, local
 from template import Template
 
@@ -404,9 +404,8 @@ class Board(object):
         elif email.lower() == 'noko':
             noko = True
 
-        # fix up the email/link
-        # TODO support URLs instead of emails too (wakaba uses a regexp here)
-        if email:
+        # fix up the email/link, if it is not a generic URI already.
+        if email and not re.match("(?!^\w+:)|(?:\:\/\/)", email):
             email = "mailto:%s" % email
 
         # format comment

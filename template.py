@@ -7,7 +7,7 @@ import random
 import jinja2
 
 import config, config_defaults
-import strings_en as strings
+import strings
 from util import local
 
 TEMPLATES_DIR = 'templates'

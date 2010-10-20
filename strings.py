@@ -211,10 +211,10 @@ OEKUNKNOWN = 'Unknown oekaki painter requested.'
 HAXORING = 'Stop hax0ring the Gibson!'
 
 OEKPAINTERS = [
-        {painter: "shi_norm", name: "Shi Normal"},
-        {painter: "shi_pro", name: "Shi Pro"},
-        {painter: "shi_norm_selfy", name: "Shi Normal+Selfy"},
-        {painter: "shi_pro_selfy", name: "Shi Pro+Selfy"},
+        {"painter": "shi_norm", "name": "Shi Normal"},
+        {"painter": "shi_pro", "name": "Shi Pro"},
+        {"painter": "shi_norm_selfy", "name": "Shi Normal+Selfy"},
+        {"painter": "shi_pro_selfy", "name": "Shi Pro+Selfy"},
 ]
 
 
