@@ -70,7 +70,7 @@ def board(name):
         Column("locked", Boolean),                      # ADDED - Locked?
     )
 
-    table.create()
+    table.create(checkfirst=True)
     _boards[name] = table
     return _boards[name]
 
