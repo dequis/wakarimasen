@@ -101,14 +101,14 @@ class Board(object):
         total = get_page_count(threads, per_page)
 
         for page in xrange(total):
-            pagethreads = threads[page * per_page:(page + 1) * per_page]
+            pagethreads = threads[page * per_page:\
+                          min(len(threads), (page + 1) * per_page)]
             self.build_cache_page(page, total, pagethreads)
 
         # check for and remove old pages
-        page += 1
-        while os.path.exists(self.get_page_filename(page)):
-            os.unlink(self.get_page_filename(page))
-            page += 1
+        for page in range(1, total):
+            while os.path.exists(self.get_page_filename(page)):
+                os.unlink(self.get_page_filename(page))
 
     def build_cache_page(self, page, total, pagethreads):
         '''Build /board/$page.html'''
@@ -116,7 +116,13 @@ class Board(object):
         
         threads = []
         for postlist in pagethreads:
-            parent, replies = postlist[0], postlist[1:]
+            if len(postlist) == 0:
+                continue
+            elif len(postlist) > 1:
+                parent, replies = postlist[0], postlist[1:]
+            else:
+                parent, replies = postlist[0], []
+
             images = [x for x in replies if x.image]
 
             if parent.stickied:
@@ -165,9 +171,11 @@ class Board(object):
 
         Template('page_template',
             pages=pages,
-            postform=self.options['ALLOW_TEXTONLY'] or self.options['ALLOW_IMAGES'],
+            postform=self.options['ALLOW_TEXTONLY'] \
+              or self.options['ALLOW_IMAGES'],
             image_inp=self.options['ALLOW_IMAGES'],
-            textonly_inp=(self.options['ALLOW_IMAGES'] and self.options['ALLOW_TEXTONLY']),
+            textonly_inp=(self.options['ALLOW_IMAGES'] \
+              and self.options['ALLOW_TEXTONLY']),
             prevpage=prevpage,
             nextpage=nextpage,
             threads=threads,

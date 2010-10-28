@@ -67,10 +67,10 @@ def board(name):
         Column("admin_post", Boolean),                  # ADDED - Admin post?
         # TODO: Probably should make this Boolean. Keeping as int for now to maintain compatibility with sorting functions.
         Column("stickied", Integer),                    # ADDED - Stickied?
-        Column("locked", Boolean),                      # ADDED - Locked?
+        Column("locked", Boolean)                       # ADDED - Locked?
     )
 
-    table.create(checkfirst=True)
+    table.create(bind=engine, checkfirst=True)
     _boards[name] = table
     return _boards[name]
 
@@ -83,7 +83,7 @@ admin = Table(config.SQL_ADMIN_TABLE, metadata,
     Column("ival2", Text),                              # Integer value 2 (usually netmask)
     Column("sval1", Text),                              # String value 1
     Column("total", Text),                              # ADDED - Total Ban?
-    Column("expiration", Integer),                      # ADDED - Ban Expiration?
+    Column("expiration", Integer)                       # ADDED - Ban Expiration?
 )
 
 proxy = Table(config.SQL_PROXY_TABLE, metadata,
@@ -91,7 +91,7 @@ proxy = Table(config.SQL_PROXY_TABLE, metadata,
     Column("type", Text),                               # Type of entry (black, white, etc)
     Column("ip", Text),                                 # IP address
     Column("timestamp", Integer),                       # Age since epoch
-    Column("date", Text),                               # Human-readable form of date 
+    Column("date", Text)                                # Human-readable form of date 
 )
 
 account = Table(config.SQL_ACCOUNT_TABLE, metadata,
@@ -99,7 +99,7 @@ account = Table(config.SQL_ACCOUNT_TABLE, metadata,
     Column("account", Text, nullable=False),            # Account type/class: mod, globmod, admin
     Column("password", Text, nullable=False),           # Encrypted password
     Column("reign", Text),                              # List of board (tables) under jurisdiction: globmod and admin have global power and are exempt
-    Column("disabled", Integer),                        # Disabled account?
+    Column("disabled", Integer)                         # Disabled account?
 )
 
 activity = Table(config.SQL_STAFFLOG_TABLE, metadata,
@@ -110,12 +110,12 @@ activity = Table(config.SQL_STAFFLOG_TABLE, metadata,
     Column("date", Text),                               # Date of action
     Column("ip", Text),                                 # IP address of the moderator
     Column("admin_id", Integer),                        # For associating certain entries with the corresponding key on the admin table
-    Column("timestamp", Integer),                       # Timestamp, for trimming
+    Column("timestamp", Integer)                        # Timestamp, for trimming
 )
 
 common = Table(config.SQL_COMMON_SITE_TABLE, metadata,
     Column("board", String(25), primary_key=True),      # Name of comment table
-    Column("type", Text),                               # Corresponding board type? (Later use)
+    Column("type", Text)                                # Corresponding board type? (Later use)
 )
 
 report = Table(config.SQL_REPORT_TABLE, metadata,
@@ -127,7 +127,7 @@ report = Table(config.SQL_REPORT_TABLE, metadata,
     Column("comment", Text, nullable=False),            # Mandated reason for the report
     Column("timestamp", Integer),                       # Timestamp in seconds for when the post was created
     Column("date", Text),                               # Date of the report
-    Column("resolved", Integer),                        # Is it resolved? (1: yes 0: no)
+    Column("resolved", Integer)                         # Is it resolved? (1: yes 0: no)
 )
 
 backup = Table(config.SQL_BACKUP_TABLE, metadata,
@@ -160,7 +160,7 @@ backup = Table(config.SQL_BACKUP_TABLE, metadata,
     Column("admin_post", Text),                         # ADDED - Admin post?
     Column("stickied", Integer),                        # ADDED - Stickied?
     Column("locked", Text),                             # ADDED - Locked?
-    Column("timestampofarchival", Integer),             # When was this backed up?
+    Column("timestampofarchival", Integer)              # When was this backed up?
 )
 
 passprompt = Table(config.SQL_PASSPROMPT_TABLE, metadata,
@@ -170,5 +170,5 @@ passprompt = Table(config.SQL_PASSPROMPT_TABLE, metadata,
     Column("boardname", String(25)),
     Column("post", Integer),
     Column("timestamp", Integer),
-    Column("passfail", Integer),
+    Column("passfail", Integer) 
 )
