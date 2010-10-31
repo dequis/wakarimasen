@@ -532,8 +532,9 @@ class Board(object):
             parent = num    # For use with "noko" below
 
         # set the name, email and password cookies
-        misc.make_cookies(c_name, c_email, c_password, config.CHARSET,
-            self.options['COOKIE_PATH']) # yum !
+        misc.make_cookies(name=c_name, email=c_email, password=c_password,
+            #config.CHARSET,
+            path=self.options['COOKIE_PATH']) # yum !
 
         forward = ''
         if not admin_post_mode:
