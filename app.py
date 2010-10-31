@@ -28,7 +28,7 @@ def task_post(environ, start_response):
     kwargs['admin'] = kwargs.pop('wakaadmin')
     kwargs['admin_post_mode'] = kwargs.pop('adminpost')
     kwargs['oekaki_post'] = kwargs['srcinfo'] = kwargs['pch'] = None
-    kwargs['environ'] = environ
+    # kwargs['environ'] = environ
     
     return board.post_stuff(**kwargs)
 
