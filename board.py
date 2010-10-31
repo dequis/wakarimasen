@@ -319,11 +319,16 @@ class Board(object):
         has_crlf = lambda x: '\n' in x or '\r' in x
 
         # check for weird characters
-        if (not parent.isdigit() or len(parent) > 10 or
-           has_crlf(name) or has_crlf(email) or has_crlf(subject)):
-            raise WakaError(strings.UNUSUAL)
+        if ((len(parent) != 0 and not parent.isdigit())
+           or len(parent) > 10 or has_crlf(name) or has_crlf(email)
+           or has_crlf(subject)):
+            raise WakaError(UNUSUAL)
 
-        parent = int(parent)
+        # convert parent to integer type
+        if len(parent) == 0:
+            parent = 0
+        else:
+            parent = int(parent)
 
         # check for excessive amounts of text
         if (len(name) > self.options['MAX_FIELD_LENGTH'] or
