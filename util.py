@@ -130,6 +130,6 @@ def make_http_forward(location, alternate_method=False):
                 ((location, ) * 4)]
     else:
         local.environ['waka.status'] = '303 Go West'
-        local.environ['waka.headers']['Location'] = location
+        local.environ['waka.headers']['Location'] = str(location)
         return ['<html><body><a href="%s">%s</a></body></html>' %
                 ((location, ) * 2)]
