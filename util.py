@@ -95,7 +95,7 @@ def headers(f):
 
             # Set-cookie can be repeated, so it's handled separately
             headerlist = environ['waka.headers'].items()
-            for cookie in environ['waka.cookies']:
+            for cookie in environ['waka.cookies'].itervalues():
                 headerlist.append(tuple(cookie.output().split(": ", 1)))
 
             start_response(status, headerlist)
