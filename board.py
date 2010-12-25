@@ -13,6 +13,7 @@ import config, config_defaults
 import strings as strings
 from util import WakaError, local
 from template import Template
+from urllib import quote_plus, urlencode
 
 from sqlalchemy.sql import case, or_, and_, select, func, null
 
@@ -31,7 +32,7 @@ class Board(object):
 
         # TODO customize these
         self.path = os.path.abspath(board)
-        self.url = '/%s/' % board
+        self.url = quote_plus(('/%s/' % board).encode('utf-8'), '/')
         self.name = board
 
     def make_path(self, file='', dir='', dirc=None, page=None, thread=None,
@@ -769,7 +770,8 @@ class Board(object):
 
         return (filename, md5, width, height, thumbnail, tn_width, tn_height)
 
-    def get_reply_link(self, reply, parent='', abbreviated=False, force_http=False):
+    def get_reply_link(self, reply, parent='', abbreviated=False,\
+                       force_http=False):
         # Should abbr_ be appended to the filename?
         filename_str = ''
         if abbreviated:
@@ -812,7 +814,7 @@ class Board(object):
         if force_http:
             self_path = 'http://' + environ['SERVER_NAME'] + self_path
 
-        return self_path + filename
+        return self_path + quote_plus(filename.encode('utf-8'))
 
     def make_anonymous(self, ip, time):
         # TODO: SILLY_ANONYMOUS not supported
@@ -850,4 +852,3 @@ def get_page_count(threads, per_page):
 def abbreviate_html(html, max_lines, approx_len):
     # TODO: implement abbreviate_html
     return
-
