@@ -6,6 +6,7 @@ import crypt
 import struct
 import strings
 from subprocess import Popen, PIPE
+import sys
 
 import util
 import crypto  # part of wakarimasen
@@ -321,7 +322,7 @@ def analyze_gif(file):
     if len(buffer) != 10:
         return
 
-    magic, width, height = struct.unpack("<6sHH", buffer)
+    magic, width, height = struct.unpack('<6sHH', buffer)
     if magic not in GIF_MAGICS:
         return
     return (width, height)
@@ -332,9 +333,11 @@ def make_thumbnail(filename, thumbnail, width, height, quality, convert):
         magickname += '[0]'
 
     convert = convert or 'convert' # lol
-    process = Popen([convert, "-size", "%sx%s" % (width, height),
-        "-geometry", "%sx%s!" % (width, height), "-quality", str(quality),
-        magickname, thumbnail])
+    process = Popen([convert, '-resize', '%sx%s!' % (width, height),
+                     '-quality', str(quality), magickname, thumbnail])
+
+    if process.wait() == 0:
+        sys.stderr.write(process.read())
 
     if process.wait() == 0 and os.path.exists(thumbnail) and \
        os.path.getsize(thumbnail) != 0:
