@@ -4,6 +4,7 @@ import time
 import random
 import hashlib
 from subprocess import Popen, PIPE
+from urllib import quote_plus, urlencode
 
 import misc
 import oekaki
@@ -13,7 +14,6 @@ import config, config_defaults
 import strings as strings
 from util import WakaError, local
 from template import Template
-from urllib import quote_plus, urlencode
 
 from sqlalchemy.sql import case, or_, and_, select, func, null
 
@@ -814,7 +814,7 @@ class Board(object):
         if force_http:
             self_path = 'http://' + environ['SERVER_NAME'] + self_path
 
-        return self_path + quote_plus(filename.encode('utf-8'))
+        return self_path + quote_plus(filename.encode('utf-8'), '/')
 
     def make_anonymous(self, ip, time):
         # TODO: SILLY_ANONYMOUS not supported
