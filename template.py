@@ -1,8 +1,9 @@
 import os
 import sys
 import glob
-import urllib
+from urllib import quote_plus
 import random
+import re
 
 import jinja2
 
@@ -87,16 +88,14 @@ class Template(object):
     @filter
     def expand_image_url(self, filename):
         # TODO: load balancing support?
-	return self.expand_url(urllib.quote(filename))
+	    return self.expand_url(quote_plus(filename, '/'))
 
     @filter
     def root_path_to_filename(self, filename):
         if filename.startswith("/") or filename.startswith("http"):
             return filename
 
-        self_path = '/' # TODO
-
-        return self_path + filename
+        return self.environ['waka.rootpath'] + filename
 
     @filter
     def basename(self, path):
@@ -114,11 +113,13 @@ class Template(object):
     @function
     def get_secure_script_name(self):
         if config.USE_SECURE_ADMIN:
-            return 'https://' + self.environ['SERVER_NAME'] + self.environ['SCRIPT_NAME']
+            return 'https://' + self.environ['SERVER_NAME'] + \
+            self.environ['SCRIPT_NAME']
 	return self.environ['SCRIPT_NAME']
 
     @filter
-    def get_reply_link(self, reply, parent, abbreviated=False, force_http=False):
+    def get_reply_link(self, reply, parent, abbreviated=False,
+                       force_http=False):
         path_tpl = (self.board.options['RES_DIR'] + "%s" +
                     ("_abbr" if abbreviated else "") +
                     config.PAGE_EXT + "%s")
@@ -142,7 +143,7 @@ class Template(object):
                 default = 0
 
             yield {
-                'filename': '/' + file,
+                'filename': file,
                 'title': title,
                 'default': default,
             }

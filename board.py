@@ -32,7 +32,9 @@ class Board(object):
 
         # TODO customize these
         self.path = os.path.abspath(board)
-        self.url = quote_plus(('/%s/' % board).encode('utf-8'), '/')
+        self.url = quote_plus(
+                   ('%s%s/' % (local.environ['waka.rootpath'], board))
+                   .encode('utf-8'), '/')
         self.name = board
 
     def make_path(self, file='', dir='', dirc=None, page=None, thread=None,
@@ -560,7 +562,6 @@ class Board(object):
 
         return util.make_http_forward(forward, config.ALTERNATE_REDIRECT)
         # end of this function. fuck yeah
-        # no kidding! --K
 
     def delete_post(self, post, password, file_only, archiving, from_window):
         # TODO: Add archiving-related stuff.
@@ -759,7 +760,7 @@ class Board(object):
             # TODO, some day
             raise NotImplementedError('ENABLE_LOAD not implemented')
 
-        # Make file and thumbnailworld-readable
+        # Make file and thumbnail world-readable
         os.chmod(filename, 0644)
         if thumbnail:
             os.chmod(thumbnail, 0644)
@@ -770,7 +771,7 @@ class Board(object):
 
         return (filename, md5, width, height, thumbnail, tn_width, tn_height)
 
-    def get_reply_link(self, reply, parent='', abbreviated=False,\
+    def get_reply_link(self, reply, parent='', abbreviated=False,
                        force_http=False):
         # Should abbr_ be appended to the filename?
         filename_str = ''
@@ -780,11 +781,12 @@ class Board(object):
             filename_str = '%s%s'
 
         if parent:
-            return expand_url(os.path.join(self.path, self.options['RES_DIR'],\
+            return expand_url(os.path.join(self.path,
+                self.options['RES_DIR'],
                 filename_str % (parent, config.PAGE_EXT)))
 
-        return expand_url(os.path.join(self.path, self.options['RES_DIR'],\
-            filename_str % (reply, config.PAGE_EXT)))
+        return expand_url(os.path.join(self.path, self.options['RES_DIR'],
+                          filename_str % (reply, config.PAGE_EXT)))
 
     def _get_page_filename(self, page):
         '''Returns either wakaba.html or (page).html'''
