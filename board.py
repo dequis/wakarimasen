@@ -114,7 +114,7 @@ class Board(object):
                 os.unlink(self.get_page_filename(page))
 
     def build_cache_page(self, page, total, pagethreads):
-        '''Build /board/$page.html'''
+        '''Build $rootpath/$board/$page.html'''
         filename = self.get_page_filename(page)
         
         threads = []
@@ -185,7 +185,7 @@ class Board(object):
         ).render_to_file(filename)
 
     def build_thread_cache(self, threadid):
-        '''Build /board/res/$threadid.html'''
+        '''Build $rootpath/$board/$res/$threadid.html'''
 
         session = model.Session()
         sql = self.table.select(
@@ -211,7 +211,8 @@ class Board(object):
             Template('page_template',
                 threads=[{'posts': thread}],
                 thread=threadid,
-                postform=self.options['ALLOW_TEXT_REPLIES'] or self.options['ALLOW_IMAGE_REPLIES'],
+                postform=self.options['ALLOW_TEXT_REPLIES'] \
+                         or self.options['ALLOW_IMAGE_REPLIES'],
                 image_inp=self.options['ALLOW_IMAGE_REPLIES'],
                 textonly_inp=0,
                 dummy=thread[-1].num,
@@ -709,6 +710,7 @@ class Board(object):
                     thumbnail = ''
             else:
                 thumbnail = ''
+
         elif width > self.options['MAX_W'] or \
              height > self.options['MAX_H'] or \
              self.options['THUMBNAIL_SMALL']:
@@ -727,11 +729,9 @@ class Board(object):
             if self.options['STUPID_THUMBNAILING']:
                 thumbnail = filename
             else:
-                print "hi there"
                 result = misc.make_thumbnail(filename, thumbnail, tn_width,
                    tn_height, self.options['THUMBNAIL_QUALITY'],
                    self.options['CONVERT_COMMAND'])
-                print "result is", result
                 if not result:
                     thumbnail = ''
         else:
@@ -781,12 +781,12 @@ class Board(object):
             filename_str = '%s%s'
 
         if parent:
-            return expand_url(os.path.join(self.path,
+            return self.expand_url(os.path.join(self.path,
                 self.options['RES_DIR'],
                 filename_str % (parent, config.PAGE_EXT)))
 
-        return expand_url(os.path.join(self.path, self.options['RES_DIR'],
-                          filename_str % (reply, config.PAGE_EXT)))
+        return self.expand_url(os.path.join(self.path, self.options['RES_DIR'],
+                               filename_str % (reply, config.PAGE_EXT)))
 
     def _get_page_filename(self, page):
         '''Returns either wakaba.html or (page).html'''
