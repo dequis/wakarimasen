@@ -32,6 +32,12 @@ def task_post(environ, start_response):
     
     return board.post_stuff(**kwargs)
 
+def task_delete(environ, start_response):
+    pass
+
+def task_edit(environ, start_response):
+    pass
+
 def fffffff(environ, start_response, error):
     start_response('200 OK', [('Content-Type', 'text/html')])
 

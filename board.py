@@ -263,7 +263,8 @@ class Board(object):
         # get a timestamp for future use
         timestamp = time.time()
 
-        # Initialize admin_post variable--tells whether or not this post has fallen under the hand of a mod/admin
+        # Initialize admin_post variable--tells whether or not this post has
+        # fallen under the hand of a mod/admin
         admin_post = False
 
         # check that the request came in as a POST, or from the command line
@@ -446,7 +447,8 @@ class Board(object):
         # Manager and deletion stuff - duuuuuh?
 
         # generate date
-        date = misc.make_date(timestamp + config.TIME_OFFSET, config.DATE_STYLE)
+        date = misc.make_date(timestamp + config.TIME_OFFSET,
+                              config.DATE_STYLE)
 
         # generate ID code if enabled
         if self.options['DISPLAY_ID']:
@@ -546,9 +548,11 @@ class Board(object):
                 # forward back to the main page
                 forward = self.make_path(page=0, url=True)
             else:
-                # ...unless we have "noko" (a la 4chan)--then forward to thread
-                # ("parent" contains current post number if a new thread was posted)
-                if not os.path.exists(self.make_path(thread=parent, abbr=True)):
+                # ...unless we have "noko" (a la 4chan)--then forward to 
+                # thread ("parent" contains current post number if a new
+                # thread was posted)
+                if not os.path.exists(self.make_path(thread=parent,
+                                      abbr=True)):
                     forward = self.make_url(thread=parent)
                 else:
                     forward = self.make_url(thread=parent, abbr=True)
@@ -563,6 +567,9 @@ class Board(object):
 
         return util.make_http_forward(forward, config.ALTERNATE_REDIRECT)
         # end of this function. fuck yeah
+
+    def delete_mult(self, posts, password, file_only, archiving, from_window):
+        pass
 
     def delete_post(self, post, password, file_only, archiving, from_window):
         # TODO: Add archiving-related stuff.
@@ -656,7 +663,8 @@ class Board(object):
             raise WakaError(strings.NOTWRITE)
 
         # Check file type with UNIX utility file()
-        file_response = Popen(["file", filename], stdout=PIPE).communicate()[0]
+        file_response = Popen(["file", filename], stdout=PIPE)\
+                        .communicate()[0]
         if re.match("\:.*(?:script|text|executable)", file_response):
             os.unlink(filename)
             raise WakaError(strings.BADFORMAT + " Potential Exploit")

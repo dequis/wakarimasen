@@ -6,7 +6,6 @@ import crypt
 import struct
 import strings
 from subprocess import Popen, PIPE
-import sys
 
 import util
 import crypto  # part of wakarimasen
@@ -335,9 +334,6 @@ def make_thumbnail(filename, thumbnail, width, height, quality, convert):
     convert = convert or 'convert' # lol
     process = Popen([convert, '-resize', '%sx%s!' % (width, height),
                      '-quality', str(quality), magickname, thumbnail])
-
-    if process.wait() == 0:
-        sys.stderr.write(process.read())
 
     if process.wait() == 0 and os.path.exists(thumbnail) and \
        os.path.getsize(thumbnail) != 0:
