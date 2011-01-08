@@ -1,6 +1,7 @@
 import model
 from template import Template
 from util import WakaError
+import sys
 
 def no_task(environ, start_response):
     board = environ['waka.board']
@@ -21,7 +22,7 @@ def task_post(environ, start_response):
         'no_format', 'sticky', 'lock', 'adminpost']
     kwargs = {}
     for param in params:
-        kwargs[param] = request.form.get(param, '')
+        kwargs[param] = request.values.get(param, '')
 
     kwargs['file'] = request.files['file']
     kwargs['name'] = kwargs.pop('field1')
@@ -33,6 +34,20 @@ def task_post(environ, start_response):
     return board.post_stuff(**kwargs)
 
 def task_delete(environ, start_response):
+    request = environ['werkzeug.request']
+    board = environ['waka.board']
+
+    kwargs = {}
+    params = ['password', 'file_only', 'archiving', 'from_window']
+    for param in params:
+        kwargs[param] = request.form.get(param, '')
+
+    # Parse posts string into array.
+    kwargs['posts'] = request.form.getlist('num')
+
+    return board.delete_stuff(**kwargs)
+
+def task_delpostwindow(environ, start_response):
     pass
 
 def task_edit(environ, start_response):

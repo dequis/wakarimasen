@@ -31,7 +31,7 @@ def application(environ, start_response):
     environ['waka.board'] = Board(boardname)
 
     # the task function if it exists, otherwise no_task()
-    function = getattr(app, 'task_%s' % task, app.no_task)
+    function = getattr(app, 'task_%s' % task.lower(), app.no_task)
 
     try:
         return function(environ, start_response)

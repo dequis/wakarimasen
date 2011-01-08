@@ -242,8 +242,12 @@ class Board(object):
 
     def delete_thread_cache(self, parent):
         base = os.path.join(self.path, self.options['RES_DIR'], '')
-        os.unlink(base + "%s%s" % (parent, config.PAGE_EXT))
-        os.unlink(base + "%s_abbr%s" % (parent, config.PAGE_EXT))
+        full_thread_page = base + "%s%s" % (parent, config.PAGE_EXT)
+        abbrev_thread_page = base + "%s_abbr%s" % (parent, config.PAGE_EXT)
+        if os.path.exists(full_thread_page):
+            os.unlink(full_thread_page)
+        if os.path.exists(abbrev_thread_page):
+            os.unlink(abbrev_thread_page)
 
     def build_thread_cache_all(self):
         session = model.Session()
@@ -568,13 +572,23 @@ class Board(object):
         return util.make_http_forward(forward, config.ALTERNATE_REDIRECT)
         # end of this function. fuck yeah
 
-    def delete_mult(self, posts, password, file_only, archiving, from_window):
-        pass
+    def delete_stuff(self, posts, password, file_only, archiving,
+                     from_window):
+        for post in posts:
+            self.delete_post(post, password, file_only, archiving,
+                             from_window)
+
+        self.build_cache()
+
+        forward = self.make_path(page=0, url=True)
+        return util.make_http_forward(forward, config.ALTERNATE_REDIRECT)
 
     def delete_post(self, post, password, file_only, archiving, from_window):
+        '''Delete a single post from the board. This method does not rebuild
+        index cache automatically.'''
         # TODO: Add archiving-related stuff.
         thumb = self.options['THUMB_DIR']
-        archive = self.options['ARCHIVE']
+        # archive = self.options['ARCHIVE']
         src = self.options['IMG_DIR']
 
         table = self.table
@@ -588,40 +602,54 @@ class Board(object):
         if row is None:
             raise WakaError(strings.POSTNOTFOUND % (post, self.board))
 
-        if password and post_admin_mode:
+        if password and row.admin_post:
             raise WakaError(strings.MODDELETEONLY)
+
+        if password != row.password:
+            raise WakaError(post + strings.BADDELPASS)
 
         if file_only:
             # remove just the image and update the database
-            delete_image(row.file)
+            delete_image(row.image)
 
             postupdate = table.update().where(table.c.num == post).values(
                 size=0, md5=null(), thumbnail=null())
             session.execute(postupdate)
         else:
-            select_thread_images = table.select(or_(
-                table.c.num == post,
-                table.c.parent == post)).column(table.image, table.thumbnail)
-            images_to_baleet = session.execute(images_to_baleet)
+            select_thread_images = select([table.c.image, table.c.thumbnail],
+                                          or_(table.c.num == post,
+                                              table.c.parent == post))
+            images_to_baleet = session.execute(select_thread_images)
             
             for i in images_to_baleet:
-                delete_file(i.image, i.thumbnail)
+                self.delete_file(i.image, i.thumbnail)
+
+            delete_query = table.delete(or_(
+                table.c.num == post,
+                table.c.parent == post))
+            session.execute(delete_query)
 
         if not row.parent:
             if not file_only:
                 # removing an entire thread
-                delete_thread_cache(post)
+                self.delete_thread_cache(post)
             else:
                 # removing parent (OP) image
-                delete_thread_cache(post)
+                self.build_thread_cache(post)
         else:
             # removing a reply, or a reply's image
-            delete_thread_cache(row.parent)
+            self.build_thread_cache(row.parent)
 
-    def delete_file(relative_file_path, relative_thumb_path):
+    def delete_file(self, relative_file_path, relative_thumb_path):
         # TODO: Add archiving-related stuff.
-        pch = oekaki.find_pch(row.image)
-        return
+        # pch = oekaki.find_pch(row.image)
+        full_file_path = os.path.join(self.path, relative_file_path)
+        full_thumb_path = os.path.join(self.path, relative_thumb_path)
+        if os.path.exists(full_file_path):
+            os.unlink(full_file_path)
+        if os.path.exists(full_thumb_path):
+            os.unlink(full_thumb_path)
+        pass
 
     def edit_stuff():
         # TODO: Figure out a clean implementation for this.
@@ -649,7 +677,8 @@ class Board(object):
         # generate "random" filename
         filebase = ("%.3f" % timestamp).replace(".", "")
         filename = self.make_path(filebase, dirc='IMG_DIR', ext=ext)
-        thumbnail = self.make_path(filebase + "s", dirc='THUMB_DIR', ext='jpg')
+        thumbnail = self.make_path(filebase + "s", dirc='THUMB_DIR',
+                                   ext='jpg')
 
         print "*" * 30, filename, thumbnail
 
