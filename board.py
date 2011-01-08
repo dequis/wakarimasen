@@ -649,12 +649,10 @@ class Board(object):
             os.unlink(full_file_path)
         if os.path.exists(full_thumb_path):
             os.unlink(full_thumb_path)
-        pass
 
     def edit_stuff():
         # TODO: Figure out a clean implementation for this.
         # (We should still have at least an alias function, though.)
-        pass
 
     def process_file(self, filestorage, timestamp, parent):
         filetypes = self.options['FILETYPES']
