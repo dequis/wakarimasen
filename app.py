@@ -1,7 +1,6 @@
 import model
 from template import Template
 from util import WakaError
-import sys
 
 def no_task(environ, start_response):
     board = environ['waka.board']
