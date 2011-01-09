@@ -12,6 +12,7 @@ def init_database():
     model.metadata.create_all()
     # TODO: cleanup backups table
 
+# Posting
 def task_post(environ, start_response):
     request = environ['werkzeug.request']
     board = environ['waka.board']
@@ -32,6 +33,7 @@ def task_post(environ, start_response):
     
     return board.post_stuff(**kwargs)
 
+# Post Deletion
 def task_delete(environ, start_response):
     request = environ['werkzeug.request']
     board = environ['waka.board']
@@ -49,8 +51,38 @@ def task_delete(environ, start_response):
 def task_delpostwindow(environ, start_response):
     pass
 
+# Post Editing
+def edit_param_parse(environ, start_response):
+    request = environ['werkzeug.request']
+    board = environ['waka.board']
+
+    params = ['num', 'field1', 'email', 'subject', 'comment',
+        'password', 'nofile', 'captcha', 'wakaadmin', 'no_captcha',
+        'no_format', 'sticky', 'lock', 'adminedit', 'killtrip',
+        'postfix']
+    kwargs = {}
+    for param in params:
+        kwargs[param] = request.values.get(param, '')
+ 
+    kwargs['file'] = request.files['file']
+    kwargs['name'] = kwargs.pop('field1')
+    kwargs['post_num'] = kwargs.pop('num')
+    kwargs['admin'] = kwargs.pop('wakaadmin')
+    kwargs['admin_post_mode'] = kwargs.pop('adminedit')
+    kwargs['oekaki_post'] = kwargs['srcinfo'] = kwargs['pch'] = None
+    # kwargs['environ'] = environ
+
+    return kwargs
+
+# TODO: Really, this should be called task_editwindow.
 def task_edit(environ, start_response):
+    kwargs = edit_param_parse(environ, start_response)
     pass
+
+# TODO: Really, this should be called task_edit.
+def task_editpost(environ, start_response):
+    kwargs = edit_param_parse(environ, start_response)
+    return board.edit_stuff(**kwargs)
 
 def fffffff(environ, start_response, error):
     start_response('200 OK', [('Content-Type', 'text/html')])

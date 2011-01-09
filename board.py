@@ -257,11 +257,12 @@ class Board(object):
         for row in query:
             self.build_thread_cache(row[0])
 
-    def post_stuff(self, parent, name, email, subject, comment, file,
-                   password, nofile, captcha, admin, no_captcha,
-                   no_format, oekaki_post, srcinfo, pch, sticky, lock,
-                   admin_post_mode):
-    
+    def __handle_post(self, name, email, subject, comment, file,
+                      password, nofile, captcha, admin, no_captcha,
+                      no_format, oekaki_post, srcinfo, pch, sticky, lock,
+                      admin_post_mode, post_num=None, killtrip=False,
+                      parent='0'):
+
         session = model.Session()
 
         # get a timestamp for future use
@@ -274,6 +275,17 @@ class Board(object):
         # check that the request came in as a POST, or from the command line
         if local.environ.get('REQUEST_METHOD', '') != 'POST':
             raise WakaError(strings.UNJUST)
+
+        # Get parent post and original file if post_num is provided (editing).
+        original_image = original_thumb = ''
+        if post_num:
+            original_get = session.execute(
+                select([self.table.c.parent, self.table.c.image,
+                        self.table.c.thumb], self.table.c.num == post_num))\
+                .fetchone()
+            parent = original_get['parent']
+            original_image = original_get['image']
+            original_thumb = original_get['thumb']
 
         # check whether the parent thread is stickied
         if parent:
@@ -417,15 +429,6 @@ class Board(object):
         email = misc.clean_string(misc.decode_string(email))
         subject = misc.clean_string(misc.decode_string(subject))
 
-        noko = False
-        # check subject field for 'noko' (legacy)
-        if subject.lower() == 'noko':
-            subject = ''
-            noko = True
-        # and the link field (proper)
-        elif email.lower() == 'noko':
-            noko = True
-
         # fix up the email/link, if it is not a generic URI already.
         if email and not re.match("(?!^\w+:)|(?:\:\/\/)", email):
             email = "mailto:%s" % email
@@ -464,6 +467,9 @@ class Board(object):
             filename, md5, width, height, thumbnail, tn_width, tn_height = \
                 self.process_file(file, timestamp, parent)
 
+            if original_image or original_thumb:
+                self.delete_file(original_image, original_thumb)
+
             if oekaki_post and self.options['ENABLE_OEKAKI']:
                 # TODO: oekaki not supported
                 raise NotImplementedError()
@@ -493,18 +499,30 @@ class Board(object):
         if not sticky:
             sticky = 0
 
-        # finally, write to the database
-        session = model.Session()
-        result = session.execute(self.table.insert().values(parent=parent,
+        # choose whether we need an SQL UPDATE (editing) or INSERT (posting)
+        db_update_function = None
+        if post_num:
+            db_update_function = self.table.update
+        else:
+            db_update_function = self.table.insert
+
+        db_update = db_update_function().values(parent=parent,
             timestamp=timestamp, lasthit=lasthit, ip=numip, date=date,
             name=name, trip=trip, email=email, subject=subject,
             password=password, comment=comment, image=filename, size=size,
             md5=md5, width=width, height=height, thumbnail=thumbnail,
             tn_width=tn_width, tn_height=tn_height, admin_post=admin_post,
-            stickied=sticky, locked=lock))
-        num = result.last_inserted_ids()[0]
+            stickied=sticky, locked=lock)
 
-        if parent: # bumping
+        # finally, write to the database
+        result = None
+        if post_num:
+            # We have to be selective if editing.
+            result = session.execute(db_update.where(num == post_num))
+        else:
+            result = session.execute(db_update)
+
+        if parent and not post_num: # bumping
             # check for sage, or too many replies
             if not (email.lower().count("sage") or
                     self.sage_count(parent_res) > self.options['MAX_RES']):
@@ -512,6 +530,8 @@ class Board(object):
                 session.execute(t.update()
                     .where(or_(t.c.num == parent, t.c.parent == parent))
                     .values(lasthit=timestamp))
+        elif not post_num:
+            post_num = result.last_inserted_ids()[0]
 
         # remove old threads from the database
         self.trim_database()
@@ -526,9 +546,9 @@ class Board(object):
             if admin_post_mode:
                 # TODO add_log_entry not implemented
                 add_log_entry(username, 'admin_post',
-                    '%s,%s' % (self.name, num),
+                    '%s,%s' % (self.name, post_num),
                     date, numip, 0, timestamp)
-            if num == 1:
+            if post_num == 1:
                 # If this is the first post on a board recently cleared
                 # of posts, the post count will reset; so should our
                 # reports, then.
@@ -537,14 +557,38 @@ class Board(object):
                 #init_report_database()
                 pass
 
-            self.build_thread_cache(num)
-
-            parent = num    # For use with "noko" below
+            self.build_thread_cache(post_num)
 
         # set the name, email and password cookies
         misc.make_cookies(name=c_name, email=c_email, password=c_password,
             #config.CHARSET,
             path=self.options['COOKIE_PATH']) # yum !
+
+        return post_num
+
+    def post_stuff(self, parent, name, email, subject, comment, file,
+                   password, nofile, captcha, admin, no_captcha,
+                   no_format, oekaki_post, srcinfo, pch, sticky, lock,
+                   admin_post_mode):
+    
+        post_num = self.__handle_post(name, email, subject, comment,
+                                      file, password, nofile, captcha, admin,
+                                      no_captcha, no_format, oekaki_post,
+                                      srcinfo, pch, sticky, lock,
+                                      admin_post_mode, parent=parent)
+
+        # For use with noko, below.
+        if not parent:
+            parent = post_num
+
+        noko = False
+        # check subject field for 'noko' (legacy)
+        if subject.lower() == 'noko':
+            subject = ''
+            noko = True
+        # and the link field (proper)
+        elif email.lower() == 'noko':
+            noko = True
 
         forward = ''
         if not admin_post_mode:
@@ -647,12 +691,21 @@ class Board(object):
         full_thumb_path = os.path.join(self.path, relative_thumb_path)
         if os.path.exists(full_file_path):
             os.unlink(full_file_path)
-        if os.path.exists(full_thumb_path):
+        if os.path.exists(full_thumb_path) and \
+           re.match(self.options['THUMB_DIR'], full_thumb_path):
             os.unlink(full_thumb_path)
 
-    def edit_stuff():
-        # TODO: Figure out a clean implementation for this.
-        # (We should still have at least an alias function, though.)
+    def edit_stuff(self, num, name, email, subject, comment, file,
+                   password, nofile, captcha, admin, no_captcha,
+                   no_format, oekaki_post, srcinfo, pch, sticky, lock,
+                   admin_post_mode, killtrip):
+
+        self.__handle_post(name, email, subject, comment, file,
+                           password, nofile, captcha, admin, no_captcha,
+                           no_format, oekaki_post, srcinfo, pch, sticky, lock,
+                           admin_post_mode, num=num, killtrip=killtrip)
+
+        return Template('edit_successful')
 
     def process_file(self, filestorage, timestamp, parent):
         filetypes = self.options['FILETYPES']
