@@ -266,7 +266,17 @@ class Board(object):
         session = model.Session()
 
         # get a timestamp for future use
-        timestamp = time.time()
+        timestamp = 0
+        if not post_num:
+            timestamp = time.time()
+
+        # Other automatically determined variables.
+        # TODO: Refactor this junk into a kwargs dict.
+        trip = ''
+        date = lastedit = ''
+        post_ip = lastedit_ip = ''
+        filename = thumbnail = md5 = ''
+        size = width = height = tn_width = tn_height = 0
 
         # Initialize admin_post variable--tells whether or not this post has
         # fallen under the hand of a mod/admin
@@ -277,15 +287,27 @@ class Board(object):
             raise WakaError(strings.UNJUST)
 
         # Get parent post and original file if post_num is provided (editing).
-        original_image = original_thumb = ''
         if post_num:
-            original_get = session.execute(
-                select([self.table.c.parent, self.table.c.image,
-                        self.table.c.thumb], self.table.c.num == post_num))\
+            original_row = session.execute(
+                self.table.select(self.table.c.num == post_num))\
                 .fetchone()
-            parent = original_get['parent']
-            original_image = original_get['image']
-            original_thumb = original_get['thumb']
+
+            if original_row == None:
+                raise WakaError('') # TODO
+                
+            parent = original_row['parent']
+            filename = original_row['image']
+            thumbnail = original_row['thumbnail']
+            md5 = original_row['md5']
+            height = original_row['height']
+            width = original_row['width']
+            tn_width = original_row['tn_width']
+            tn_height = original_row['tn_height']
+            timestamp = original_row['timestamp']
+            post_ip = original_row['ip']
+            size = original_row['size']
+            if not killtrip:
+                trip = original_row['trip']
 
         # check whether the parent thread is stickied
         if parent:
@@ -340,13 +362,13 @@ class Board(object):
         has_crlf = lambda x: '\n' in x or '\r' in x
 
         # check for weird characters
-        if ((len(parent) != 0 and not parent.isdigit())
+        if not post_num and ((len(parent) != 0 and not parent.isdigit())
            or len(parent) > 10 or has_crlf(name) or has_crlf(email)
            or has_crlf(subject)):
             raise WakaError(UNUSUAL)
 
         # convert parent to integer type
-        if len(parent) == 0:
+        if not post_num and len(parent) == 0:
             parent = 0
         else:
             parent = int(parent)
@@ -367,7 +389,6 @@ class Board(object):
             raise WakaError(strings.NOTEXT)
 
         # get file size, and check for limitations.
-        size = 0
         if file:
             size = misc.get_filestorage_size(file)
             if size > (self.options['MAX_KB'] * 1024):
@@ -378,6 +399,11 @@ class Board(object):
         ip = local.environ['REMOTE_ADDR']
         numip = misc.dot_to_dec(ip)
 
+        if post_num:
+            lastedit_ip = numip
+        else:
+            post_ip = numip
+
         # set up cookies
         c_name = name
         c_email = email
@@ -387,7 +413,8 @@ class Board(object):
         whitelisted = misc.is_whitelisted(numip)
 
         # process the tripcode - maybe the string should be decoded later
-        name, trip = misc.process_tripcode(name, self.options['TRIPKEY'])
+        name, temp = misc.process_tripcode(name, self.options['TRIPKEY'])
+        trip = temp or trip
 
         if not whitelisted:
             # check for bans
@@ -454,8 +481,12 @@ class Board(object):
         # Manager and deletion stuff - duuuuuh?
 
         # generate date
-        date = misc.make_date(timestamp + config.TIME_OFFSET,
-                              config.DATE_STYLE)
+        if not post_num:
+            date = misc.make_date(timestamp + config.TIME_OFFSET,
+                                  config.DATE_STYLE)
+        else:
+            lastedit = misc.make_date(timestamp + config.TIME_OFFSET,
+                                  config.DATE_STYLE)
 
         # generate ID code if enabled
         if self.options['DISPLAY_ID']:
@@ -464,11 +495,11 @@ class Board(object):
 
         # copy file, do checksums, make thumbnail, etc
         if file:
+            if filename or thumbnail:
+                self.delete_file(filename, thumbnail)
+
             filename, md5, width, height, thumbnail, tn_width, tn_height = \
                 self.process_file(file, timestamp, parent)
-
-            if original_image or original_thumb:
-                self.delete_file(original_image, original_thumb)
 
             if oekaki_post and self.options['ENABLE_OEKAKI']:
                 # TODO: oekaki not supported
@@ -491,9 +522,6 @@ class Board(object):
                     postfix = 'TODO'
                     #my $postfix = OEKAKI_INFO_TEMPLATE->(decode_srcinfo($srcinfo,$uploadname,$new_pch_filename));
                     comment += postfix
-        else:
-            filename = md5 = thumbnail = ''
-            width = height = tn_width = tn_height = 0
 
         # Make sure sticky is a numeric 0. TODO: do we need this in python?
         if not sticky:
@@ -507,18 +535,20 @@ class Board(object):
             db_update_function = self.table.insert
 
         db_update = db_update_function().values(parent=parent,
-            timestamp=timestamp, lasthit=lasthit, ip=numip, date=date,
+            timestamp=timestamp, lasthit=lasthit, ip=post_ip, date=date,
             name=name, trip=trip, email=email, subject=subject,
             password=password, comment=comment, image=filename, size=size,
             md5=md5, width=width, height=height, thumbnail=thumbnail,
             tn_width=tn_width, tn_height=tn_height, admin_post=admin_post,
-            stickied=sticky, locked=lock)
+            stickied=sticky, locked=lock, lastedit_ip=lastedit_ip,
+            lastedit=lastedit)
 
         # finally, write to the database
         result = None
         if post_num:
             # We have to be selective if editing.
-            result = session.execute(db_update.where(num == post_num))
+            result = session.execute(db_update\
+                                     .where(self.table.c.num == post_num))
         else:
             result = session.execute(db_update)
 
@@ -707,15 +737,16 @@ class Board(object):
 
         return Template('post_edit_template', loop=[row])
 
-    def edit_stuff(self, num, name, email, subject, comment, file,
+    def edit_stuff(self, post_num, name, email, subject, comment, file,
                    password, nofile, captcha, admin, no_captcha,
                    no_format, oekaki_post, srcinfo, pch, sticky, lock,
-                   admin_post_mode, killtrip):
+                   admin_post_mode, killtrip, postfix):
 
         self.__handle_post(name, email, subject, comment, file,
                            password, nofile, captcha, admin, no_captcha,
                            no_format, oekaki_post, srcinfo, pch, sticky, lock,
-                           admin_post_mode, num=num, killtrip=killtrip)
+                           admin_post_mode, post_num=post_num,
+                           killtrip=killtrip)
 
         return Template('edit_successful')
 
