@@ -52,7 +52,26 @@ def task_delpostwindow(environ, start_response):
     pass
 
 # Post Editing
-def edit_param_parse(environ, start_response):
+# TODO: Really, this should be called task_editwindow.
+# def task_edit(environ, start_response):
+#    pass
+
+def task_edit(environ, start_response):
+    request = environ['werkzeug.request']
+    board = environ['waka.board']
+
+    params = ['num', 'password', 'wakaadmin']
+    kwargs = {}
+    for param in params:
+        kwargs[param] = request.values.get(param, '')
+
+    kwargs['admin'] = kwargs.pop('wakaadmin')
+    kwargs['post_num'] = kwargs.pop('num')
+
+    return board.edit_window(**kwargs)
+
+# TODO: Really, this should be called task_edit.
+def task_editpost(environ, start_response):
     request = environ['werkzeug.request']
     board = environ['waka.board']
 
@@ -72,16 +91,6 @@ def edit_param_parse(environ, start_response):
     kwargs['oekaki_post'] = kwargs['srcinfo'] = kwargs['pch'] = None
     # kwargs['environ'] = environ
 
-    return kwargs
-
-# TODO: Really, this should be called task_editwindow.
-def task_edit(environ, start_response):
-    kwargs = edit_param_parse(environ, start_response)
-    pass
-
-# TODO: Really, this should be called task_edit.
-def task_editpost(environ, start_response):
-    kwargs = edit_param_parse(environ, start_response)
     return board.edit_stuff(**kwargs)
 
 def fffffff(environ, start_response, error):

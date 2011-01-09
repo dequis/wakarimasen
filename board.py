@@ -695,6 +695,18 @@ class Board(object):
            re.match(self.options['THUMB_DIR'], full_thumb_path):
             os.unlink(full_thumb_path)
 
+    def edit_window(self, post_num, admin, password):
+
+        session = model.Session()
+        table = self.table
+        sql = table.select().where(table.c.num == post_num)
+        row = session.execute(sql).fetchone()
+
+        if row is None:
+            raise WakaError('') # TODO
+
+        return Template('post_edit_template', loop=[row])
+
     def edit_stuff(self, num, name, email, subject, comment, file,
                    password, nofile, captcha, admin, no_captcha,
                    no_format, oekaki_post, srcinfo, pch, sticky, lock,
