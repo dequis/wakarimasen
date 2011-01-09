@@ -486,10 +486,10 @@ class Board(object):
         # generate date
         if not post_num:
             date = misc.make_date(timestamp + config.TIME_OFFSET,
-                                  config.DATE_STYLE)
+                                  self.options['DATE_STYLE'])
         else:
             lastedit = misc.make_date(timestamp + config.TIME_OFFSET,
-                                  config.DATE_STYLE)
+                                  self.options['DATE_STYLE'])
 
         # generate ID code if enabled
         if self.options['DISPLAY_ID']:

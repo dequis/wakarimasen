@@ -217,9 +217,56 @@ def format_comment(comment):
 def flood_check(ip, timestamp, comment, file, no_repeat, report_check):
     pass
 
-def make_date(timestamp, style, locdays=[]):
-    return 'today'
+def make_date(timestamp, style='futaba'):
+    '''Generate a date string from a passed timestamp based on a requested
+    style. The string formatting power of the time module's strftime()
+    method is used here. The optional locale array from Wakaba is dropped
+    in favor of using the local day and month abbreviations provided by the
+    module. The format used can also be inputted directly into the style
+    parameter.'''
 
+    localtime = time.localtime(timestamp)
+    gmt = time.gmtime(timestamp - config.TIME_OFFSET)
+
+    time_str = ''
+
+    if style.lower() == '2ch':
+        time_str = time.strftime('%Y-%m-%d %H:%M', localtime)
+    elif style.lower() == '2ch-gmt':
+        time_str = time.strftime('%Y-%m-%d %H:%M GMT', gmt)
+    elif style.lower() == 'futaba' or style == 0:
+        time_str = time.strftime('%y/%m/%d(%a)%H:%M', localtime)
+    elif style.lower() == 'futaba-gmt':
+        time_str = time.strftime('%y/%m/%d(%a)%H:%M GMT', gmt)
+    elif style.lower() == 'tiny':
+        time_str = time.strftime('%m/%d %H:%M', localtime)
+    elif style.lower() == 'cookie':
+        time_str = time.strftime('%a, %d-%b-%Y %H:%M:%S GMT', gmt)
+    elif style.lower() == 'http':
+        time_str = time.strftime('%a, %d %b %Y %H:%M:%S GMT', gmt)
+    elif style.lower() == 'month':
+        time_str = time.strftime('%b %Y', gmt)
+    elif style.lower() == 'us-en':
+        time_str = time.strftime('%A, %B %d, %Y @ %h:%M %p', localtime)
+    elif style.lower() == 'uk-en':
+        time_str = time.strftime('%A, %d %B %Y @ %h:%M %p', localtime)
+    elif style.lower() == 'ctime' or style.lower() == 'c':
+        time_str = time.asctime(localtime)
+    elif style.lower() == 'localtime':
+        time_str = str(timestamp)
+    elif style.lower() == '2ch-sep93':
+        # Damn AOLers! Get offa mah lawn!
+        SEP_1_1993 = 746884800L # September 1, 1993 as a timestamp.
+        seconds_past = long(timestamp) - SEP_1_1993
+        days_past = seconds_past / 86400L # 86400s / 1d
+        time_str = '1993-09-%u' % (days_past + 1)
+        time_str = ' '.join([time_str, time.strftime('%H:%M', localtime)])
+    else:
+        # Let the style parameter default to a format string.
+        time_str = time.strftime(style, timestamp)
+
+    return time_str
+        
 def make_cookies(**kwargs):
     expires = kwargs.pop('expires', time.time() + 14 * 24 * 3600)
     autopath = kwargs.pop('autopath', None)
