@@ -52,11 +52,21 @@ def task_delpostwindow(environ, start_response):
     pass
 
 # Post Editing
-# TODO: Really, this should be called task_editwindow.
-# def task_edit(environ, start_response):
-#    pass
-
+# TODO: Really, this should be called task_editgateway.
 def task_edit(environ, start_response):
+    request = environ['werkzeug.request']
+    board = environ['waka.board']
+
+    params = ['num', 'admin_post']
+    kwargs = {}
+    for param in params:
+        kwargs[param] = request.values.get(param, '')
+
+    kwargs['post_num'] = kwargs.pop('num')
+
+    return board.edit_gateway_window(**kwargs)
+
+def task_editpostwindow(environ, start_response):
     request = environ['werkzeug.request']
     board = environ['waka.board']
 

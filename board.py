@@ -293,8 +293,11 @@ class Board(object):
                 .fetchone()
 
             if original_row == None:
-                raise WakaError('') # TODO
+                raise WakaError('Post not found') # TODO
                 
+            if password != original_row['password']:
+                raise WakaError('Wrong password for editing') # TODO
+
             parent = original_row['parent']
             filename = original_row['image']
             thumbnail = original_row['thumbnail']
@@ -725,6 +728,9 @@ class Board(object):
            re.match(self.options['THUMB_DIR'], full_thumb_path):
             os.unlink(full_thumb_path)
 
+    def edit_gateway_window(self, post_num, admin_post):
+        return Template('password', admin_post=admin_post, num=post_num)
+
     def edit_window(self, post_num, admin, password):
 
         session = model.Session()
@@ -733,7 +739,11 @@ class Board(object):
         row = session.execute(sql).fetchone()
 
         if row is None:
-            raise WakaError('') # TODO
+            raise WakaError('Post not found') # TODO
+
+        # Wrong password?
+        if password != row['password']:
+            raise WakaError('Wrong pass for editing') # TODO
 
         return Template('post_edit_template', loop=[row])
 
