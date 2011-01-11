@@ -271,7 +271,6 @@ class Board(object):
             timestamp = time.time()
 
         # Other automatically determined variables.
-        # TODO: Refactor this junk into a kwargs dict.
         trip = ''
         date = lastedit = ''
         post_ip = lastedit_ip = ''
@@ -537,6 +536,7 @@ class Board(object):
         else:
             db_update_function = self.table.insert
 
+        # TODO: Make a keyword dictionary for this?...
         db_update = db_update_function().values(parent=parent,
             timestamp=timestamp, lasthit=lasthit, ip=post_ip, date=date,
             name=name, trip=trip, email=email, subject=subject,
