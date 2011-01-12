@@ -226,7 +226,8 @@ class Board(object):
         posts_to_trim = len(thread) - config.POSTS_IN_ABBREVIATED_THREAD_PAGES
 
         # Filename for Last xx Posts Page.
-        abbreviated_filename = os.path.join(self.path, self.options['RES_DIR'], 
+        abbreviated_filename = os.path.join(self.path,
+            self.options['RES_DIR'], 
             "%s_abbr%s" % (threadid, config.PAGE_EXT))
 
         if config.ENABLE_ABBREVIATED_THREAD_PAGES and posts_to_trim > 1:
@@ -649,6 +650,21 @@ class Board(object):
         return util.make_http_forward(forward, config.ALTERNATE_REDIRECT)
         # end of this function. fuck yeah
 
+    def edit_gateway_window(self, post_num, admin_post):
+        return self.__gateway_window(post_num, 'edit', admin_post=admin_post)
+
+    def delete_gateway_window(self, post_num):
+        return self.__gateway_window(post_num, 'delete')
+
+    def __gateway_window(self, post_num, task, admin_post=None):
+        if not post_num.isdigit():
+            raise WakaError('Please enter post number.') # TODO
+
+        if task == 'edit': 
+            return Template('password', admin_post=admin_post, num=post_num)
+        else:
+            return Template('delpassword', num=post_num)
+
     def delete_stuff(self, posts, password, file_only, archiving,
                      from_window):
         for post in posts:
@@ -727,9 +743,6 @@ class Board(object):
         if os.path.exists(full_thumb_path) and \
            re.match(self.options['THUMB_DIR'], full_thumb_path):
             os.unlink(full_thumb_path)
-
-    def edit_gateway_window(self, post_num, admin_post):
-        return Template('password', admin_post=admin_post, num=post_num)
 
     def edit_window(self, post_num, admin, password):
 

@@ -34,6 +34,15 @@ def task_post(environ, start_response):
     return board.post_stuff(**kwargs)
 
 # Post Deletion
+def task_delpostwindow(environ, start_response):
+    request = environ['werkzeug.request']
+    board = environ['waka.board']
+
+    kwargs = {}
+    kwargs['post_num'] = request.values.get('num', '')
+
+    return board.delete_gateway_window(**kwargs)
+
 def task_delete(environ, start_response):
     request = environ['werkzeug.request']
     board = environ['waka.board']
@@ -47,9 +56,6 @@ def task_delete(environ, start_response):
     kwargs['posts'] = request.form.getlist('num')
 
     return board.delete_stuff(**kwargs)
-
-def task_delpostwindow(environ, start_response):
-    pass
 
 # Post Editing
 # TODO: Really, this should be called task_editgateway.
