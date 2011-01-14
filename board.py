@@ -7,6 +7,7 @@ from subprocess import Popen, PIPE
 from urllib import quote_plus, urlencode
 
 import misc
+import str_format
 import oekaki
 import util
 import model
@@ -456,8 +457,8 @@ class Board(object):
                 email = ''
 
         # clean up the inputs
-        email = misc.clean_string(misc.decode_string(email))
-        subject = misc.clean_string(misc.decode_string(subject))
+        email = str_format.clean_string(str_format.decode_string(email))
+        subject = str_format.clean_string(str_format.decode_string(subject))
 
         # fix up the email/link, if it is not a generic URI already.
         if email and not re.match("(?!^\w+:)|(?:\:\/\/)", email):
@@ -465,8 +466,8 @@ class Board(object):
 
         # format comment
         if not no_format:
-            comment = misc.format_comment(misc.clean_string(
-                misc.decode_string(comment)))
+            comment = str_format.format_comment(str_format.clean_string(
+                str_format.decode_string(comment)))
 
         # insert default values for empty fields
         if not parent:

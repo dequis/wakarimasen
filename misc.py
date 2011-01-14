@@ -10,6 +10,7 @@ from subprocess import Popen, PIPE
 import util
 import crypto  # part of wakarimasen
 import config, config_defaults
+import str_format
 from util import local
 
 MAX_UNICODE = 1114111
@@ -35,11 +36,11 @@ SALT_CLEAN_RE = re.compile('[^\.-z]')
 def process_tripcode(name, tripkey='!'):
     match = re.match(TRIP_RE % re.escape(tripkey), name)
     if not match:
-        return (clean_string(decode_string(name)), '')
+        return (str_format.clean_string(str_format.decode_string(name)), '')
 
     trip = ''
     namepart, marker, trippart = match.groups()
-    namepart = clean_string(decode_string(namepart))
+    namepart = str_format.clean_string(str_format.decode_string(namepart))
 
     # do we want secure trips, and is there one?
     if config.SECRET:
@@ -56,9 +57,9 @@ def process_tripcode(name, tripkey='!'):
                 return (namepart, trip)
 
     # 2ch trips are processed as Shift_JIS whenever possible
-    trippart = decode_string(trippart).encode("shiftjis", "xmlcharrefreplace")
+    trippart = str_format.decode_string(trippart).encode("shiftjis", "xmlcharrefreplace")
 
-    trippar = clean_string(trippart)
+    trippar = str_format.clean_string(trippart)
     salt = (trippart + "H..")[1:3]
     salt = SALT_CLEAN_RE.sub('.', salt)
     for old, new in map(None, ':;<=>?@[\\]^_`', 'ABCDEFGabcdef'):
@@ -126,7 +127,7 @@ def spam_engine(trap_fields, spam_files):
     spam_checker = compile_spam_checker(spam_files)
     fields = request.values.keys() 
     
-    fulltext = '\n'.join([decode_string(request.values[x])
+    fulltext = '\n'.join([str_format.decode_string(request.values[x])
                           for x in fields])
 
     if spam_checker(fulltext):
@@ -142,77 +143,6 @@ def check_captcha(*args):
 
 def proxy_check(ip):
     pass
-
-CONTROL_CHARS_RE = re.compile('[\x00-\x08\x0b\x0c\x0e-\x1f]')
-ENTITIES_CLEAN_RE = re.compile('&(#([0-9]+);|#x([0-9a-fA-F]+);|)')
-ENTITY_REPLACES = {
-    '<': '&lt;',
-    '>': '&gt;',
-    '"': '&quot;',
-    "'": '&#39;',
-    ',': '&44;', # "clean up commas for some reason I forgot"
-}
-
-def clean_string(string, cleanentities=False):
-    if cleanentities:
-        string = string.replace("&", "&amp;") # clean up &
-    else:
-        def repl(match):
-            g = match.groups()
-            if not g[0]:                    # change simple ampersands
-                return '&amp;'
-            ordinal = int(g[1] or int(g[2], 16))
-            if forbidden_unicode(ordinal):  # strip forbidden unicode chars
-                return ''
-            else:                           # and leave the rest as-is.
-                return '&' + g[0]
-
-        string = ENTITIES_CLEAN_RE.sub(repl, string)
-
-    # replace <, >, ", ' and "," with html entities
-    for old, new in ENTITY_REPLACES.iteritems():
-        string = string.replace(old, new)
-
-    # remove control chars
-    string = CONTROL_CHARS_RE.sub('', string)
-
-    return string
-
-ENTITIES_DECODE_RE = re.compile('(&#([0-9]*)([;&])|&#([x&])([0-9a-f]*)([;&]))', re.I)
-
-def decode_string(string, noentities=False):
-    '''Returns unicode string'''
-
-    string = string.decode(config.CHARSET, "ignore")
-
-    def repl(match):
-        g = match.groups()
-        ordinal = int(g[1] or int(g[4], 16))
-        if '&' in g: # nested entities, leave as-is.
-            return g[0]
-        elif ordinal in (35, 38): # don't convert & or #
-            return g[0]
-        elif forbidden_unicode(ordinal): # strip forbidden unicode chars
-            return ''
-        else: # convert all entities to unicode chars
-            return unichr(ordinal)
-
-    if not noentities:
-        string = ENTITIES_DECODE_RE.sub(repl, string)
-
-    # remove control chars
-    string = CONTROL_CHARS_RE.sub('', string)
-    return string
-
-def forbidden_unicode(num):
-    return ((len(str(num)) > 7) or               # too long numbers
-            (num > MAX_UNICODE) or               # outside unicode range
-            (num < 32) or                        # control chars
-            (num >= 0xd800 and num <= 0xdfff) or # surrogate code points
-            (num >= 0x202a and num <= 0x202e))   # text direction
-
-def format_comment(comment):
-    return comment
 
 def flood_check(ip, timestamp, comment, file, no_repeat, report_check):
     pass
@@ -254,11 +184,11 @@ def make_date(timestamp, style='futaba'):
         time_str = time.asctime(localtime)
     elif style.lower() == 'localtime':
         time_str = str(timestamp)
-    elif style.lower() == '2ch-sep93':
-        # Damn AOLers! Get offa mah lawn!
-        SEP_1_1993 = 746884800L # September 1, 1993 as a timestamp.
+    elif style.lower() == '2ch-sep93': # Damn AOLers! Get offa mah lawn!
+        # September 1, 1993 as a timestamp.
+        SEP_1_1993 = 746884800L 
         seconds_past = long(timestamp) - SEP_1_1993
-        days_past = seconds_past / 86400L # 86400s / 1d
+        days_past = seconds_past / 86400L
         time_str = '1993-09-%u' % (days_past + 1)
         time_str = ' '.join([time_str, time.strftime('%H:%M', localtime)])
     else:

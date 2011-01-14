@@ -10,7 +10,7 @@ import jinja2
 import config, config_defaults
 import strings
 from util import local
-import misc
+import str_format
 
 TEMPLATES_DIR = 'templates'
 CACHE_DIR = os.path.join(TEMPLATES_DIR, '.cache')
@@ -133,15 +133,11 @@ class Template(object):
 
     @filter
     def clean_string(self, string):
-        return misc.clean_string(string)
+        return str_format.clean_string(string)
 
     @filter
     def tag_killa(self, string):
-        # TODO: Replace tags with equivalent formatting.
-        string.replace('<br.*?>', '\n')
-        string.replace('</p>', '\n\n')
-        string.replace('<.*?>', '')
-        return string
+        return str_format.tag_killa(string)
     
     def get_stylesheets(self):
         # FIXME: don't hardcode the path
