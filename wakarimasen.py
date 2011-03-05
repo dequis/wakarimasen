@@ -19,7 +19,7 @@ def application(environ, start_response):
     local.environ = environ
     request = werkzeug.BaseRequest(environ)
 
-    task = request.values.get('task', request.values.get('action', None))
+    task = request.values.get('task', request.values.get('action', ''))
     boardname = request.values.get('board', '9001') # temp. default value
 
     environ['waka.task'] = task
