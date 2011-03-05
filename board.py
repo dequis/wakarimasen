@@ -359,6 +359,8 @@ class Board(object):
             if parent:
                 threadupdate = threadupdate.values(locked=True)
             lock = True
+        else:
+            lock = False
 
         if (sticky or lock) and parent:
             session.execute(threadupdate)
