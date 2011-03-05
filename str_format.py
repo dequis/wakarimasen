@@ -9,7 +9,7 @@ ENTITY_REPLACES = {
     '>': '&gt;',
     '"': '&quot;',
     "'": '&#39;',
-    ',': '&44;', # "clean up commas for some reason I forgot"
+    ',': '&#44;', # "clean up commas for some reason I forgot"
 }
 
 def clean_string(string, cleanentities=False):
