@@ -800,7 +800,6 @@ class Board(object):
         thumbnail = self.make_path(filebase + "s", dirc='THUMB_DIR',
                                    ext='jpg')
 
-        print "*" * 30, filename, thumbnail
 
         if not known:
             filename += self.options['MUNGE_UNKNOWN']
