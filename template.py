@@ -152,7 +152,8 @@ class Template(object):
                 default = 0
 
             yield {
-                'filename': file,
+                # FIXME: web root hardcoded here too
+                'filename': '/' + file,
                 'title': title,
                 'default': default,
             }
