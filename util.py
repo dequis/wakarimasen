@@ -10,6 +10,10 @@ from urllib import quote_plus, urlencode
 class DefaultLocal(threading.local):
     environ = {}
 
+    # shortcuts
+    board = property(lambda self: self.environ['waka.board'])
+    request = property(lambda self: self.environ['werkzeug.request'])
+
 local = DefaultLocal()
 
 class WakaError(Exception):

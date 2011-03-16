@@ -119,7 +119,7 @@ def spam_engine(trap_fields, spam_files):
     def spam_screen():
         raise util.WakaError(strings.SPAM)
 
-    request = local.environ['werkzeug.request']
+    request = local.request
     for field in trap_fields:
         if request.values.get('request', None) is not None:
             spam_screen()
