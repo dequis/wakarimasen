@@ -981,6 +981,14 @@ class Board(object):
         # TODO not implemented
         raise NotImplementedError()
 
+    def get_post(self, num):
+        '''Returns None or CompactPost'''
+        session = model.Session()
+        sql = self.table.select(self.table.c.num == num)
+        row = session.execute(sql).fetchone()
+        if row:
+            return model.CompactPost(row)
+
     def get_parent_post(self, parentid):
         session = model.Session()
         sql = self.table.select(and_(self.table.c.num == parentid,
