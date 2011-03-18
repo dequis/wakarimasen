@@ -21,9 +21,9 @@ from sqlalchemy.sql import case, or_, and_, select, func, null
 class Board(object):
     def __init__(self, board):
         if not os.path.exists(board):
-            raise WakaError('Board not found.')
+            raise BoardNotFound()
         if not os.path.exists(os.path.join(board, 'board_config.py')):
-            raise WakaError('Board configuration not found.')
+            raise BoardNotFound('Board configuration not found.')
         
         module = util.import2('board_config', board)
 
@@ -1009,3 +1009,7 @@ def get_page_count(threads, per_page):
 def abbreviate_html(html, max_lines, approx_len):
     # TODO: implement abbreviate_html
     return
+
+class BoardNotFound(WakaError):
+    def __init__(self, message='Board not found'):
+        WakaError.__init__(self, message)
