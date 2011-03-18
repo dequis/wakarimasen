@@ -21,9 +21,9 @@ from sqlalchemy.sql import case, or_, and_, select, func, null
 class Board(object):
     def __init__(self, board):
         if not os.path.exists(board):
-            raise WakaError('Board not found.')
+            raise BoardNotFound()
         if not os.path.exists(os.path.join(board, 'board_config.py')):
-            raise WakaError('Board configuration not found.')
+            raise BoardNotFound('Board configuration not found.')
         
         module = util.import2('board_config', board)
 
@@ -929,6 +929,7 @@ class Board(object):
 
     def get_reply_link(self, reply, parent='', abbreviated=False,
                        force_http=False):
+        # TODO merge this with make_path
         # Should abbr_ be appended to the filename?
         filename_str = ''
         if abbreviated:
@@ -937,11 +938,9 @@ class Board(object):
             filename_str = '%s%s'
 
         if parent:
-            return self.expand_url(os.path.join(self.path,
-                self.options['RES_DIR'],
-                filename_str % (parent, config.PAGE_EXT)))
+            reply = parent
 
-        return self.expand_url(os.path.join(self.path, self.options['RES_DIR'],
+        return self.expand_url(os.path.join(self.url, self.options['RES_DIR'],
                                filename_str % (reply, config.PAGE_EXT)))
 
     def _get_page_filename(self, page):
@@ -982,6 +981,14 @@ class Board(object):
         # TODO not implemented
         raise NotImplementedError()
 
+    def get_post(self, num):
+        '''Returns None or CompactPost'''
+        session = model.Session()
+        sql = self.table.select(self.table.c.num == num)
+        row = session.execute(sql).fetchone()
+        if row:
+            return model.CompactPost(row)
+
     def get_parent_post(self, parentid):
         session = model.Session()
         sql = self.table.select(and_(self.table.c.num == parentid,
@@ -1010,3 +1017,7 @@ def get_page_count(threads, per_page):
 def abbreviate_html(html, max_lines, approx_len):
     # TODO: implement abbreviate_html
     return
+
+class BoardNotFound(WakaError):
+    def __init__(self, message='Board not found'):
+        WakaError.__init__(self, message)
