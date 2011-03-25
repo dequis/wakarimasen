@@ -120,12 +120,12 @@ class Board(object):
 
         # check for and remove old pages
         for page in range(1, total):
-            while os.path.exists(self.get_page_filename(page)):
-                os.unlink(self.get_page_filename(page))
+            while os.path.exists(self.make_path(page=page)):
+                os.unlink(self.make_path(page=page))
 
     def build_cache_page(self, page, total, pagethreads):
         '''Build $rootpath/$board/$page.html'''
-        filename = self.get_page_filename(page)
+        filename = self.make_path(page=page)
         
         threads = []
         for postlist in pagethreads:
@@ -172,7 +172,7 @@ class Board(object):
         for i in xrange(total):
             p = {}
             p['page'] = i
-            p['filename'] = self.get_page_url(page)
+            p['filename'] = self.make_url(page=page)
             p['current'] = page == i
             pages.append(p)
         
@@ -945,20 +945,6 @@ class Board(object):
             return self.make_url(thread=reply, abbr=abbreviated,
                 force_http=force_http)
 
-    def _get_page_filename(self, page):
-        '''Returns either wakaba.html or (page).html'''
-        if page == 0:
-            return self.options['HTML_SELF']
-        else:
-            return "%s%s" % (page, config.PAGE_EXT)
-
-    def get_page_filename(self, page):
-        '''Returns the local path to a file in the board'''
-        return os.path.join(self.path, self._get_page_filename(page))
-
-    def get_page_url(self, page):
-        return self.expand_url(self._get_page_filename(page))
-        
     def expand_url(self, filename, force_http=False):
         # TODO: mark this as deprecated?
 
