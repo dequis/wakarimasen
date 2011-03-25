@@ -607,8 +607,7 @@ class Board(object):
 
         # set the name, email and password cookies
         misc.make_cookies(name=c_name, email=c_email, password=c_password,
-            #config.CHARSET,
-            path=self.options['COOKIE_PATH']) # yum !
+            autopath=self.options['COOKIE_PATH']) # yum !
 
         return post_num
 
