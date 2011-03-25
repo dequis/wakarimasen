@@ -39,10 +39,14 @@ class Board(object):
         self.name = board
 
     def make_path(self, file='', dir='', dirc=None, page=None, thread=None,
-                  ext=config.PAGE_EXT, abbr=False, url=False):
+                  ext=config.PAGE_EXT, abbr=False, hash=None, url=False,
+                  force_http=False):
         '''Builds an url or a path'''
         if url:
             base = self.url
+            if force_http:
+                # TODO: have a SERVER_NAME entry in config
+                base = 'http://' + local.environ['SERVER_NAME'] + base
         else:
             base = self.path
 
@@ -59,15 +63,20 @@ class Board(object):
         if thread is not None:
             dir = self.options['RES_DIR']
             file = str(thread)
+
+        if hash is not None:
+            hash = '#%s' % hash
+        else:
+            hash = ''
         
         if file:
             if abbr:
                 file += '_abbr'
             if ext is not None:
                 file += '.' + ext.lstrip(".")
-            return os.path.join(base, dir, file)
+            return os.path.join(base, dir, file) + hash
         else:
-            return os.path.join(base, dir)
+            return os.path.join(base, dir) + hash
 
     def make_url(self, **kwargs):
         '''Alias for make_path to build urls'''
