@@ -959,9 +959,8 @@ class Board(object):
     def get_page_url(self, page):
         return self.expand_url(self._get_page_filename(page))
         
-    def expand_url(self, filename, force_http=False, environ={}):
-        '''When force_http is true, the environ parameter is required
-        TODO: have a SERVER_NAME entry in config'''
+    def expand_url(self, filename, force_http=False):
+        # TODO: mark this as deprecated?
 
         # Is the filename already expanded?
         # The generic regex tests for http://, https://, ftp://, etc.
@@ -971,7 +970,7 @@ class Board(object):
         self_path = self.url
 
         if force_http:
-            self_path = 'http://' + environ['SERVER_NAME'] + self_path
+            self_path = 'http://' + local.environ['SERVER_NAME'] + self_path
 
         return self_path + quote_plus(filename.encode('utf-8'), '/')
 
