@@ -938,19 +938,12 @@ class Board(object):
 
     def get_reply_link(self, reply, parent='', abbreviated=False,
                        force_http=False):
-        # TODO merge this with make_path
-        # Should abbr_ be appended to the filename?
-        filename_str = ''
-        if abbreviated:
-            filename_str = '%sabbr_%s'
-        else:
-            filename_str = '%s%s'
-
         if parent:
-            reply = parent
-
-        return self.expand_url(os.path.join(self.url, self.options['RES_DIR'],
-                               filename_str % (reply, config.PAGE_EXT)))
+            return self.make_url(thread=parent, hash=reply, abbr=abbreviated,
+                force_http=force_http)
+        else:
+            return self.make_url(thread=reply, abbr=abbreviated,
+                force_http=force_http)
 
     def _get_page_filename(self, page):
         '''Returns either wakaba.html or (page).html'''
