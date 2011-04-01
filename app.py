@@ -44,16 +44,27 @@ def task_delpostwindow(environ, start_response):
     return board.delete_gateway_window(**kwargs)
 
 def task_delete(environ, start_response):
+    # TODO review compatibility with wakaba or refactor
     request = environ['werkzeug.request']
     board = environ['waka.board']
 
-    kwargs = {}
-    params = ['password', 'file_only', 'archiving', 'from_window']
-    for param in params:
-        kwargs[param] = request.form.get(param, '')
+    singledelete = (request.values.get("singledelete", '') == 'OK')
 
-    # Parse posts string into array.
-    kwargs['posts'] = request.form.getlist('num')
+    kwargs = {}
+    # TODO what are the last two parameters?
+    params = ['password', 'file_only', 'archiving', 'from_window']
+    if singledelete:
+        params_single = ['postpassword', 'postfileonly', 'archiving', 'from_window']
+        for param, single in map(None, params, params_single):
+            kwargs[param] = request.form.get(single, '')
+
+        kwargs['posts'] = [request.values.get('deletepost', '')]
+    else:
+        for param in params:
+            kwargs[param] = request.form.get(param, '')
+
+        # Parse posts string into array.
+        kwargs['posts'] = request.form.getlist('num')
 
     return board.delete_stuff(**kwargs)
 
