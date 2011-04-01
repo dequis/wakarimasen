@@ -1,0 +1,19 @@
+Wakarimasen - A wakaba-compatible python imageboard
+
+Wakarimasen is still experimental software - use it at your own risk and
+if you know how to fix stuff when it breaks.
+
+Installation instructions are available in the INSTALL file
+
+FAQ:
+    Q. What does "wakarimasen" mean?
+    A. I don't know
+
+    Q. No, seriously, what is it?
+    A. *doesn't want to reply*. Huh. It's imageboard software written in
+       python, based in a translation and compatible with wakaba+desuchan
+
+    Q. What's wrong with wakaba+desuchan?
+    A. There seems to be a memory leak, and restarting the process doesn't
+       always work (they turn into zombie process sometimes, or it just
+       ignores the term signal and never quits)

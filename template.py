@@ -84,12 +84,12 @@ class Template(object):
 
     @filter
     def expand_url(self, filename, force_http=False):
-        return self.board.expand_url(filename, force_http, self.environ)
+        return self.board.expand_url(filename, force_http)
 
     @filter
     def expand_image_url(self, filename):
         # TODO: load balancing support?
-	    return self.expand_url(quote_plus(filename, '/'))
+	return self.expand_url(quote_plus(filename, '/'))
 
     @filter
     def root_path_to_filename(self, filename):
@@ -121,15 +121,8 @@ class Template(object):
     @filter
     def get_reply_link(self, reply, parent, abbreviated=False,
                        force_http=False):
-        path_tpl = (self.board.options['RES_DIR'] + "%s" +
-                    ("_abbr" if abbreviated else "") +
-                    config.PAGE_EXT + "%s")
-        if parent:
-            path = path_tpl % (parent, "#" + reply)
-        else:
-            path = path_tpl % (reply, '')
-
-        return self.board.expand_url(path, force_http, self.environ)
+        return self.board.get_reply_link(reply, parent, abbreviated,
+            force_http)
 
     @filter
     def clean_string(self, string):

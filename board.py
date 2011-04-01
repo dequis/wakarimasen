@@ -39,10 +39,14 @@ class Board(object):
         self.name = board
 
     def make_path(self, file='', dir='', dirc=None, page=None, thread=None,
-                  ext=config.PAGE_EXT, abbr=False, url=False):
+                  ext=config.PAGE_EXT, abbr=False, hash=None, url=False,
+                  force_http=False):
         '''Builds an url or a path'''
         if url:
             base = self.url
+            if force_http:
+                # TODO: have a SERVER_NAME entry in config
+                base = 'http://' + local.environ['SERVER_NAME'] + base
         else:
             base = self.path
 
@@ -59,15 +63,20 @@ class Board(object):
         if thread is not None:
             dir = self.options['RES_DIR']
             file = str(thread)
+
+        if hash is not None:
+            hash = '#%s' % hash
+        else:
+            hash = ''
         
         if file:
             if abbr:
                 file += '_abbr'
             if ext is not None:
                 file += '.' + ext.lstrip(".")
-            return os.path.join(base, dir, file)
+            return os.path.join(base, dir, file) + hash
         else:
-            return os.path.join(base, dir)
+            return os.path.join(base, dir) + hash
 
     def make_url(self, **kwargs):
         '''Alias for make_path to build urls'''
@@ -111,12 +120,12 @@ class Board(object):
 
         # check for and remove old pages
         for page in range(1, total):
-            while os.path.exists(self.get_page_filename(page)):
-                os.unlink(self.get_page_filename(page))
+            while os.path.exists(self.make_path(page=page)):
+                os.unlink(self.make_path(page=page))
 
     def build_cache_page(self, page, total, pagethreads):
         '''Build $rootpath/$board/$page.html'''
-        filename = self.get_page_filename(page)
+        filename = self.make_path(page=page)
         
         threads = []
         for postlist in pagethreads:
@@ -163,7 +172,7 @@ class Board(object):
         for i in xrange(total):
             p = {}
             p['page'] = i
-            p['filename'] = self.get_page_url(page)
+            p['filename'] = self.make_url(page=page)
             p['current'] = page == i
             pages.append(p)
         
@@ -598,8 +607,7 @@ class Board(object):
 
         # set the name, email and password cookies
         misc.make_cookies(name=c_name, email=c_email, password=c_password,
-            #config.CHARSET,
-            path=self.options['COOKIE_PATH']) # yum !
+            autopath=self.options['COOKIE_PATH']) # yum !
 
         return post_num
 
@@ -718,7 +726,8 @@ class Board(object):
             images_to_baleet = session.execute(select_thread_images)
             
             for i in images_to_baleet:
-                self.delete_file(i.image, i.thumbnail)
+                if i.image and i.thumbnail:
+                    self.delete_file(i.image, i.thumbnail)
 
             delete_query = table.delete(or_(
                 table.c.num == post,
@@ -929,37 +938,15 @@ class Board(object):
 
     def get_reply_link(self, reply, parent='', abbreviated=False,
                        force_http=False):
-        # TODO merge this with make_path
-        # Should abbr_ be appended to the filename?
-        filename_str = ''
-        if abbreviated:
-            filename_str = '%sabbr_%s'
-        else:
-            filename_str = '%s%s'
-
         if parent:
-            reply = parent
-
-        return self.expand_url(os.path.join(self.url, self.options['RES_DIR'],
-                               filename_str % (reply, config.PAGE_EXT)))
-
-    def _get_page_filename(self, page):
-        '''Returns either wakaba.html or (page).html'''
-        if page == 0:
-            return self.options['HTML_SELF']
+            return self.make_url(thread=parent, hash=reply, abbr=abbreviated,
+                force_http=force_http)
         else:
-            return "%s%s" % (page, config.PAGE_EXT)
+            return self.make_url(thread=reply, abbr=abbreviated,
+                force_http=force_http)
 
-    def get_page_filename(self, page):
-        '''Returns the local path to a file in the board'''
-        return os.path.join(self.path, self._get_page_filename(page))
-
-    def get_page_url(self, page):
-        return self.expand_url(self._get_page_filename(page))
-        
-    def expand_url(self, filename, force_http=False, environ={}):
-        '''When force_http is true, the environ parameter is required
-        TODO: have a SERVER_NAME entry in config'''
+    def expand_url(self, filename, force_http=False):
+        # TODO: mark this as deprecated?
 
         # Is the filename already expanded?
         # The generic regex tests for http://, https://, ftp://, etc.
@@ -969,7 +956,7 @@ class Board(object):
         self_path = self.url
 
         if force_http:
-            self_path = 'http://' + environ['SERVER_NAME'] + self_path
+            self_path = 'http://' + local.environ['SERVER_NAME'] + self_path
 
         return self_path + quote_plus(filename.encode('utf-8'), '/')
 
