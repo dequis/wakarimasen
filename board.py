@@ -726,7 +726,8 @@ class Board(object):
             images_to_baleet = session.execute(select_thread_images)
             
             for i in images_to_baleet:
-                self.delete_file(i.image, i.thumbnail)
+                if i.image and i.thumbnail:
+                    self.delete_file(i.image, i.thumbnail)
 
             delete_query = table.delete(or_(
                 table.c.num == post,
