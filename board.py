@@ -172,7 +172,7 @@ class Board(object):
         for i in xrange(total):
             p = {}
             p['page'] = i
-            p['filename'] = self.make_url(page=page)
+            p['filename'] = self.make_url(page=i)
             p['current'] = page == i
             pages.append(p)
         
