@@ -119,9 +119,10 @@ class Board(object):
             self.build_cache_page(page, total, pagethreads)
 
         # check for and remove old pages
-        for page in range(1, total):
-            while os.path.exists(self.make_path(page=page)):
-                os.unlink(self.make_path(page=page))
+        page = total
+        while os.path.exists(self.make_path(page=page)):
+            os.unlink(self.make_path(page=page))
+            page += 1
 
     def build_cache_page(self, page, total, pagethreads):
         '''Build $rootpath/$board/$page.html'''
