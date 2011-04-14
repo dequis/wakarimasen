@@ -221,7 +221,7 @@ def format_comment(comment):
 URL_PATTERN = re.compile(
     '(https?://[^\s<>"]*?)((?:\s|<|>|"|\.|\)|\]|!|\?|,|&#44;|&quot;)*'
     '(?:[\s<>"]|$))', re.I | re.S)
-URL_SUB = r'\<a href="\1"\>\1\</a\>\2'
+URL_SUB = r'<a href="\1">\1</a>\2'
 
 GREENTEXT_PATTERN = re.compile("^(&gt;[^_]*)$")
 GREENTEXT_SUB = r'<span class="unkfunc">\1</span>'
