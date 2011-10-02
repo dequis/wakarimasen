@@ -414,6 +414,7 @@ class Board(object):
             tn_width = original_row['tn_width']
             tn_height = original_row['tn_height']
             timestamp = original_row['timestamp']
+            date = original_row['date']
             post_ip = original_row['ip']
             size = original_row['size']
             lasthit = original_row['lasthit']
