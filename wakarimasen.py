@@ -24,6 +24,7 @@ def application(environ, start_response):
 
     environ['waka.task'] = task
     environ['waka.boardname'] = boardname
+    # Indicate "pop-up window" UI style.
     environ['waka.fromwindow'] = False
     environ['waka.rootpath'] = os.path.join('/',
                           re.sub('[^/]+$', '',
@@ -49,6 +50,7 @@ def cleanup(environ, start_response):
 application = util.cleanup(application, cleanup)
 
 def main():
+    app.init_database()
     server = sys.argv[1:] and sys.argv[1] or 'fcgi'
     if server == 'fcgi':
         fcgi.WSGIServer(application).run()
