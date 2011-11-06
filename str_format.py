@@ -119,13 +119,13 @@ for (key, value) in BBCODE_TABLE.iteritems():
 def format_comment(comment):
     '''Format an already decoded string following the markup translation
     dictionary.'''
-    for (input_code, output_html) in HTML_TRANSL.iteritems():
-        comment = input_code.sub(output_html, comment)
+    #for (input_code, output_html) in HTML_TRANSL.iteritems():
+    #    comment = input_code.sub(output_html, comment)
 
     return comment
 
 def tag_killa(comment):
-    for (input_html, output_code) in CODE_TRANSL.iteritems():
-        comment = input_html.sub(output_code, comment)
+    #for (input_html, output_code) in CODE_TRANSL.iteritems():
+    #    comment = input_html.sub(output_code, comment)
 
-    return comment
+    return decode_string(comment)
