@@ -196,8 +196,8 @@ def make_date(timestamp, style='futaba'):
     module. The format used can also be inputted directly into the style
     parameter.'''
 
-    localtime = time.localtime(timestamp)
-    gmt = time.gmtime(timestamp - config.TIME_OFFSET)
+    localtime = time.localtime(timestamp + config.TIME_OFFSET)
+    gmt = time.gmtime(timestamp)
 
     time_str = ''
 
