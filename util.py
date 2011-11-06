@@ -5,7 +5,6 @@ import Cookie
 import threading
 import mimetypes
 import functools
-from urllib import quote_plus
 
 class DefaultLocal(threading.local):
     environ = {}
@@ -126,15 +125,17 @@ def cleanup(application, cleanup_function):
     return wrapper
 
 def make_http_forward(location, alternate_method=False):
-    '''Pseudo-application to redirect to another location'''
+    '''Pseudo-application to redirect to another location. The location
+    parameter is assumed to be properly decoded and escaped.'''
+
     if alternate_method:
-        return ['<html><head>'
+        return [str('<html><head>'
                 '<meta http-equiv="refresh" content="0; url=%s" />'
                 '<script type="text/javascript">document.location="%s";</script>'
-                '</head><body><a href="%s">%s</a></body></html>' % 
-                ((url_plus(location), ) * 4), '/']
+                '</head><body><a href="%s">%s</a></body></html>' %\
+                ((location, ) * 4))]
     else:
         local.environ['waka.status'] = '303 Go West'
-        local.environ['waka.headers']['Location'] = quote_plus(location, '/')
-        return [quote_plus('<html><body><a href="%s">%s</a></body></html>' %
-                ((location, ) * 2), '/')]
+        local.environ['waka.headers']['Location'] = location
+        return [str('<html><body><a href="%s">%s</a></body></html>' %\
+                ((location, ) * 2))]
