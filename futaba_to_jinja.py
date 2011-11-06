@@ -90,8 +90,8 @@ KNOWN_LOOPS = {
     'pages': ('page', ['page', 'filename', 'current']),
     'loop': ('post', _POST_TABLE),
     'boards_select': ('board', ['board_entry']),
-    'reportedposts': ('rpost', ['reporter', 'offender', 'postnum',
-                                'comment', 'date', 'resolved']),
+    'reportedposts': ('rpost', ['reporter', 'offender', 'postnum', 'comment',
+                                'date', 'resolved']),
     'users': ('user', ['username', 'account', 'password', 'reign', 'disabled']),
     'boards': ('board', ['board_entry', 'underpower']),
     'staff': ('account', ['username']),
@@ -107,6 +107,8 @@ KNOWN_LOOPS = {
                           'date', 'divider', 'rowtype']),
     'errors': ('error', ['error']),
     'items': ('post', _POST_TABLE + ['mime_type']),
+    'reports' : ('report', ['reporter', 'offender', 'postnum', 'comment',
+                            'date', 'resolved', 'board_name'])
 }
 
 RENAME = {
@@ -123,6 +125,7 @@ RENAME = {
     'include/boards/announcements_global.html': 'announcements_global.html',
     'include/announcements.html': 'announcements.html',
     '../include/boards/rules.html': 'rules.html',
+    'wakaba.pl': "environ['SCRIPT_NAME']"
 }
 
 REMOVE_BACKSLASHES_RE = re.compile(r'\\([^\\])')
