@@ -9,6 +9,7 @@ import jinja2
 
 import config, config_defaults
 import strings
+import misc
 from util import local
 import str_format
 
@@ -77,6 +78,9 @@ class Template(object):
                 rc.write(contents)
 
         os.chmod(filename, 0644)
+    
+    def update_parameters(self, **kwargs):
+        self.vars.update(kwargs)
 
     @filter
     def reverse_format(self, value, tplstring):
@@ -109,15 +113,15 @@ class Template(object):
 
     @function
     def get_script_name(self):
-	return self.environ['SCRIPT_NAME']
+        return self.environ['SCRIPT_NAME']
 
     @function
     def get_secure_script_name(self):
         if config.USE_SECURE_ADMIN:
-            return 'https://' + self.environ['SERVER_NAME'] + \
-            self.environ['SCRIPT_NAME']
-	return self.environ['SCRIPT_NAME']
-
+            return 'https://' + self.environ['SERVER_NAME'] \
+                + self.environ['SCRIPT_NAME']
+        return self.environ['SCRIPT_NAME']
+        
     @filter
     def get_reply_link(self, reply, parent, abbreviated=False,
                        force_http=False):
@@ -131,6 +135,16 @@ class Template(object):
     @filter
     def tag_killa(self, string):
         return str_format.tag_killa(string)
+
+    @filter
+    def dec_to_dot(self, numip):
+        if not numip:
+            return ''
+        return misc.dec_to_dot(numip)
+
+    @filter
+    def get_action_name(self, action, debug=0):
+        return misc.get_action_name(action, debug=debug)
     
     def get_stylesheets(self):
         # FIXME: don't hardcode the path
