@@ -28,21 +28,18 @@ UNSAVED_LOGIN_EXPIRE = 3600
 class LoginData(object):
     '''Class for interfacing with prefetched login data.'''
 
-    def ___init___(self, user, addr):
+    def __init__(self, user, addr):
         self.addr = addr
-        self.crypt = misc.hide_critical_data\
-                       (','.join((user.password, remote)), config.SECRET)
+        self.crypt = crypt_pass(user.password, addr)
         self.username = user.username
-        self.cookie_str = ','.join((self.username, self.crypt))
+        self.cookie = ','.join((self.username, self.crypt))
 
     def make_cookie(self, save_login=False):
-        misc.make_cookies(admin=self._cstring)
-
         if save_login:
-            misc.make_cookies(wakaadminsave='1', wakaadmin=self.crypt,
+            misc.make_cookies(wakaadminsave='1', wakaadmin=self.cookie,
                               expires=time.time()+SAVED_LOGIN_EXPIRE)
         else:
-            misc.make_cookies(wakaadminsave='0', wakaadmin=self.crypt,
+            misc.make_cookies(wakaadminsave='0', wakaadmin=self.cookie,
                               expires=time.time()+UNSAVED_LOGIN_EXPIRE)
 
 # Class for representing staff
@@ -50,7 +47,7 @@ class StaffMember(object):
     '''A staff object for acquiring and updating personnel account
     information. Use the class factory method to initialize:
     
-    >> StaffMember.get('SirDerpDeeDoo')
+    >>> StaffMember.get('SirDerpDeeDoo')
     
     To create new staff accounts, use the add_staff() function instead.'''
 
@@ -85,7 +82,8 @@ class StaffMember(object):
     @password.setter
     def password(self, new):
         table = self._table
-        # TODO: Sanity checks
+        if len(new) < 8:
+            raise WakaError('Passwords should be at least eight characters!')
 
         self._update_db(password=new)
         self._password = new
@@ -123,11 +121,16 @@ class StaffMember(object):
 
     @disabled.setter
     def disabled(self, disable):
-        self._disabled = disable
-        self._update_db(disabled=int(disable))
+        self._disabled = bool(disable)
+        if disable:
+            disable = 1
+        else:
+            disable = 0
+
+        self._update_db(disabled=disable)
 
     def login_host(self, ip):
-        login_data = LoginData(self.username, ip)
+        login_data = LoginData(self, ip)
         self._login_data = login_data
         return login_data
 
@@ -139,7 +142,8 @@ class StaffMember(object):
         table = self._table
 
         if len(self._update_dict) > 0:
-            db_update = table.update().where(self.username == username)\
+            db_update = table.update()\
+                             .where(table.c.username == self.username)\
                              .values(**self._update_dict)
             session.execute(db_update)
 
@@ -153,6 +157,24 @@ class StaffMember(object):
         return staff_obj
 
 def add_staff(username, pt_password, account, reign):
+    if not username:
+        raise WakaError('A username is necessary.')
+    if not pt_password:
+        raise WakaError('A password is necessary.')
+    if len(pt_password) < 8:
+        raise WakaError('Passwords should be eight characters minimum.')
+    if len(reign) == 0 and account == staff.MODERATOR:
+        raise WakaError('Board reign not specified for moderator account.')
+
+    # Check whether the user exists already.
+    try:
+        StaffMember.get(username)
+    except LoginError:
+        # User not found. Good.
+        pass
+    else:
+        raise WakaError('Username exists.')
+
     session = model.Session()
     table = model.account
     password = misc.hide_critical_data(pt_password, config.SECRET)
@@ -174,8 +196,8 @@ def del_staff(username):
 #    except AttributeError:
 #        pass
 
-def edit_staff(mpass, username, clear_pass=None, new_class=None,
-               reign=None):
+def edit_staff(username, clear_pass=None, new_class=None, reign=None,
+               disable=None):
 
     staff_obj = StaffMember.get(username)
     
@@ -189,70 +211,24 @@ def edit_staff(mpass, username, clear_pass=None, new_class=None,
     if reign:
         staff_obj.reign = reign
 
+    if disable is not None:
+        staff_obj.disabled = disable
+
     staff_obj.flush_db()
 
-def staff_exist():
+def staff_exists():
     session = model.Session()
     table = model.account
     sql = select([func.count()], table)
     row = session.execute(sql).fetchone()
 
-    return row != 0
-
-def clear_login_cookies():
-    misc.make_cookies(wakaadmin='', wakaadminsave='0', expires=0)
-
-def do_login(username=None, password=None, save_login=False,
-             admin_cookie=None, nexttask='mpanel'):
-
-    bad_pass = False
-    staff_entry = None
-
-    if not staff_exist():
-        return staff_interface.make_first_time_setup_gateway()
-    elif username and password:
-        # Login via login form entry.
-        try:
-            staff_entry = StaffMember.get(username)
-        except LoginError:
-            # Bad username.
-            bad_pass = True
-        else:
-            crypt_pass = misc.hide_critical_data(staff_entry.password,
-                                                 config.SECRET)
-            if crypt_pass == staff_entry.password:
-                staff_entry.login_host(remote)
-            else:
-                bad_pass = True
-    elif admin_cookie:
-        # Attempt automatic login.
-        try:
-            staff_entry = check_password(admin_cookie)
-        except LoginError:
-            clear_login_cookies()
-            bad_pass = True
-    else:
-        # No login credentials given.
-        bad_pass = True
-
-    if bad_pass:
-        return staff_interface.make_login_panel()
-    else:
-        login = staff_entry.login_data
-        login.make_cookie(save_login=save_login)
-        return staff_interface.make_admin_panel(login.cookie, nexttask)
-
-def do_logout(admin):
-    # Clear login cache.
-    try:
-        user = check_password(admin)
-        user.logout_user()
-    except LoginError:
-        pass
-
-    clear_login_cookies()
+    return row[0] != 0
 
 def check_password(cookie_str, editing=None):
+    if not cookie_str or not cookie_str.count(','):
+        raise LoginError('Cookie data missing.')
+
+    remote = local.environ['REMOTE_ADDR']
     (username, crypt) = cookie_str.split(',')
     staff_entry = StaffMember.get(username)
     cache = staff_entry.login_data
@@ -260,17 +236,18 @@ def check_password(cookie_str, editing=None):
     if cache and cache.addr == remote:
         # The host is already logged in.
         pass
-    elif crypt != misc.hide_critical_data(','.join([staff_entry.password,
-                                                    remote]), config.SECRET):
-        raise LoginError(S_WRONGPASS)
+    elif crypt != crypt_pass(staff_entry.password, remote):
+        raise LoginError(strings.S_WRONGPASS)
+    elif staff_entry.disabled:
+        raise LoginError('You have been disabled.')
     else:
         # NOTE: This will overwrite the current network address login.
         staff_entry.login_host(remote)
+        staff_entry.login_data.make_cookie()
 
     return staff_entry
 
-def crypt_pass(cleartext):
-    remote = local.environ['REMOTE_ADDR']
+def crypt_pass(cleartext, remote):
     return misc.hide_critical_data(','.join((cleartext, remote)),
                                             config.SECRET)
 
