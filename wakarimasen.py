@@ -10,6 +10,7 @@ import werkzeug
 import app
 import util
 import model
+import interboard
 from board import Board
 from util import WakaError, local
 
@@ -35,6 +36,7 @@ def application(environ, start_response):
     function = getattr(app, 'task_%s' % task.lower(), app.no_task)
 
     try:
+        interboard.remove_old_bans()
         return function(environ, start_response)
     except WakaError, e:
         return app.fffffff(environ, start_response, e)
