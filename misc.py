@@ -1,4 +1,5 @@
 # misc.py: Temporary place for new functions
+import sys
 import os
 import re
 import time
@@ -15,8 +16,54 @@ from util import local
 
 MAX_UNICODE = 1114111
 
-def check_password(admin, task_redirect, editing=None):
-    raise NotImplementedError()
+# Dictionary of what action keywords mean. It's like a real dictionary!
+ACTION_TRANSLATION \
+    = {'ipban' : {'name' : 'IP Ban', 'content' : 'Affected IP Address'},
+       'ipban_edit'
+            : {'name' : 'IP Ban Revision', 'content' : 'Revised Data'},
+       'ipban_remove'
+            : {'name' : 'IP Ban Removal',
+                'content' : 'Unbanned IP Address'},
+       'wordban' : {'name' : 'Word Ban', 'content' : 'Banned Phrase'},
+       'wordban_edit' : {'name' : 'Word Ban Revision',
+                           'content' : 'Revised Data'},
+       'wordban_remove' : {'name' : 'Word Ban Removal',
+                             'content' : 'Unbanned Phrase'},
+       'whitelist' : {'name' : 'IP Whitelist',
+                        'content' : 'Whitelisted IP Address'},
+       'whitelist_edit' : {'name' : 'IP Whitelist Revision',
+                             'content' : 'Revised Data'},
+       'whitelist_remove' : {'name' : 'IP Whitelist Removal',
+                                        'content' : 'Removed IP Address'},
+       'trust' : {'name' : 'Captcha Exemption',
+                    'content' : 'Exempted Tripcode'},
+       'trust_edit' : {'name' : 'Revised Captcha Exemption',
+                         'content' : 'Revised Data'},
+       'trust_remove' : {'name' : 'Removed Captcha Exemption',
+                           'content' : 'Removed Tripcode'},
+       'admin_post' : {'name' : 'Manager Post', 'content' : 'Post'},
+       'admin_edit' : {'name' : 'Administrative Edit',
+                         'content' : 'Post'},
+       'admin_delete' : {'name' : 'Administrative Deletion',
+                           'content' : 'Post'},
+       'thread_sticky' : {'name' : 'Thread Sticky',
+                            'content' : 'Thread Parent'},
+       'thread_unsticky' : {'name' : 'Thread Unsticky',
+                              'content': 'Thread Parent'},
+       'thread_lock' : {'name' : 'Thread Lock',
+                          'content' : 'Thread Parent'},
+       'thread_unlock' : {'name' : 'Thread Unlock',
+                            'content' : 'Thread Parent'},
+       'report_resolve' : {'name' : 'Report Resolution',
+                             'content' : 'Resolved Post'},
+       'backup_restore' : {'name' : 'Restoration From Trash Bin',
+                             'content' : 'Restored Post'},
+       'backup_remove' : {'name' : 'Deletion From Trash Bin',
+                            'content' : 'Deleted Post'},
+       'thread_move' : {'name' : 'Thread Move',
+                          'content' : 'Source and Destination'},
+       'script_ban_forgive' : {'name' : 'Script Access Restoration',
+                                 'content' : 'IP Address'}}
 
 def dot_to_dec(ip):
     parts = [int(x) for x in ip.split(".")]
@@ -86,9 +133,6 @@ def hide_critical_data(string, key):
         i += 15
     return ret
 
-def ban_check(numip, name, subject, comment):
-    pass
-
 def compile_spam_checker(spam_files):
     # TODO caching this by timestamps would be nice
     regexps = []
@@ -142,9 +186,6 @@ def check_captcha(*args):
     pass
 
 def proxy_check(ip):
-    pass
-
-def flood_check(ip, timestamp, comment, file, no_repeat, report_check):
     pass
 
 def make_date(timestamp, style='futaba'):
@@ -207,7 +248,7 @@ def make_cookies(**kwargs):
     environ = local.environ
 
     if not path:
-        scriptname = local.environ['SCRIPT_NAME']
+        scriptname = environ['SCRIPT_NAME']
         if autopath == 'current':
             path = os.path.dirname(scriptname) + "/"
         elif autopath == 'parent':
@@ -222,7 +263,12 @@ def make_cookies(**kwargs):
         cookies[key]['path'] = path
 
 def get_secure_script_name():
-    return 'wakaba.pl'
+    environ = local.environ
+
+    if config.USE_SECURE_ADMIN:
+        return 'https://' + environ['SERVER_NAME'] \
+            + 'wakarimasen.py' # TODO: Un-hardcode this w/ os module.
+    return 'wakarimasen.py'
 
 def get_filestorage_size(filestorage):
     filestorage.stream.seek(0, 2)
@@ -302,6 +348,20 @@ def analyze_gif(file):
     if magic not in GIF_MAGICS:
         return
     return (width, height)
+
+def get_action_name(action_to_view, debug=0):
+    try:
+        name = ACTION_TRANSLATION[action_to_view]['name']
+        content = ACTION_TRANSLATION[action_to_view]['content'] 
+    except KeyError:
+        raise WakaError('Missing action key or unknown action key.')
+
+    if not debug:
+        return name
+    elif debug == 1:
+        return (name, content)
+    else:
+        return content
 
 def make_thumbnail(filename, thumbnail, width, height, quality, convert):
     magickname = filename
