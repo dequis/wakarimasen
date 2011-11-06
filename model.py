@@ -64,10 +64,10 @@ def board(name):
         Column("tn_height", Text),                      # Thumbnail height in pixels
         Column("lastedit", Text),                       # ADDED - Date of previous edit, as a string 
         Column("lastedit_ip", Text),                    # ADDED - Previous editor of the post, if any
-        Column("admin_post", Boolean),                  # ADDED - Admin post?
+        Column("admin_post", Text),                  # ADDED - Admin post?
         # TODO: Probably should make this Boolean. Keeping as int for now to maintain compatibility with sorting functions.
         Column("stickied", Integer),                    # ADDED - Stickied?
-        Column("locked", Boolean)                       # ADDED - Locked?
+        Column("locked", Text)                          # ADDED - Locked?
     )
 
     table.create(bind=engine, checkfirst=True)
@@ -172,3 +172,44 @@ passprompt = Table(config.SQL_PASSPROMPT_TABLE, metadata,
     Column("timestamp", Integer),
     Column("passfail", Integer) 
 )
+
+class Page(object):
+    '''Pagination class: Given an SQL query and pagination information,
+    produce only the relevant rows. N.B.: The board.Board class uses
+    different pagination logic.'''
+
+    def __init__(self, query, page_num, per_page):
+        assert str(page_num).isdigit() and page_num > 0,\
+            'Invalid page number.'
+        assert str(per_page).isdigit() and per_page > 0,\
+            'Invalid page entry count.'
+
+        self.num = page_num
+        self.per_page = per_page
+        self.offset = (page_num - 1) * per_page
+
+        session = Session()
+
+        row_proxies = session.execute(query.limit(per_page)\
+                                           .offset(self.offset)).fetchall()
+
+        self.rows = [dict(row.items()) for row in row_proxies]
+
+        self.total_entries = len(self.rows)
+        self.total_pages = (self.total_entries + per_page - 1) / per_page
+        if self.total_pages == 0:
+            self.total_pages = 1
+
+        if self.total_pages < self.num:
+            self.num = self.total_pages
+
+        # Quick fix for 'board' -> 'board_name' column renaming.
+        if self.rows:
+            ren_board = 'board' in self.rows[0].keys()
+
+        row_ctr = 1
+        for row in self.rows:
+            row_ctr ^= 0x3
+            row['rowtype'] = row_ctr
+            if ren_board:
+                row['board_name'] = row['board']
