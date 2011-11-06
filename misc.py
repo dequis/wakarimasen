@@ -70,7 +70,7 @@ def dot_to_dec(ip):
     return struct.unpack('>L', struct.pack('>4B', *parts))[0]
 
 def dec_to_dot(numip):
-    parts = struct.unpack('>4B', struct.pack('>L', numip))
+    parts = struct.unpack('>4B', struct.pack('>L', long(numip)))
     return '.'.join([str(x) for x in parts])
 
 def is_whitelisted(numip):
