@@ -28,6 +28,28 @@ ENABLE_STAFF_CONFIRM = 'enablestaffwindow'
 EDIT_STAFF_CONFIRM = 'editstaffwindow'
 ADD_STAFF_CONFIRM = 'addstaffwindow'
 
+def admin_only(f):
+    '''StaffInterface templating function decorator: Indicate and enforce
+    admin-only pages.'''
+    def ret_func(*args, **kwargs):
+        self = args[0]
+        if self.user.account != staff.ADMIN:
+            raise WakaError(strings.INUSUFFICENTPRIVLEDGES)
+        f(*args, **kwargs)
+
+    return ret_func
+
+def global_only(f):
+    '''StaffInterface templating function decorator: Indicate and enforce
+    pages for global staff people only.'''
+    def ret_func(*args, **kwargs):
+        self = args[0]
+        if self.user.account == staff.MODERATOR:
+            raise WakaError(strings.INUSUFFICENTPRIVLEDGES)
+        f(*args, **kwargs)
+
+    return ret_func
+
 class StaffInterface(Template):
     '''Specialized template.Template class for dynamic administrative
     pages served by Wakarimasen.'''
@@ -57,23 +79,7 @@ class StaffInterface(Template):
             self.perpage = int(perpage)
             self.board = board
 
-            TEMPLATE_SELECTIONS = {HOME_PANEL : self.make_admin_home_panel,
-                BOARD_PANEL : self.make_admin_board_panel,
-                BAN_PANEL : self.make_admin_ban_panel,
-                REPORTS_PANEL : self.make_admin_report_panel,
-                STAFF_PANEL : self.make_admin_staff_panel,
-                SPAM_PANEL : self.make_admin_spam_panel,
-                TRASH_PANEL : self.make_admin_trash_panel,
-                DEL_STAFF_CONFIRM : self.make_del_staff_window,
-                DISABLE_STAFF_CONFIRM : self.make_disable_staff_window,
-                ENABLE_STAFF_CONFIRM : self.make_enable_staff_window,
-                EDIT_STAFF_CONFIRM : self.make_edit_staff_window}
-
-            # Initialize underlying parent class instance.
-            if dest not in TEMPLATE_SELECTIONS.keys():
-                dest = HOME_PANEL
-
-            TEMPLATE_SELECTIONS[dest](**kwargs)
+            self._init_template(dest, **kwargs)
 
             # Convert user reign list into a list of dictionaries, for
             # templating.
@@ -95,6 +101,27 @@ class StaffInterface(Template):
                                        boards=reign,
                                        page=self.page,
                                        perpage=self.perpage)
+
+    def _init_template(self, dest, **kwargs):
+            TEMPLATE_SELECTIONS = {HOME_PANEL : self.make_admin_home_panel,
+                BOARD_PANEL : self.make_admin_board_panel,
+                BAN_PANEL : self.make_admin_ban_panel,
+                REPORTS_PANEL : self.make_admin_report_panel,
+                STAFF_PANEL : self.make_admin_staff_panel,
+                SPAM_PANEL : self.make_admin_spam_panel,
+                TRASH_PANEL : self.make_admin_trash_panel,
+                DEL_STAFF_CONFIRM : self.make_del_staff_window,
+                DISABLE_STAFF_CONFIRM : self.make_disable_staff_window,
+                ENABLE_STAFF_CONFIRM : self.make_enable_staff_window,
+                EDIT_STAFF_CONFIRM : self.make_edit_staff_window}
+
+            # Initialize underlying parent class instance.
+            if dest not in TEMPLATE_SELECTIONS.keys():
+                dest = HOME_PANEL
+
+            template_function = TEMPLATE_SELECTIONS[dest]
+
+            TEMPLATE_SELECTIONS[dest](**kwargs)
 
     def make_admin_board_panel(self):
         # Update perpage attribute: it is determined here by board options.
@@ -136,10 +163,8 @@ class StaffInterface(Template):
 
     make_admin_home_panel = make_admin_board_panel
 
+    @admin_only
     def make_admin_staff_panel(self):
-        if self.user.account != staff.ADMIN:
-            raise WakaError(strings.INUSUFFICENTPRIVLEDGES)
-
         session = model.Session()
         table = model.account
         sql = table.select().order_by(table.c.account.asc(),
@@ -171,13 +196,11 @@ class StaffInterface(Template):
 
         Template.__init__(self, 'staff_management', users=users)
 
+    @admin_only
     def make_admin_activity_panel(self, admin, view=None, user_to_view=None,
                                   action_to_view=None, ip_to_view=None,
                                   post_to_view=None, sortby_name='date',
                                   sortby_dir='desc'):
-
-        if user.account != staff.ADMIN:
-           raise WakaError(strings.INUSUFFICENTPRIVLEDGES)
 
         template_view = 'staff_activity_unfiltered'
         action_name = action_content = ''
@@ -320,11 +343,9 @@ class StaffInterface(Template):
 
         Template.__init__(self, 'ban_panel_template', bans=bans, ip=ip)
 
+    @global_only
     def make_admin_spam_panel(self):
         # TODO: Paginate this, too.
-        if self.user.account == staff.MODERATOR:
-            raise WakaError(strings.INUSUFFICENTPRIVLEDGES)
-
         spam_list = []
         for filename in config.SPAM_FILES:
             with open(filename, 'r') as f:
