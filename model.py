@@ -4,7 +4,7 @@ from sqlalchemy import Table, Column, Integer, Text, String, MetaData, Boolean
 from sqlalchemy.orm import sessionmaker, mapper, scoped_session
 from sqlalchemy.ext.declarative import declarative_base
 
-engine = create_engine(config.SQL_ENGINE, echo=True, pool_size=100, max_overflow=10)
+engine = create_engine(config.SQL_ENGINE, pool_size=100, max_overflow=10)
 Session = scoped_session(sessionmaker(bind=engine))
 metadata = MetaData()
 
