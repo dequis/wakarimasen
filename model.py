@@ -191,7 +191,7 @@ class Page(object):
         session = Session()
 
         row_proxies = session.execute(query.limit(per_page)\
-                                           .offset(self.offset)).fetchall()
+                                           .offset(self.offset))
 
         self.rows = [dict(row.items()) for row in row_proxies]
 
