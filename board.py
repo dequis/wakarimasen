@@ -212,7 +212,10 @@ class Board(object):
 
     def get_board_page_data(self, page, total):
         if page >= total:
-            page = total - 1
+            if total:
+                page = total - 1
+            else:
+                page = 0
 
         pages = []
         for i in xrange(total):
@@ -225,7 +228,7 @@ class Board(object):
 
         if page != 0:
             prevpage = pages[page - 1]['filename']
-        if page != total - 1:
+        if page != total - 1 and total:
             nextpage = pages[page + 1]['filename']
 
         return (pages, prevpage, nextpage)
