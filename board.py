@@ -339,19 +339,19 @@ class Board(object):
             with open(full_thread_page, 'r') as res_in:
                 with open(archive_thread_page, 'w') as res_out:
                     for line in res_in:
-                        # Update image links.
+                        # Update thumbnail links.
                         line = re.sub(r'img src="(.*?)'
                                           + self.options['THUMB_DIR'],
                                       r'img src="\1'
-                                          + archive_dir
-                                          + self.options['THUMB_DIR'],
+                                          + os.path.join(archive_dir,
+                                              self.options['THUMB_DIR'], ''),
                                       line)
-                        # Update thread reply links.
+                        # Update image links.
                         line = re.sub(r'a href="(.*?)'
                                           + self.options['IMG_DIR'],
                                       r'a href="\1'
-                                          + archive_dir
-                                          + self.options['IMG_DIR'],
+                                          + os.path.join(archive_dir,
+                                              self.options['IMG_DIR'], ''),
                                       line)
                         res_out.write(line)
                 
