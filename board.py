@@ -353,6 +353,15 @@ class Board(object):
                                           + os.path.join(archive_dir,
                                               self.options['IMG_DIR'], ''),
                                       line)
+                        # Update reply links.
+                        line = re.sub(r'a href="(.*?)'
+                            + os.path.join(self.path,
+                                           self.options['RES_DIR'], ''),
+                            r'a href="\1' + os.path.join(\
+                                           self.path,
+                                           self.options['RES_DIR'], ''),
+                            line)
+
                         res_out.write(line)
                 
         if os.path.exists(full_thread_page):
