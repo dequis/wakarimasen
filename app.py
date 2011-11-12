@@ -82,11 +82,11 @@ def task_edit(environ, start_response):
     request = environ['werkzeug.request']
     board = environ['waka.board']
 
-    params = ['num', 'admin_post', 'wakaadmin']
+    params = ['num', 'wakaadmin']
    
     kwargs = kwargs_from_params(request, params)
     kwargs['post_num'] = kwargs.pop('num')
-    kwargs['admin'] = kwargs.pop('wakaadmin')
+    kwargs['admin_post'] = kwargs.pop('wakaadmin')
 
     return board.edit_gateway_window(**kwargs)
 
