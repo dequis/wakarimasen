@@ -444,7 +444,7 @@ def task_edituser(environ, start_response):
     kwargs['username'] = kwargs.pop('usernametoedit')
     kwargs['reign'] = request.form.getlist('reign')
 
-    return staff_interface.edit_staff_proxy(**kwargs);
+    return staff_interface.edit_staff_proxy(**kwargs)
 
 # Error-handling
 

@@ -931,7 +931,7 @@ class Board(object):
         whitelisted = misc.is_whitelisted(numip)
         if not whitelisted:
             interboard.ban_check(numip, '', '', '')
-        self.flood_check(numip, time.time(), comment, '', False, True);
+        self.flood_check(numip, time.time(), comment, '', False, True)
 
         # Clear up the backlog.
         interboard.trim_reported_posts()
