@@ -328,11 +328,14 @@ def move_thread(admin, parent, src_brd_obj, dest_brd_obj):
             post['parent'] = new_parent
 
             new_comment = re.sub(r'a href="(.*?)'
-                + os.path.join(src_brd_obj.options['RES_DIR'],
-                               str(parent), '')
+                + os.path.join(src_brd_obj.path,
+                               src_brd_obj.options['RES_DIR'],
+                               str(parent))
                 + config.PAGE_EXT,
-                r'a href="\1' + os.path.join(dest_brd_obj.options['RES_DIR'],
-                               str(new_parent), '')
+                r'a href="\1' + os.path.join(\
+                               dest_brd_obj.path,
+                               dest_brd_obj.options['RES_DIR'],
+                               str(new_parent))
                 + config.PAGE_EXT,
                 post['comment'])
 
