@@ -4,6 +4,7 @@ import interboard
 from template import Template
 from util import WakaError
 from staff_interface import StaffInterface
+from board import Board
 
 def no_task(environ, start_response):
     board = environ['waka.board']
@@ -445,6 +446,20 @@ def task_edituser(environ, start_response):
     kwargs['reign'] = request.form.getlist('reign')
 
     return staff_interface.edit_staff_proxy(**kwargs)
+
+def task_move(environ, start_response):
+    request = environ['werkzeug.request']
+    
+    kwargs = {}
+    kwargs['parent'] = request.values.get('num', '')
+    try:
+        kwargs['admin'] = request.cookies['wakaadmin']
+    except KeyError:
+        kwargs['admin'] = ''
+    kwargs['src_brd_obj'] = environ['waka.board']
+    kwargs['dest_brd_obj'] = Board(request.values.get('destboard', ''))
+
+    return interboard.move_thread(**kwargs)
 
 # Error-handling
 

@@ -2,6 +2,8 @@
 e.g., transferring and merging threads.'''
 
 import time
+import re
+import os
 from urllib import urlencode
 
 import config
@@ -193,6 +195,7 @@ def mark_resolved(admin, delete, posts):
     errors = []
     board_obj = None
     for (board_name, posts) in posts.iteritems():
+        # Access rights enforcement.
         if user.account == staff.MODERATOR and board_name not in user.reign:
             errors.append({'error' : '/%s/*: Sorry, you lack access rights.'\
                                      % (board_name)})
@@ -267,5 +270,102 @@ def update_spam_file(admin, spam):
     return util.make_http_forward(forward_url, config.ALTERNATE_REDIRECT)
 
 # Thread Transfer
+
+def move_thread(admin, parent, src_brd_obj, dest_brd_obj):
+    if not parent:
+        raise WakaError('No thread specified.')
+    if src_brd_obj.name == dest_brd_obj.name:
+        raise WakaError('Source and destination boards match.')
+
+    # Check administrative access rights to both boards.
+    src_brd_obj.check_access(admin)
+    dest_brd_obj.check_access(admin)
+
+    session = model.Session()
+    src_table = src_brd_obj.table
+    dest_table = dest_brd_obj.table
+
+    sql = select([src_table.c.parent], src_table.c.num == parent)
+    row = session.execute(sql).fetchone()
+
+    if not row:
+        raise WakaError('Thread not found.')
+    elif row[0]:
+        # Automatically correct if reply instead of thread was given.
+        parent = row[0]
+
+    sql = src_table.select().where(or_(src_table.c.num == parent,
+                                       src_table.c.parent == parent))\
+                            .order_by(src_table.c.num.asc())
+    thread = [dict(x.items()) for x in session.execute(sql).fetchall()]
+
+    # Indicate OP post number after insertion.
+    new_parent = 0
+
+    # List of images/thumbs to move around.
+    image_move = []
+    thumb_move = []
+
+    lasthit = time.time()
+
+    # DB operations
+    for post in thread:
+        # Grab post contents as dictionary of updates. Remove primary key.
+        del post['num']
+
+        post['lasthit'] = lasthit
+        image = post['image']
+        thumbnail = post['thumbnail']
+
+        if image:
+            image_move.append(image)
+        if thumbnail \
+            and re.match(src_brd_obj.options['THUMB_DIR'], thumbnail):
+            thumb_move.append(thumbnail)
+
+        # Update post reference links.
+        if new_parent:
+            post['parent'] = new_parent
+
+            new_comment = re.sub(r'a href="(.*?)'
+                + os.path.join(src_brd_obj.options['RES_DIR'],
+                               str(parent), '')
+                + config.PAGE_EXT,
+                r'a href="\1' + os.path.join(dest_brd_obj.options['RES_DIR'],
+                               str(new_parent), '')
+                + config.PAGE_EXT,
+                post['comment'])
+
+            post['comment'] = new_comment
+
+        sql = dest_table.insert().values(**post)
+        result = session.execute(sql)
+
+        if not new_parent:
+            new_parent = result.last_inserted_ids()[0]
+
+    # Nested associate for moving files in bulk.
+    def rename_files(filename_list, dir_type):
+        for filename in filename_list:
+            src_filename = os.path.join(src_brd_obj.path, filename)
+            dest_filename = re.sub('^/?' + src_brd_obj.options[dir_type],
+                                   dest_brd_obj.options[dir_type],
+                                   filename)
+            dest_filename = os.path.join(dest_brd_obj.path, dest_filename)
+            os.rename(src_filename, dest_filename)
+
+    # File transfer operations.
+    rename_files(image_move, 'IMG_DIR')
+    rename_files(thumb_move, 'THUMB_DIR')
+
+    dest_brd_obj.build_cache()
+    src_brd_obj.delete_stuff([parent], '', False, False, caller='internal')
+
+    forward_url = '?'.join((misc.get_secure_script_name(),
+                            urlencode({'task' : 'mpanel',
+                                       'board' : dest_brd_obj.name,
+                                       'page' : 't' + str(new_parent)})))
+
+    return util.make_http_forward(forward_url)
 
 # Advanced Administration
