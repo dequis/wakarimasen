@@ -360,6 +360,7 @@ def move_thread(admin, parent, src_brd_obj, dest_brd_obj):
     rename_files(thumb_move, 'THUMB_DIR')
 
     dest_brd_obj.build_cache()
+    dest_brd_obj.build_thread_cache(new_parent)
 
     src_brd_obj.delete_stuff([parent], '', False, False, caller='internal')
 
