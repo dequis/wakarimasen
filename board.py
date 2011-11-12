@@ -800,8 +800,11 @@ class Board(object):
 
     def delete_stuff(self, posts, password, file_only, archiving,
                      caller='user', from_window=False, admin=''):
-        if admin:
+        if admin and caller == 'user':
             self.check_access(admin)
+        elif caller == 'internal':
+            # Internally called; force admin.
+            admin = True
 
         for post in posts:
             self.delete_post(post, password, file_only, archiving,
