@@ -835,7 +835,7 @@ class Board(object):
         if row is None:
             raise WakaError(strings.POSTNOTFOUND % (int(post), self.name))
 
-        if password: 
+        if not admin: 
             archiving = False
 
             if row.admin_post:
@@ -843,8 +843,6 @@ class Board(object):
 
             if password != row.password:
                 raise WakaError(post + strings.BADDELPASS)
-        elif not admin:
-            raise WakaError(post + strings.BADDELPASS)
 
         if file_only:
             # remove just the image and update the database
