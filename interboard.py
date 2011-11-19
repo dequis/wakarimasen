@@ -330,12 +330,12 @@ def move_thread(admin, parent, src_brd_obj, dest_brd_obj):
             new_comment = re.sub(r'a href="(.*?)'
                 + os.path.join(src_brd_obj.path,
                                src_brd_obj.options['RES_DIR'],
-                               '%d%s' % (int(parent)), config.PAGE_EXT)),
+                               '%d%s' % (int(parent)), config.PAGE_EXT),
                 r'a href="\1' + os.path.join(\
                                dest_brd_obj.path,
                                dest_brd_obj.options['RES_DIR'],
                                '%d%s' % (int((new_parent), config.PAGE_EXT)),
-                post['comment'])
+                post['comment']))
 
             post['comment'] = new_comment
 
