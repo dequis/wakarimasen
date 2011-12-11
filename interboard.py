@@ -319,8 +319,7 @@ def move_thread(admin, parent, src_brd_obj, dest_brd_obj):
 
         if image:
             image_move.append(image)
-        if thumbnail \
-            and re.match(src_brd_obj.options['THUMB_DIR'], thumbnail):
+        if re.match(src_brd_obj.options['THUMB_DIR'], thumbnail):
             thumb_move.append(thumbnail)
 
         # Update post reference links.
