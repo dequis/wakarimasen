@@ -858,11 +858,18 @@ class Board(object):
 
         if file_only:
             # remove just the image and update the database
-            delete_image(row.image)
+            select_post_image = select([table.c.image, table.c.thumbnail],
+                                       or_(table.c.num == post))
+            baleet_me = session.execute(select_post_image).fetchone()
+
+            if baleet_me.image and baleet_me.thumbnail:
+                self.delete_file(baleet_me.image, baleet_me.thumbnail,
+                                 archiving=archiving)
 
             postupdate = table.update().where(table.c.num == post).values(
                 size=0, md5=null(), thumbnail=null())
             session.execute(postupdate)
+
         else:
             select_thread_images = select([table.c.image, table.c.thumbnail],
                                           or_(table.c.num == post,
