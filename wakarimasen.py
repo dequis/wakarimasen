@@ -7,6 +7,7 @@ import re
 import fcgi
 import werkzeug
 
+import config, config_defaults
 import app
 import util
 import model
@@ -27,9 +28,7 @@ def application(environ, start_response):
     environ['waka.boardname'] = boardname
     # Indicate "pop-up window" UI style.
     environ['waka.fromwindow'] = False
-    environ['waka.rootpath'] = os.path.join('/',
-                          re.sub('[^/]+$', '',
-                          os.path.abspath(environ['SCRIPT_NAME'])))
+    environ['waka.rootpath'] = os.path.join('/', config.BOARD_DIR, '')
     environ['waka.board'] = Board(boardname)
 
     # the task function if it exists, otherwise no_task()

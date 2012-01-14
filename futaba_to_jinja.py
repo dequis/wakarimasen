@@ -116,7 +116,7 @@ RENAME = {
     'OEKAKI_DEFAULT_PAINTER': 'board.options.OEKAKI_DEFAULT_PAINTER',
     'ENV{SERVER_NAME}': "environ['SERVER_NAME']",
     'ENV{HTTP_REFERER}': "environ['HTTP_REFERER']",
-    'self': "environ['SCRIPT_NAME']",
+    'self': "get_script_name()",
     'escamp': 'escape',
     'expand_filename': 'expand_url',
     'expand_image_filename': 'expand_image_url',
@@ -125,7 +125,6 @@ RENAME = {
     'include/boards/announcements_global.html': 'announcements_global.html',
     'include/announcements.html': 'announcements.html',
     '../include/boards/rules.html': 'rules.html',
-    'wakaba.pl': "environ['SCRIPT_NAME']"
 }
 
 REMOVE_BACKSLASHES_RE = re.compile(r'\\([^\\])')
@@ -382,7 +381,7 @@ class Jinja2Translator(object):
         if type == 'string':
             return value.decode('string-escape')
         elif type == 'html':
-            return value
+            return value.replace('wakaba.pl', '{{ get_script_name() }}')
         elif type == 'include':
             return self.TAGS['include'] % self.handle_include(value)
         elif type == 'const':

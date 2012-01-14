@@ -13,7 +13,7 @@ import misc
 from util import local
 import str_format
 
-TEMPLATES_DIR = 'templates'
+TEMPLATES_DIR = os.path.join('templates')
 CACHE_DIR = os.path.join(TEMPLATES_DIR, '.cache')
 
 _filters = []
@@ -52,7 +52,7 @@ class Template(object):
 
         vars['environ'] = self.environ
         vars['board'] = self.board
-        vars['stylesheets'] = list(self.get_stylesheets())
+        vars['stylesheets'] = list(self.get_stylesheets(self.board))
         self.env.globals['config'] = config
         self.env.globals['strings'] = strings
 
@@ -113,14 +113,11 @@ class Template(object):
 
     @function
     def get_script_name(self):
-        return self.environ['SCRIPT_NAME']
+        return misc.get_script_name()
 
     @function
     def get_secure_script_name(self):
-        if config.USE_SECURE_ADMIN:
-            return 'https://' + self.environ['SERVER_NAME'] \
-                + self.environ['SCRIPT_NAME']
-        return self.environ['SCRIPT_NAME']
+        return misc.get_secure_script_name()
         
     @filter
     def get_reply_link(self, reply, parent, abbreviated=False,
@@ -146,12 +143,20 @@ class Template(object):
     def get_action_name(self, action, debug=0):
         return misc.get_action_name(action, debug=debug)
     
-    def get_stylesheets(self):
-        # FIXME: don't hardcode the path
-        for file in glob.glob("include/common/css/*.css"):
+    def get_stylesheets(self, board=None):
+        files = glob.glob(os.path.abspath\
+                         (os.path.join(self.environ['DOCUMENT_ROOT'],
+                                       config.BOARD_ROOT,
+                                       'include/common/css/*.css')))
+        if board is not None:
+            # Add board CSS directory, if present.
+            files.extend(glob.glob(os.path.abspath\
+                                   (os.path.join(board.path, 'css/*.css'))))
+
+        for file in files:
             title = os.path.basename(file) \
-                .replace(".css", "") \
-                .replace("_", " ").title()
+                .replace('.css', '') \
+                .replace('_', ' ').title()
 
             if title == self.board.options['DEFAULT_STYLE']:
                 default = 1
@@ -159,8 +164,9 @@ class Template(object):
                 default = 0
 
             yield {
-                # FIXME: web root hardcoded here too
-                'filename': '/' + file,
+                'filename': os.path.abspath(\
+                            file.replace(self.environ['DOCUMENT_ROOT'], ''))\
+                            .encode('utf-8'),
                 'title': title,
                 'default': default,
             }

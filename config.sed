@@ -13,5 +13,7 @@ $ {
     g;
     s#SQL_DBI_SOURCE = 'DBI:([^:]+):database=([^:]+);host=([^']+)'.*\nSQL_USERNAME = '([^']+)'.*\nSQL_PASSWORD = '([^']+)'[^\n]*\n#SQL_ENGINE = '\1://\4:\5@\3/\2'\n#;
     s/\n\n+/\n/g;
-    p
+    s/$/\
+    BOARD_ROOT = \'\'/;
+    p;
 }

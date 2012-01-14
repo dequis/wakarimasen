@@ -4,7 +4,7 @@ import time
 import random
 import hashlib
 from subprocess import Popen, PIPE
-from urllib import quote_plus, urlencode
+from urllib import quote, urlencode
 
 import misc
 import str_format
@@ -14,7 +14,7 @@ import model
 import staff
 # NOTE: I'm not sure if interboard is a good module to have here.
 import interboard
-import config, config_defaults
+import config
 import strings as strings
 from util import WakaError, local
 from template import Template
@@ -23,22 +23,27 @@ from sqlalchemy.sql import case, or_, and_, select, func, null
 
 class Board(object):
     def __init__(self, board):
-        if not os.path.exists(board):
+        board_path = os.path.abspath(os.path.join(\
+                                        local.environ['DOCUMENT_ROOT'],
+                                        config.BOARD_ROOT,
+                                        board))
+        if not os.path.exists(board_path):
             raise BoardNotFound()
-        if not os.path.exists(os.path.join(board, 'board_config.py')):
+        if not os.path.exists(os.path.join(board_path, 'board_config.py')):
             raise BoardNotFound('Board configuration not found.')
         
-        module = util.import2('board_config', board)
+        module = util.import2('board_config', board_path)
 
         self.options = module.config
         
         self.table = model.board(self.options['SQL_TABLE'])
 
-        # TODO customize these
-        self.path = os.path.abspath(board)
-        self.url = quote_plus(
-                   ('%s%s/' % (local.environ['waka.rootpath'], board))
-                   .encode('utf-8'), '/')
+        # TODO likely will still need customization
+        self.path = board_path
+        url_path = os.path.join('/', os.path.relpath(\
+                                          board_path,
+                                          local.environ['DOCUMENT_ROOT']), '')
+        self.url = quote(('%s' % (url_path.encode('utf-8'))))
         self.name = board
 
     def make_path(self, file='', dir='', dirc=None, page=None, thread=None,
@@ -1218,7 +1223,7 @@ class Board(object):
         if force_http:
             self_path = 'http://' + local.environ['SERVER_NAME'] + self_path
 
-        return self_path + quote_plus(filename.encode('utf-8'), '/')
+        return self_path + quote(filename.encode('utf-8'))
 
     def make_anonymous(self, ip, time):
         # TODO: SILLY_ANONYMOUS not supported

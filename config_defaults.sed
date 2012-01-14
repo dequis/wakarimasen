@@ -16,6 +16,8 @@ ${
     g;
     s/\n\n+/\n/g;
     s/$/\
+BOARD_ROOT = \'\'\
+\
 # add default values to config.py\
 import util as _util\
 _util.module_default('config', locals())/;

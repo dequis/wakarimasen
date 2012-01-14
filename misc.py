@@ -262,13 +262,14 @@ def make_cookies(**kwargs):
         cookies[key]['expires'] = expire_date
         cookies[key]['path'] = path
 
-def get_secure_script_name():
-    environ = local.environ
+def get_script_name():
+    return local.environ['SCRIPT_NAME']
 
+def get_secure_script_name():
+    script_name = get_script_name()
     if config.USE_SECURE_ADMIN:
-        return 'https://' + environ['SERVER_NAME'] \
-            + 'wakarimasen.py' # TODO: Un-hardcode this w/ os module.
-    return 'wakarimasen.py'
+        return 'https://' + environ['SERVER_NAME'] + script_name
+    return script_name
 
 def get_filestorage_size(filestorage):
     filestorage.stream.seek(0, 2)
