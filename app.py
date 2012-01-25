@@ -53,7 +53,8 @@ def task_delete(environ, start_response, archiving=False):
     singledelete = (request.values.get("singledelete", '') == 'OK')
 
     kwargs = {}
-    params = ['password', 'file_only', 'from_window' ]
+    params = ['password', 'file_only', 'from_window', 'wakaadmin',
+              'admindelete']
 
     if singledelete:
         # NOTE: from_window parameter originates from pop-up windows
@@ -71,7 +72,7 @@ def task_delete(environ, start_response, archiving=False):
         # Parse posts string into array.
         kwargs['posts'] = request.form.getlist('num')
 
-    kwargs['admin'] = request.cookies['wakaadmin']
+    kwargs['admin'] = kwargs.pop('wakaadmin')
     kwargs['archiving'] = archiving
     return board.delete_stuff(**kwargs)
 

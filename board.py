@@ -813,8 +813,9 @@ class Board(object):
         return reported_posts
 
     def delete_stuff(self, posts, password, file_only, archiving,
-                     caller='user', from_window=False, admin=''):
-        if admin and caller == 'user':
+                     caller='user', admindelete=False,
+                     from_window=False, admin=''):
+        if admin and admindelete and caller == 'user':
             self.check_access(admin)
         elif caller == 'internal':
             # Internally called; force admin.
