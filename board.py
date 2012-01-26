@@ -823,7 +823,7 @@ class Board(object):
 
         for post in posts:
             self.delete_post(post, password, file_only, archiving,
-                             from_window=False, admin=admin)
+                             from_window=False, admin=admindelete)
 
         self.build_cache()
 
