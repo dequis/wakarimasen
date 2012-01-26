@@ -12,6 +12,7 @@ import util
 import crypto  # part of wakarimasen
 import config, config_defaults
 import str_format
+import urllib
 from util import local
 
 MAX_UNICODE = 1114111
@@ -104,7 +105,7 @@ def process_tripcode(name, tripkey='!'):
                 return (namepart, trip)
 
     # 2ch trips are processed as Shift_JIS whenever possible
-    trippart = str_format.decode_string(trippart).encode("shiftjis", "xmlcharrefreplace")
+    trippart = trippart.encode("shiftjis", "xmlcharrefreplace")
 
     trippar = str_format.clean_string(trippart)
     salt = (trippart + "H..")[1:3]
@@ -258,7 +259,7 @@ def make_cookies(**kwargs):
 
     cookies = environ['waka.cookies']
     for key, value in kwargs.iteritems():
-        cookies[key] = str(value)
+        cookies[key] = urllib.quote(value.encode('utf-8'))
         cookies[key]['expires'] = expire_date
         cookies[key]['path'] = path
 

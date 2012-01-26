@@ -42,8 +42,6 @@ ENTITIES_DECODE_RE = re.compile('(&#([0-9]*)([;&])|&#([x&])([0-9a-f]*)([;&]))', 
 def decode_string(string, noentities=False):
     '''Returns unicode string'''
 
-    string = string.decode(config.CHARSET, "ignore")
-
     def repl(match):
         g = match.groups()
         ordinal = int(g[1] or int(g[4], 16))

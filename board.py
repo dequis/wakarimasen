@@ -827,7 +827,7 @@ class Board(object):
 
         self.build_cache()
 
-        if admin:
+        if admin and admindelete:
             forward = '?'.join((misc.get_secure_script_name(),
                 urlencode({'task' : 'mpanel', 'board' : self.name})))
         else:
