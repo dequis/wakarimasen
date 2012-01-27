@@ -461,7 +461,7 @@ def add_staff_proxy(admin, mpass, usertocreate, passtocreate, account, reign):
 
     staff.add_staff(usertocreate, passtocreate, account, reign)
 
-    return make_http_forward('?'.join((msic.get_secure_script_name(),
+    return make_http_forward('?'.join((misc.get_secure_script_name(),
         urlencode({'task' : 'staff'}))), config.ALTERNATE_REDIRECT)
 
 def del_staff_proxy(admin, mpass, username):
