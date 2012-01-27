@@ -444,6 +444,9 @@ class Board(object):
                 select([self.table.c.stickied, self.table.c.locked],
                     self.table.c.num == parent)).fetchone()
 
+            if sticky_check is None:
+                raise WakaError('Thread not found.')
+
             if sticky_check['stickied']:
                 sticky = 1
             elif not admin_post_mode:
