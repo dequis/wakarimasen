@@ -1,6 +1,7 @@
 import model
 import staff_interface
 import interboard
+import urllib
 from template import Template
 from util import WakaError
 from staff_interface import StaffInterface
@@ -488,7 +489,8 @@ def kwargs_from_params(request, params):
     kwargs = {}
     for param in params:
         if param in request.cookies.keys():
-            kwargs[param] = request.cookies[param]
+            kwargs[param] = urllib.unquote(request.cookies[param])\
+                                  .decode('utf-8')
         else:
             kwargs[param] = request.values.get(param, '')
 
