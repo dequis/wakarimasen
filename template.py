@@ -147,7 +147,7 @@ class Template(object):
         files = glob.glob(os.path.abspath\
                          (os.path.join(self.environ['DOCUMENT_ROOT'],
                                        config.BOARD_ROOT,
-                                       'include/common/css/*.css')))
+                                       'include/boards/css/*.css')))
         if board is not None:
             # Add board CSS directory, if present.
             files.extend(glob.glob(os.path.abspath\
