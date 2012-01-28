@@ -23,6 +23,10 @@ from sqlalchemy.sql import case, or_, and_, select, func, null
 
 class Board(object):
     def __init__(self, board):
+        # Correct for missing key when running under WSGI
+        if 'DOCUMENT_ROOT' not in local.environ:
+            local.environ['DOCUMENT_ROOT'] = os.getcwd()
+
         # For WSGI mode (which does not initialize this for whatever reason).
         board_path = os.path.abspath(os.path.join(\
                                         local.environ['DOCUMENT_ROOT'],
