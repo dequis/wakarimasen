@@ -147,7 +147,7 @@ class StaffInterface(Template):
             table = board.table
             session = model.Session
             sql = select([func.count()], table.c.parent == 0)
-            thread_count = session.execute(sql).fetchone()
+            thread_count = session.execute(sql).fetchone()[0]
             total = (thread_count + self.perpage - 1) / self.perpage
 
             if total <= page:
