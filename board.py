@@ -23,6 +23,7 @@ from sqlalchemy.sql import case, or_, and_, select, func, null
 
 class Board(object):
     def __init__(self, board):
+        # For WSGI mode (which does not initialize this for whatever reason).
         board_path = os.path.abspath(os.path.join(\
                                         local.environ['DOCUMENT_ROOT'],
                                         config.BOARD_DIR,
@@ -130,13 +131,16 @@ class Board(object):
         thread_dict = {}
         thread_nums = []
 
+        per_page = board.options['IMAGES_PER_PAGE']
+        offset = (page - 1) * per_page
+
         # Query 1: Grab all thread (OP) entries.
         op_sql = table.select().where(table.c.parent == 0).order_by(
                     table.c.stickied.desc(),
                     table.c.lasthit.desc(),
                     table.c.num.asc()
                 )
-        op_query = session.execute(op_sql)
+        op_query = session.execute(op_sql).limit(per_page).offset(offset)
 
         for op in op_query:
             thread_dict[op.num] = [model.CompactPost(op)]

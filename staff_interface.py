@@ -143,9 +143,21 @@ class StaffInterface(Template):
                       'parent' : self.page,
                       'thread' : self.page}
         else:
-            # Get board posts.
+            table = board.table
+            sql = table.select(table.c.parent == 0)\
+                       .order_by(table.c.stickied.desc(),
+                                 table.c.lasthit.desc(),
+                                 table.c.num.asc()
+                                 ).count()
+            thread_count = session.execute(sql).fetchone()
+            total = (thread_count + self.perpage - 1) / self.perpage
+
+            if total <= page:
+                # Set page number to last page if exceeding total.
+                # Pages are 0-indexed.
+                page = total - 1
+            # Get partial board posts.
             pagethreads = board.get_some_threads(self.page)
-            total = (len(pagethreads) + self.perpage - 1) / self.perpage
             (pages, prevpage, nextpage)\
                 = board.get_board_page_data(self.page, total)
             threads = board.parse_page_threads(pagethreads)
@@ -570,7 +582,8 @@ def make_first_time_setup_gateway():
 
 def do_first_time_setup(admin, username, password):
     # Checks.
-    if admin != staff.crypt_pass(config.ADMIN_PASS):
+    if admin != staff.crypt_pass(config.ADMIN_PASS,
+                                 local.environ['REMOTE_ADDR']):
         return staff_interface.make_first_time_setup_gateway()
     if not username:
         raise WakaError('Missing username.')
@@ -579,13 +592,13 @@ def do_first_time_setup(admin, username, password):
 
     staff.add_staff(username, password, staff.ADMIN, [])
     return make_http_forward('?'.join((misc.get_secure_script_name(),
-                              + urlencode({'task' : 'loginpanel'}))),
+                              urlencode({'task' : 'loginpanel'}))),
                               config.ALTERNATE_REDIRECT)
 
 
 def make_first_time_setup_page(admin):
     if admin == config.ADMIN_PASS:
-        admin = staff.crypt_pass(admin)
+        admin = staff.crypt_pass(admin, local.environ['REMOTE_ADDR'])
         return Template('account_setup', admin=admin)
     else:
         return make_first_time_setup_gateway()

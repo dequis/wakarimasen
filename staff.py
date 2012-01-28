@@ -163,7 +163,7 @@ def add_staff(username, pt_password, account, reign):
         raise WakaError('A password is necessary.')
     if len(pt_password) < 8:
         raise WakaError('Passwords should be eight characters minimum.')
-    if len(reign) == 0 and account == staff.MODERATOR:
+    if len(reign) == 0 and account == MODERATOR:
         raise WakaError('Board reign not specified for moderator account.')
 
     # Check whether the user exists already.
