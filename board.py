@@ -25,7 +25,7 @@ class Board(object):
     def __init__(self, board):
         board_path = os.path.abspath(os.path.join(\
                                         local.environ['DOCUMENT_ROOT'],
-                                        config.BOARD_ROOT,
+                                        config.BOARD_DIR,
                                         board))
         if not os.path.exists(board_path):
             raise BoardNotFound()
