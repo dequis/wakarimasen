@@ -150,10 +150,10 @@ class StaffInterface(Template):
             thread_count = session.execute(sql).fetchone()[0]
             total = (thread_count + self.perpage - 1) / self.perpage
 
-            if total <= page:
+            if total <= self.page:
                 # Set page number to last page if exceeding total.
                 # Pages are 0-indexed.
-                page = total - 1
+                self.page = total - 1
             # Get partial board posts.
             pagethreads = board.get_some_threads(self.page)
             (pages, prevpage, nextpage)\
