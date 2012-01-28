@@ -143,8 +143,8 @@ class Board(object):
                     table.c.stickied.desc(),
                     table.c.lasthit.desc(),
                     table.c.num.asc()
-                )
-        op_query = session.execute(op_sql).limit(per_page).offset(offset)
+                ).limit(per_page).offset(offset)
+        op_query = session.execute(op_sql)
 
         for op in op_query:
             thread_dict[op.num] = [model.CompactPost(op)]
