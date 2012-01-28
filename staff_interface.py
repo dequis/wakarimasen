@@ -146,7 +146,7 @@ class StaffInterface(Template):
             # Grab count of all threads.
             table = board.table
             session = model.Session
-            sql = table.select([func.count()], table.c.parent == 0, table)
+            sql = select([func.count()], table.c.parent == 0)
             thread_count = session.execute(sql).fetchone()
             total = (thread_count + self.perpage - 1) / self.perpage
 
