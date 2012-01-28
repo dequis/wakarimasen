@@ -135,7 +135,7 @@ class Board(object):
         thread_dict = {}
         thread_nums = []
 
-        per_page = board.options['IMAGES_PER_PAGE']
+        per_page = self.options['IMAGES_PER_PAGE']
         offset = (page - 1) * per_page
 
         # Query 1: Grab all thread (OP) entries.
