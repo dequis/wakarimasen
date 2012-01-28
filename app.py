@@ -176,7 +176,7 @@ def _toggle_thread_state(environ, start_response, operation, enable=True):
     kwargs['enable_state'] = enable
     kwargs['operation'] = operation
     try:
-        kwargs['admin'] = request.cookies['wakaadmin']
+        kwargs['admin'] = get_cookie_from_request(request, 'wakaadmin')
     except KeyError:
         kwargs['admin'] = ''
 
@@ -260,7 +260,7 @@ def task_bans(environ, start_response):
 
     kwargs = {}
     kwargs['ip'] = request.values.get('ip', '')
-    kwargs['admin'] = request.cookies['wakaadmin']
+    kwargs['admin'] = get_cookie_from_request(request, 'wakaadmin')
     kwargs['dest'] = staff_interface.BAN_PANEL
 
     return StaffInterface(**kwargs)
@@ -270,7 +270,7 @@ def task_staff(environ, start_response):
 
     kwargs = {}
     try:
-        kwargs['admin'] = request.cookies['wakaadmin']
+        kwargs['admin'] = get_cookie_from_request(request, 'wakaadmin')
     except KeyError:
         kwargs['admin'] = ''
     kwargs['dest'] = staff_interface.STAFF_PANEL
@@ -282,7 +282,7 @@ def task_spam(environ, start_response):
 
     kwargs = {}
     try:
-        kwargs['admin'] = request.cookies['wakaadmin']
+        kwargs['admin'] = get_cookie_from_request(request, 'wakaadmin')
     except KeyError:
         kwargs['admin'] = ''
     kwargs['dest'] = staff_interface.SPAM_PANEL
@@ -455,7 +455,7 @@ def task_move(environ, start_response):
     kwargs = {}
     kwargs['parent'] = request.values.get('num', '')
     try:
-        kwargs['admin'] = request.cookies['wakaadmin']
+        kwargs['admin'] = get_cookie_from_request(request, 'wakaadmin')
     except KeyError:
         kwargs['admin'] = ''
     kwargs['src_brd_obj'] = environ['waka.board']
@@ -482,6 +482,9 @@ def not_found(environ, start_response):
 
 # Helpers
 
+def get_cookie_from_request(request, key):
+    return urllib.unquote(request.cookies[key]).decode('utf-8')
+
 def kwargs_from_params(request, params):
     '''Associate function to convert CGI request data with list of parameter
     keys to a dictionary.'''
@@ -489,8 +492,7 @@ def kwargs_from_params(request, params):
     kwargs = {}
     for param in params:
         if param in request.cookies.keys():
-            kwargs[param] = urllib.unquote(request.cookies[param])\
-                                  .decode('utf-8')
+            kwargs[param] = get_cookie_from_request(request, param)
         else:
             kwargs[param] = request.values.get(param, '')
 
