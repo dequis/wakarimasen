@@ -735,8 +735,16 @@ class Board(object):
             self.build_thread_cache(post_num)
 
         # set the name, email and password cookies
+        autopath = self.options['COOKIE_PATH']
+        if autopath == 'current':
+            path = self.url
+        elif autopath == 'parent':
+            path = local.environ['waka.rootpath']
+        else:
+            path = '/'
+
         misc.make_cookies(name=c_name, email=c_email, password=c_password,
-            autopath=self.options['COOKIE_PATH']) # yum !
+            path=path) # yum !
 
         return post_num
 

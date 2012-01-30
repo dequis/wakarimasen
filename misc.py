@@ -248,15 +248,6 @@ def make_cookies(**kwargs):
 
     environ = local.environ
 
-    if not path:
-        scriptname = environ['SCRIPT_NAME']
-        if autopath == 'current':
-            path = os.path.dirname(scriptname) + "/"
-        elif autopath == 'parent':
-            path = os.path.dirname(os.path.dirname(scriptname)) + "/"
-        else:
-            path = "/"
-
     cookies = environ['waka.cookies']
     for key, value in kwargs.iteritems():
         cookies[key] = urllib.quote(value.encode('utf-8'))
