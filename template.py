@@ -146,7 +146,7 @@ class Template(object):
     def get_stylesheets(self, board=None):
         files = glob.glob(os.path.abspath\
                          (os.path.join(self.environ['DOCUMENT_ROOT'],
-                                       config.BOARD_ROOT,
+                                       config.BOARD_DIR,
                                        'include/boards/css/*.css')))
         if board is not None:
             # Add board CSS directory, if present.
