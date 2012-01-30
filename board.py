@@ -136,7 +136,8 @@ class Board(object):
         thread_nums = []
 
         per_page = self.options['IMAGES_PER_PAGE']
-        offset = (page - 1) * per_page
+        # Page is zero-indexed, so offset formula must differ.
+        offset = page * per_page
 
         # Query 1: Grab all thread (OP) entries.
         op_sql = table.select().where(table.c.parent == 0).order_by(
