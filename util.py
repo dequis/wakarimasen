@@ -131,8 +131,8 @@ def make_http_forward(location, alternate_method=False):
     if alternate_method:
         return [str('<html><head>'
                 '<meta http-equiv="refresh" content="0; url=%s" />'
-                '<script type="text/javascript">document.location="%s";</script>'
-                '</head><body><a href="%s">%s</a></body></html>' %\
+                '<script type="text/javascript">document.location="%s";'
+                '</script></head><body><a href="%s">%s</a></body></html>' %\
                 ((location, ) * 4))]
     else:
         local.environ['waka.status'] = '303 Go West'
