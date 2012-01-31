@@ -124,7 +124,8 @@ report = Table(config.SQL_REPORT_TABLE, metadata,
     Column("reporter", Text, nullable=False),           # Reporter's IP address (decimal encoded)
     Column("offender", Text),                           # IP Address of the offending poster. Why the form-breaking redundancy with SQL_TABLE? If a post is deleted by the perpetrator, the trace is still logged. :)
     Column("postnum", Integer, nullable=False),         # Post number
-    Column("comment", Text, nullable=False),            # Mandated reason for the report
+    Column("comment", Text(convert_unicode=True),
+                      nullable=False),                  # Mandated reason for the report.
     Column("timestamp", Integer),                       # Timestamp in seconds for when the post was created
     Column("date", Text),                               # Date of the report
     Column("resolved", Integer)                         # Is it resolved? (1: yes 0: no)
