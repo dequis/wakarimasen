@@ -157,7 +157,8 @@ class StaffInterface(Template):
             # Get partial board posts.
             pagethreads = board.get_some_threads(self.page)
             (pages, prevpage, nextpage)\
-                = board.get_board_page_data(self.page, total)
+                = board.get_board_page_data(self.page, total,
+                                            admin_mode=True)
             threads = board.parse_page_threads(pagethreads)
             kwargs = {'pages' : pages,
                       'prevpage' : prevpage,

@@ -224,7 +224,7 @@ class Board(object):
        
         return threads
 
-    def get_board_page_data(self, page, total):
+    def get_board_page_data(self, page, total, admin_mode=False):
         if page >= total:
             if total:
                 page = total - 1
@@ -235,7 +235,14 @@ class Board(object):
         for i in xrange(total):
             p = {}
             p['page'] = i
-            p['filename'] = self.make_url(page=i)
+            if admin_mode:
+                # Admin mode: direct to staff interface, not board pages.
+                p['filename'] = '?'.join((misc.get_secure_script_name(),
+                                         urlencode({'board' : self.name,
+                                                    'task' : 'mpanel',
+                                                    'page' : i})))
+            else:
+                p['filename'] = self.make_url(page=i)
             p['current'] = page == i
             pages.append(p)
         prevpage = nextpage = None
