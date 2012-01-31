@@ -54,7 +54,7 @@ def board(name):
         Column("password", Text),                       # Deletion password (in plaintext) 
         Column("comment", Text(convert_unicode=True)),  # Comment text, HTML encoded.
 
-        Column("image", Text),                          # Image filename with path and extension (IE, src/1081231233721.jpg)
+        Column("image", Text(convert_unicode=True)),    # Image filename with path and extension (IE, src/1081231233721.jpg)
         Column("size", Integer),                        # File size in bytes
         Column("md5", Text),                            # md5 sum in hex
         Column("width", Integer),                       # Width of image in pixels
