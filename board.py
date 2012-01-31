@@ -237,20 +237,22 @@ class Board(object):
             p['page'] = i
             if admin_mode:
                 # Admin mode: direct to staff interface, not board pages.
-                p['filename'] = '?'.join((misc.get_secure_script_name(),
-                                         urlencode({'board' : self.name,
-                                                    'task' : 'mpanel',
-                                                    'page' : i})))
+                filename = '?'.join((misc.get_secure_script_name(),
+                                     urlencode({'board' : self.name,
+                                                'task' : 'mpanel',
+                                                'page' : i})))
+                p['filename'] = filename.replace('&', '&amp;')
             else:
                 p['filename'] = self.make_url(page=i)
             p['current'] = page == i
             pages.append(p)
-        prevpage = nextpage = None
+        prevpage = nextpage = 'none'
 
+        key_select = 'page' if admin_mode else 'filename'
         if page != 0:
-            prevpage = pages[page - 1]['filename']
+            prevpage = pages[page - 1][key_select]
         if page != total - 1 and total:
-            nextpage = pages[page + 1]['filename']
+            nextpage = pages[page + 1][key_select]
 
         return (pages, prevpage, nextpage)
 
