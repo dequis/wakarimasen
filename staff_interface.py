@@ -150,7 +150,7 @@ class StaffInterface(Template):
             thread_count = session.execute(sql).fetchone()[0]
             total = (thread_count + self.perpage - 1) / self.perpage
 
-            if total <= self.page:
+            if total <= self.page and total > 0:
                 # Set page number to last page if exceeding total.
                 # Pages are 0-indexed.
                 self.page = total - 1
