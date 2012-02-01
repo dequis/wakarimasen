@@ -495,15 +495,18 @@ def edit_staff_proxy(admin, mpass, username, newpassword=None, newclass=None,
 
     user = staff.check_password(admin)
 
-    if user.account == staff.ADMIN:
+    if user.username == username:
+        if misc.hide_critical_data(originalpassword, config.SECRET) \
+           != user.password:
+            raise WakaError(strings.S_WRONGPASS)
+        newclass = None
+        reign = None
+    elif user.account == staff.ADMIN:
         edited_user = staff.StaffMember.get(username)
         if edited_user.account == staff.ADMIN and mpass != config.ADMIN_PASS:
             raise WakaError('Incorrect management password.')
     else:
-        if user.username != username:
-            raise WakaError(strings.INUSUFFICENTPRIVLEDGES)
-        newclass = None
-        reign = None
+        raise WakaError(strings.INUSUFFICENTPRIVLEDGES)
 
     staff.edit_staff(username, clear_pass=newpassword, new_class=newclass,
                      reign=reign, disable=disable)
