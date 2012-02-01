@@ -498,7 +498,7 @@ def edit_staff_proxy(admin, mpass, username, newpassword=None, newclass=None,
     if user.username == username:
         if misc.hide_critical_data(originalpassword, config.SECRET) \
            != user.password:
-            raise WakaError(strings.S_WRONGPASS)
+            raise WakaError(strings.WRONGPASS)
         newclass = None
         reign = None
     elif user.account == staff.ADMIN:

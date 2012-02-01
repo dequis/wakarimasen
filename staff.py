@@ -237,7 +237,7 @@ def check_password(cookie_str, editing=None):
         # The host is already logged in.
         pass
     elif crypt != crypt_pass(staff_entry.password, remote):
-        raise LoginError(strings.S_WRONGPASS)
+        raise LoginError(strings.WRONGPASS)
     elif staff_entry.disabled:
         raise LoginError('You have been disabled.')
     else:
