@@ -78,7 +78,7 @@ def board(name):
 admin = Table(config.SQL_ADMIN_TABLE, metadata,
     Column("num", Integer, primary_key=True),           # Entry number, auto-increments
     Column("type", Text),                               # Type of entry (ipban, wordban, etc)
-    Column("comment", Text),      # Comment for the entry
+    Column("comment", Text(convert_unicode=True)),      # Comment for the entry
     Column("ival1", Text),                              # Integer value 1 (usually IP)
     Column("ival2", Text),                              # Integer value 2 (usually netmask)
     Column("sval1", Text),                              # String value 1
