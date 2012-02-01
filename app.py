@@ -483,7 +483,10 @@ def not_found(environ, start_response):
 # Helpers
 
 def get_cookie_from_request(request, key):
-    return urllib.unquote(request.cookies[key]).decode('utf-8')
+    try:
+        return urllib.unquote(request.cookies[key]).decode('utf-8')
+    except KeyError:
+        return ''
 
 def kwargs_from_params(request, params):
     '''Associate function to convert CGI request data with list of parameter
