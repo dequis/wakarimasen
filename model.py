@@ -78,7 +78,7 @@ def board(name):
 admin = Table(config.SQL_ADMIN_TABLE, metadata,
     Column("num", Integer, primary_key=True),           # Entry number, auto-increments
     Column("type", Text),                               # Type of entry (ipban, wordban, etc)
-    Column("comment", Text),                            # Comment for the entry
+    Column("comment", Text),      # Comment for the entry
     Column("ival1", Text),                              # Integer value 1 (usually IP)
     Column("ival2", Text),                              # Integer value 2 (usually netmask)
     Column("sval1", Text),                              # String value 1
@@ -141,14 +141,14 @@ backup = Table(config.SQL_BACKUP_TABLE, metadata,
     Column("ip", Text),                                 # IP number of poster, in integer form!
 
     Column("date", Text),                               # The date, as a string
-    Column("name", Text),                               # Name of the poster
+    Column("name", Text(convert_unicode=True)),         # Name of the poster
     Column("trip", Text),                               # Tripcode (encoded)
     Column("email", Text),                              # Email address
-    Column("subject", Text),                            # Subject
+    Column("subject", Text(convert_unicode=True)),      # Subject
     Column("password", Text),                           # Deletion password (in plaintext) 
-    Column("comment", Text),                            # Comment text, HTML encoded.
+    Column("comment", Text(convert_unicode=True)),      # Comment text, HTML encoded.
 
-    Column("image", Text),                              # Image filename with path and extension (IE, src/1081231233721.jpg)
+    Column("image", Text(convert_unicode=True)),        # Image filename with path and extension (IE, src/1081231233721.jpg)
     Column("size", Integer),                            # File size in bytes
     Column("md5", Text),                                # md5 sum in hex
     Column("width", Integer),                           # Width of image in pixels
