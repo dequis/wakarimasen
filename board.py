@@ -848,7 +848,7 @@ class Board(object):
             self.check_access(admin)
         elif caller == 'internal':
             # Internally called; force admin.
-            admin = True
+            admindelete = True
 
         for post in posts:
             self.delete_post(post, password, file_only, archiving,
