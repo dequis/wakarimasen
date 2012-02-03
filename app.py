@@ -207,9 +207,9 @@ def task_entersetup(environ, start_response):
 def task_setup(environ, start_response):
     request = environ['werkzeug.request']
 
-    params = ['admin', 'username', 'password']
-
+    params = ['admin', 'username']
     kwargs = kwargs_from_params(request, params)
+    kwargs['password'] = request.values.get('password', '')
 
     return staff_interface.do_first_time_setup(**kwargs)
 
