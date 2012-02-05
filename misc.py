@@ -71,8 +71,12 @@ def dot_to_dec(ip):
 def dec_to_dot(numip):
     # Parse 64-bit integer for compatibility with database written
     # with Perl's 'N' packing format.
-    parts = struct.unpack('>8B', struct.pack('>Q', long(numip)))
-    return '.'.join([str(x) for x in parts[4:8]])
+    try:
+        parts = struct.unpack('>8B', struct.pack('>Q', long(numip)))
+        return '.'.join([str(x) for x in parts[4:8]])
+    except:
+        # Potential DB derp in Wakaba.
+        return '0.0.0.0'
 
 def is_whitelisted(numip):
     return False
