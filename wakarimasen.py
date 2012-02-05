@@ -60,7 +60,7 @@ def main():
             util.wrap_static(application, __file__,
                 index='wakaba.html',
                 not_found_handler=app.not_found),
-            use_reloader=True, use_debugger=True)
+            use_reloader=True)
 
 if __name__ == '__main__':
     main()
