@@ -373,3 +373,39 @@ def make_thumbnail(filename, thumbnail, width, height, quality, convert):
 
     # other methods supported by the original wakaba
     # but not by wakaba+desuchan aren't included here
+
+def get_cookie_from_request(request, key):
+    try:
+        # Undo conversion done in make_cookies()
+        return urllib.unquote(request.cookies[key]).decode('utf-8')
+    except KeyError:
+        return ''
+
+def kwargs_from_params(request, params):
+    '''Associate function to convert CGI request data with dictionary
+    of parameter keys to a dictionary of keyword arguments for passing
+    to an application function.
+    
+    Dictonary format: {'cookies': ['cookie_keys'],
+                       'form':    ['html_form_input_names'],
+                       'file':    ['file_keys']}
+    
+    Not all keys are necessary. Invalid keys are ignored.'''
+
+    kwargs = {}
+    if 'cookies' in params.keys():
+        for param in params['cookies']:
+            try:
+                kwargs[param] = get_cookie_from_request(request, param)
+            except KeyError:
+                kwargs[param] = ''
+
+    if 'form' in params.keys():
+        for param in params['form']:
+            kwargs[param] = request.values.get(param, '')
+
+    if 'file' in params.keys():
+        for param in params['file']:
+            kwargs[param] = request.files[param]
+
+    return kwargs
