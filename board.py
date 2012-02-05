@@ -294,6 +294,9 @@ class Board(object):
         for post in query:
             thread.append(model.CompactPost(post))
 
+        if not len(thread):
+            raise WakaError('Thread not found.')
+
         if thread[0].parent:
             raise WakaError(strings.NOTHREADERR)
 
