@@ -15,8 +15,6 @@ import str_format
 import urllib
 from util import local
 
-MAX_UNICODE = 1114111
-
 # Dictionary of what action keywords mean. It's like a real dictionary!
 ACTION_TRANSLATION \
     = {'ipban' : {'name' : 'IP Ban', 'content' : 'Affected IP Address'},

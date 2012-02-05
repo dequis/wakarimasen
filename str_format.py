@@ -3,6 +3,8 @@ import re
 import config, config_defaults
 from urllib import quote
 
+MAX_UNICODE = 1114111
+
 CONTROL_CHARS_RE = re.compile('[\x00-\x08\x0b\x0c\x0e-\x1f]')
 ENTITIES_CLEAN_RE = re.compile('&(#([0-9]+);|#x([0-9a-fA-F]+);|)')
 ENTITY_REPLACES = {
