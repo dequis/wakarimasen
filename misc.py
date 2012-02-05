@@ -69,8 +69,10 @@ def dot_to_dec(ip):
     return struct.unpack('>L', struct.pack('>4B', *parts))[0]
 
 def dec_to_dot(numip):
-    parts = struct.unpack('>4B', struct.pack('>L', long(numip)))
-    return '.'.join([str(x) for x in parts])
+    # Parse 64-bit integer for compatibility with database written
+    # with Perl's 'N' packing format.
+    parts = struct.unpack('>8B', struct.pack('>Q', long(numip)))
+    return '.'.join([str(x) for x in parts[4:8]])
 
 def is_whitelisted(numip):
     return False
