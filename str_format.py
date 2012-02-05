@@ -1,6 +1,7 @@
 import re
 
 import config, config_defaults
+from urllib import quote
 
 CONTROL_CHARS_RE = re.compile('[\x00-\x08\x0b\x0c\x0e-\x1f]')
 ENTITIES_CLEAN_RE = re.compile('&(#([0-9]+);|#x([0-9a-fA-F]+);|)')
@@ -127,3 +128,6 @@ def tag_killa(comment):
     #    comment = input_html.sub(output_code, comment)
 
     return decode_string(comment)
+
+def percent_encode(string):
+    return quote(string.encode('utf-8'))

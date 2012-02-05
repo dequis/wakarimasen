@@ -4,7 +4,7 @@ import time
 import random
 import hashlib
 from subprocess import Popen, PIPE
-from urllib import quote, urlencode
+from urllib import urlencode
 
 import misc
 import str_format
@@ -48,7 +48,7 @@ class Board(object):
         url_path = os.path.join('/', os.path.relpath(\
                                           board_path,
                                           local.environ['DOCUMENT_ROOT']), '')
-        self.url = quote(('%s' % (url_path.encode('utf-8'))))
+        self.url = str_format.percent_encode(url_path)
         self.name = board
 
     def make_path(self, file='', dir='', dirc=None, page=None, thread=None,
@@ -608,7 +608,8 @@ class Board(object):
                 email = ''
 
         # clean up the inputs
-        email = str_format.clean_string(str_format.decode_string(email))
+        email = str_format.percent_encode(str_format.clean_string\
+                                          (str_format.decode_string(email)))
         subject = str_format.clean_string(str_format.decode_string(subject))
 
         # fix up the email/link, if it is not a generic URI already.
@@ -1253,7 +1254,7 @@ class Board(object):
         if force_http:
             self_path = 'http://' + local.environ['SERVER_NAME'] + self_path
 
-        return self_path + quote(filename.encode('utf-8'))
+        return self_path + str_format.percent_encode(filename)
 
     def make_anonymous(self, ip, time):
         # TODO: SILLY_ANONYMOUS not supported

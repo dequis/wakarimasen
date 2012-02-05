@@ -1,9 +1,9 @@
 import os
 import sys
 import glob
-from urllib import quote_plus
 import random
 import re
+from str_format import percent_encode
 
 import jinja2
 
@@ -93,7 +93,7 @@ class Template(object):
     @filter
     def expand_image_url(self, filename):
         # TODO: load balancing support?
-	return self.expand_url(quote_plus(filename, '/'))
+	return self.expand_url(percent_encode(filename), '/')
 
     @filter
     def root_path_to_filename(self, filename):
