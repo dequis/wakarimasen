@@ -249,7 +249,7 @@ def make_cookies(**kwargs):
 
     cookies = environ['waka.cookies']
     for key, value in kwargs.iteritems():
-        cookies[key] = urllib.quote(value.encode('utf-8'))
+        cookies[key] = urllib.quote_plus(value.encode('utf-8'))
         cookies[key]['expires'] = expire_date
         cookies[key]['path'] = path
 
@@ -377,7 +377,7 @@ def make_thumbnail(filename, thumbnail, width, height, quality, convert):
 def get_cookie_from_request(request, key):
     try:
         # Undo conversion done in make_cookies()
-        return urllib.unquote(request.cookies[key]).decode('utf-8')
+        return urllib.unquote_plus(request.cookies[key]).decode('utf-8')
     except KeyError:
         return ''
 
