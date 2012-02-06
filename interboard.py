@@ -60,7 +60,8 @@ def remove_board_from_index(board_name):
 # Bans and Whitelists
 
 def add_admin_entry(admin, option, comment, ip='', mask='255.255.255.255',
-                    sval1='', total='', expiration=0, caller=''):
+                    sval1='', total='', expiration=0,
+                    caller=''):
     staff.check_password(admin)
 
     session = model.Session()
@@ -110,8 +111,10 @@ def add_admin_entry(admin, option, comment, ip='', mask='255.255.255.255',
 
     # TODO: Log this.
 
+    board = local.environ['waka.board']
     forward_url = '?'.join((misc.get_secure_script_name(),
-                            urlencode({'task' : 'bans'})))
+                            urlencode({'task' : 'bans',
+                                       'board': board.name})))
 
     return util.make_http_forward(forward_url, config.ALTERNATE_REDIRECT)
 
@@ -131,8 +134,12 @@ def remove_admin_entry(admin, num, override_log=False, no_redirect=False):
         sql = table.delete().where(table.c.num == num)
         session.execute(sql)
 
-    return util.make_http_forward('%s?task=bans' % \
-                                  (misc.get_secure_script_name()))
+    board = local.environ['waka.board']
+    forward_url = '?'.join((misc.get_secure_script_name(),
+                            urlencode({'task': 'bans',
+                                       'board': board.name})))
+
+    return util.make_http_forward(forward_url, config.ALTERNATE_REDIRECT)
 
 def remove_old_bans():
     session = model.Session()
@@ -265,8 +272,10 @@ def update_spam_file(admin, spam):
     with open(config.SPAM_FILES[0], 'w') as f:
         f.write(spam)
 
+    board = local.environ['waka.board']
     forward_url = '?'.join([misc.get_secure_script_name(),
-                            urlencode({'task' : 'spam'})])
+                            urlencode({'task' : 'spam',
+                                       'board': board.name})])
     return util.make_http_forward(forward_url, config.ALTERNATE_REDIRECT)
 
 # Thread Transfer

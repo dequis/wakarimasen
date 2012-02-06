@@ -472,8 +472,10 @@ def add_staff_proxy(admin, mpass, usertocreate, passtocreate, account, reign):
 
     staff.add_staff(usertocreate, passtocreate, account, reign)
 
+    board = local.environ['waka.board']
     return make_http_forward('?'.join((misc.get_secure_script_name(),
-        urlencode({'task' : 'staff'}))), config.ALTERNATE_REDIRECT)
+        urlencode({'task' : 'staff',
+                   'board': board.name}))), config.ALTERNATE_REDIRECT)
 
 def del_staff_proxy(admin, mpass, username):
     user = staff.check_password(admin)
@@ -487,8 +489,10 @@ def del_staff_proxy(admin, mpass, username):
 
     staff.del_staff(username)
 
+    board = local.environ['waka.board']
     return make_http_forward('?'.join((misc.get_secure_script_name(),
-        urlencode({'task' : 'staff'}))), config.ALTERNATE_REDIRECT)
+        urlencode({'task' : 'staff',
+                   'board': board.name}))), config.ALTERNATE_REDIRECT)
 
 def edit_staff_proxy(admin, mpass, username, newpassword=None, newclass=None,
                      originalpassword='', reign=None, disable=None):
@@ -511,13 +515,16 @@ def edit_staff_proxy(admin, mpass, username, newpassword=None, newclass=None,
     staff.edit_staff(username, clear_pass=newpassword, new_class=newclass,
                      reign=reign, disable=disable)
 
+    board = local.environ['waka.board']
     forward = ''
     if user.username == username:
         forward = '?'.join((misc.get_secure_script_name(),
-                            urlencode({'task' : 'admin'})))
+                            urlencode({'task' : 'admin',
+                                       'board': board.name})))
     else:
         forward = '?'.join((misc.get_secure_script_name(),
-                            urlencode({'task' : 'staff'})))
+                            urlencode({'task' : 'staff',
+                                       'board': board.name})))
 
     return make_http_forward(forward, config.ALTERNATE_REDIRECT)
 
@@ -574,8 +581,10 @@ def do_logout(admin):
 
     clear_login_cookies()
 
+    board = local.environ['waka.board']
     return make_http_forward('?'.join((misc.get_secure_script_name(),
-                                       urlencode({'task' : 'admin'}))),
+                                       urlencode({'task' : 'admin',
+                                                  'board': board.name}))),
                                        config.ALTERNATE_REDIRECT)
 
 def make_first_time_setup_gateway():
@@ -593,8 +602,11 @@ def do_first_time_setup(admin, username, password):
         raise WakaError('Missing password.')
 
     staff.add_staff(username, password, staff.ADMIN, [])
+
+    board = local.environ['waka.board']
     return make_http_forward('?'.join((misc.get_secure_script_name(),
-                              urlencode({'task' : 'loginpanel'}))),
+                              urlencode({'task' : 'loginpanel',
+                                         'board': board.name}))),
                               config.ALTERNATE_REDIRECT)
 
 
