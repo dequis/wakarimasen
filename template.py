@@ -141,7 +141,7 @@ class Template(object):
 
     @filter
     def get_action_name(self, action, debug=0):
-        return misc.get_action_name(action, debug=debug)
+        return interboard.get_action_name(action, debug=debug)
     
     def get_stylesheets(self, board=None):
         files = glob.glob(os.path.abspath\
