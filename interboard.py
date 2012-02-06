@@ -97,7 +97,7 @@ def add_admin_entry(admin, option, comment, ip='', mask='255.255.255.255',
 
     comment = str_format.clean_string(\
         str_format.decode_string(comment, config.CHARSET))
-    expiration = int(expiration)
+    expiration = int(expiration) if expiration else 0
     if expiration:
         expiration = expiration + time.time()
 
