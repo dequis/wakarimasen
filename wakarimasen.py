@@ -11,6 +11,7 @@ import config, config_defaults
 import app
 import util
 import model
+import board
 import interboard
 from board import Board
 from util import WakaError, local
@@ -51,10 +52,23 @@ def cleanup(environ, start_response):
 application = util.cleanup(application, cleanup)
 
 def main():
+    # Set up tentative environment variables.
+    local.environ['waka.rootpath'] \
+        = os.path.join('/', config.BOARD_DIR, '')
+    local.environ['SCRIPT_NAME'] = sys.argv[0]
+
     app.init_database()
-    server = sys.argv[1:] and sys.argv[1] or 'fcgi'
-    if server == 'fcgi':
-        fcgi.WSGIServer(application).run()
+    arg = sys.argv[1:] and sys.argv[1] or 'fcgi'
+    if arg == 'fcgi':
+        fcgi.WSGIarg(application).run()
+    elif sys.argv[1] == 'rebuild_cache':
+        local.environ['DOCUMENT_ROOT'] = sys.argv[3]
+        board = Board(sys.argv[2])
+        local.environ['waka.board'] = board
+        board.rebuild_cache()
+    elif sys.argv[1] == 'rebuild_global_cache':
+        local.environ['DOCUMENT_ROOT'] = sys.argv[2]
+        interboard.global_cache_rebuild()
     else:
         werkzeug.run_simple('', 8000,
             util.wrap_static(application, __file__,

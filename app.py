@@ -25,7 +25,7 @@ def task_rebuild(environ, start_response):
     
     kwargs = kwargs_from_params(request, params)
 
-    return board.rebuild_cache(**kwargs)
+    return board.rebuild_cache_proxy(**kwargs)
 
 def task_rebuildglobal(environ, start_response):
     request = environ['werkzeug.request']
@@ -34,7 +34,7 @@ def task_rebuildglobal(environ, start_response):
     
     kwargs = kwargs_from_params(request, params)
 
-    return interboard.global_cache_rebuild(**kwargs)
+    return interboard.global_cache_rebuild_proxy(**kwargs)
 
 # Posting
 def task_post(environ, start_response):

@@ -5,6 +5,7 @@ import time
 import re
 import os
 from urllib import urlencode
+from subprocess import Popen, PIPE
 
 import config
 import strings
@@ -124,7 +125,7 @@ def remove_board_from_index(board_name):
 
 # Global rebuilding
 
-def global_cache_rebuild(admin):
+def global_cache_rebuild():
     boards = [x['board_entry'] for x in get_all_boards()]
     for board_str in boards:
         try:
@@ -133,6 +134,12 @@ def global_cache_rebuild(admin):
         except Exception:
             pass
 
+def global_cache_rebuild_proxy(admin):
+    user = staff.check_password(admin)
+    if user.account != staff.ADMIN:
+        raise WakaError(strings.INUSUFFICENTPRIVLEDGES)
+    Popen(['python', 'wakarimasen.py', 'rebuild_global_cache',
+           local.environ['DOCUMENT_ROOT']])
     referer = local.environ['HTTP_REFERER']
     return util.make_http_forward(referer, config.ALTERNATE_REDIRECT)
 

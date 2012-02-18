@@ -1,4 +1,5 @@
 import os
+import sys
 import re
 import time
 import random
@@ -180,12 +181,16 @@ class Board(object):
             os.unlink(self.make_path(page=page))
             page += 1
 
-    def rebuild_cache(self, admin):
-        self.check_access(admin)
+    def rebuild_cache(self):
         self.build_thread_cache_all()
         self.build_cache()
 
-        return util.make_http_forward('?'.join([misc.get_secure_script_name(),
+    def rebuild_cache_proxy(self, admin):
+        self.check_access(admin)
+        Popen(['python', 'wakarimasen.py', 'rebuild_cache', self.name,
+               local.environ['DOCUMENT_ROOT']])
+        return util.make_http_forward(\
+            '?'.join([misc.get_secure_script_name(),
             urlencode({'task': 'mpanel',
                        'board': self.name})]), config.ALTERNATE_REDIRECT)
 
