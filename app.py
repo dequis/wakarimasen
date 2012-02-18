@@ -20,14 +20,24 @@ def init_database():
 
 # Cache building
 def task_rebuild(environ, start_response):
+    request = environ['werkzeug.request']
     board = environ['waka.board']
-    board.rebuild_cache()
     params = {'cookies': ['wakaadmin']}
     
     kwargs = kwargs_from_params(request, params)
     kwargs['admin'] = kwargs.pop('wakaadmin')
 
-    return board.rebuild_cache(kwargs)
+    return board.rebuild_cache(**kwargs)
+
+def task_rebuildglobal(environ, start_response):
+    request = environ['werkzeug.request']
+    board = environ['waka.board']
+    params = {'cookies': ['wakaadmin']}
+    
+    kwargs = kwargs_from_params(request, params)
+    kwargs['admin'] = kwargs.pop('wakaadmin')
+
+    return interboard.global_cache_rebuild(**kwargs)
 
 # Posting
 def task_post(environ, start_response):

@@ -185,6 +185,10 @@ class Board(object):
         self.build_thread_cache_all()
         self.build_cache()
 
+        return util.make_http_forward('?'.join([misc.get_secure_script_name(),
+            urlencode({'task': 'mpanel',
+                       'board': self.name})]), config.ALTERNATE_REDIRECT)
+
     def parse_page_threads(self, pagethreads):
         threads = []
         for postlist in pagethreads:

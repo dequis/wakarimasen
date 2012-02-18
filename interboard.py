@@ -122,6 +122,20 @@ def remove_board_from_index(board_name):
 
     session.execute(sql)
 
+# Global rebuilding
+
+def global_cache_rebuild(admin):
+    boards = [x['board_entry'] for x in get_all_boards()]
+    for board_str in boards:
+        try:
+            board_obj = board.Board(board_str)
+            board_obj.rebuild_cache(admin)
+        except Exception:
+            pass
+
+    referer = local.environ['HTTP_REFERER']
+    return util.make_http_forward(referer, config.ALTERNATE_REDIRECT)
+
 # Bans and Whitelists
 
 def add_admin_entry(admin, option, comment, ip='', mask='255.255.255.255',
