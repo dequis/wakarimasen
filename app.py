@@ -83,7 +83,7 @@ def task_delete(environ, start_response, archiving=False):
         #       brought up by clicking "Delete" without JS enabled.
         #       Not implemented yet.
         params_single = ['postpassword', 'postfileonly', 'from_window']
-        for param, single in map(None, params, params_single):
+        for param, single in map(None, params['form'][:3], params_single):
             kwargs[param] = request.form.get(single, '')
 
         kwargs['posts'] = [request.values.get('deletepost', '')]
