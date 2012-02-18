@@ -46,6 +46,8 @@ non-FastCGI context. If you want to force CGI behavior, set the environment
 variable FCGI_FORCE_CGI to "Y" or "y".
 """
 
+import config, config_defaults
+
 __author__ = 'Allan Saddi <allan@saddi.com>'
 __version__ = '$Revision$'
 
@@ -1138,9 +1140,13 @@ class Server(object):
         Called by Request if an exception occurs within the handler. May and
         should be overridden.
         """
-        import cgitb
-        req.stdout.write('Content-Type: text/html\r\n\r\n' +
-                         cgitb.html(sys.exc_info()))
+        if config.DEBUG:
+            import cgitb
+            req.stdout.write('Content-Type: text/html\r\n\r\n' +
+                             cgitb.html(sys.exc_info()))
+        else:
+            req.stdout.write('Content-Type: text/html\r\n\r\n' +
+                             'Internal server error.')
 
 class WSGIServer(Server):
     """
