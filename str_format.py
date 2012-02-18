@@ -2,6 +2,7 @@ import re
 
 import config, config_defaults
 from urllib import quote
+from util import local
 
 MAX_UNICODE = 1114111
 
@@ -117,19 +118,168 @@ for (key, value) in BBCODE_TABLE.iteritems():
     # The HTML code is raw, thus no need to decode/clean the key.
     __build_transl_dict(value, key, CODE_TRANSL)
 
+def percent_encode(string):
+    return quote(string.encode('utf-8'))
+
+# The code above will be temporarily replaced by this wakabamark-only
+# version, in this branch only.
+
+
+#format_comment regexps (FC_*)
+FC_HIDE_POSTLINKS = [
+    (re.compile('&gt;&gt;&gt;/?([0-9a-zA-Z]+)/?&gt;&gt;([0-9]+)'),
+     r'&gt&gt&gt;/\1/&gt&gt;\2'),
+    (re.compile('&gt;&gt;&gt;/([0-9a-zA-Z]+)/'), r'&gt&gt&gt;/\1/'),
+    (re.compile('&gt;&gt;([0-9\-]+)'), r'&gtgt;\1')
+]
+FC_BOARD_POST_LINK = re.compile('&gt&gt&gt;\/?([0-9a-zA-Z]+)\/?&gt&gt;([0-9]+)')
+FC_BOARD_LINK = re.compile('&gt&gt&gt;\/?([0-9a-zA-Z]+)\/?')
+FC_POST_LINK = re.compile('&gtgt;([0-9]+)')
+
 def format_comment(comment):
-    '''Format an already decoded string following the markup translation
-    dictionary.'''
-    #for (input_code, output_html) in HTML_TRANSL.iteritems():
-    #    comment = input_code.sub(output_html, comment)
+    # hide >>1 references from the quoting code
+    for pattern, repl in FC_HIDE_POSTLINKS:
+        comment = pattern.sub(repl, comment)
+
+    def unhide_postlinks(string):
+        return (string
+            .replace("&gt&gt&gt;", "&gt;&gt;&gt;")
+            .replace("&gt&gt;", "&gt;&gt;")
+            .replace("&gtgt;", "&gt;&gt;"))
+
+    def handler(line):
+        '''fix up post link references'''
+
+        # import this here to avoid circular imports. ugly, i know.
+        import board
+
+        def board_post_link(match):
+            origtext = unhide_postlinks(match.group(0))
+            try:
+                newboard = board.Board(match.group(1))
+                res = newboard.get_post(match.group(2))
+                if res:
+                    return '<a href="%s" onclick="highlight(%s)">%s</a>' % (
+                        newboard.get_reply_link(res.num, res.parent),
+                        match.group(1), origtext)
+            except board.BoardNotFound:
+                pass
+            return origtext
+        line = FC_BOARD_POST_LINK.sub(board_post_link, line)
+
+        def board_link(match):
+            origtext = unhide_postlinks(match.group(0))
+            try:
+                newboard = board.Board(match.group(1))
+                return '<a href="%s">%s</a>' % (
+                    newboard.make_path(page=0, url=True),
+                    origtext)
+            except board.BoardNotFound:
+                return origtext
+
+        line = FC_BOARD_LINK.sub(board_link, line)
+
+        def post_link(match):
+            origtext = unhide_postlinks(match.group(0))
+            res = local.board.get_post(match.group(1))
+            if res:
+                return '<a href="%s" onclick="highlight(%s)">%s</a>' % (
+                    local.board.get_reply_link(res.num, res.parent),
+                    res.num, origtext)
+            else:
+                return origtext
+
+        line = FC_POST_LINK.sub(post_link, line)
+
+        return line
+
+    if local.board.options['ENABLE_WAKABAMARK']:
+        raise NotImplementedError('No wakabamark support yet') # TODO
+        comment = do_wakabamark(comment, handler)
+    else:
+        comment = "<p>" + simple_format(comment, handler) + "</p>"
+
+    # fix <blockquote> styles for old stylesheets
+    comment = comment.replace("<blockquote>", '<blockquote class="unkfunc">')
+
+    # restore >>1 references hidden in code blocks
+    comment = unhide_postlinks(comment)
 
     return comment
 
-def tag_killa(comment):
-    #for (input_html, output_code) in CODE_TRANSL.iteritems():
-    #    comment = input_html.sub(output_code, comment)
 
-    return decode_string(comment)
+URL_PATTERN = re.compile(
+    '(https?://[^\s<>"]*?)((?:\s|<|>|"|\.|\)|\]|!|\?|,|&#44;|&quot;)*'
+    '(?:[\s<>"]|$))', re.I | re.S)
+URL_SUB = r'<a href="\1">\1</a>\2'
 
-def percent_encode(string):
-    return quote(string.encode('utf-8'))
+GREENTEXT_PATTERN = re.compile("^(&gt;[^_]*)$")
+GREENTEXT_SUB = r'<span class="unkfunc">\1</span>'
+
+def simple_format(comment, handler):
+    lines = []
+    for line in comment.split("\n"):
+        # make URLs into links
+        line = URL_PATTERN.sub(URL_SUB, line)
+
+        # colour quoted sections if working in old-style mode.
+        if not local.board.options['ENABLE_WAKABAMARK']:
+            line = GREENTEXT_PATTERN.sub(GREENTEXT_SUB, line)
+
+        if handler:
+            line = handler(line)
+
+        lines.append(line)
+
+    return '<br />'.join(lines)
+
+
+#tag_killa regexps (TK_*)
+TK_REPLACEMENTS = [
+    # Strip Oekaki postfix.
+    (re.compile('<p(?: class="oekinfo">|>\s*<small>)\s*<strong>(?:Oekaki post|'
+        'Edited in Oekaki)</strong>\s*\(Time\:.*?</p>'), '', re.I),
+
+    (re.compile('<br\s?/?>'), '\n'),
+    (re.compile('</p>$'), ''),
+    (re.compile('<code>([^\n]*?)</code>'), r'`\1`'),
+    (re.compile('</blockquote>$'), ''),
+    (re.compile('</blockquote>'), '\n\n'),
+]
+
+TK_CODEBLOCK = re.compile('<\s*?code>(.*?)</\s*?code>', re.S)
+TK_ULIST = re.compile('<ul>(.*?)</ul>', re.S)
+TK_OLIST = re.compile('<ol>(.*?)</ol>', re.S)
+
+TK_REPLACEMENTS_2 = [
+    (re.compile('</?em>'), '*'),
+    (re.compile('</?strong>'), '**'),
+    (re.compile('<.*?>'), ''),
+]
+
+def tag_killa(string):
+    '''subroutine for stripping HTML tags and supplanting them with corresponding wakabamark'''
+    for pattern, repl in TK_REPLACEMENTS:
+        string = pattern.sub(repl, string)
+
+    # TODO do <code> tags consider newlines as line breaks?
+    def codeblock(match):
+        return '\n'.join(['    ' + x for x in match.group(1).split("\n")]) + "\n"
+    string = TK_CODEBLOCK.sub(codeblock, string)
+
+    def ulist(match):
+        return match.group(1).replace("<li>", "* ").replace("</li>", "\n") + "\n"
+    string = TK_ULIST.sub(ulist, string)
+
+    def olist(match):
+        count = 0
+        def replace_li(entry):
+            count += 1
+            return entry.replace("<li>", "%s. " % count)
+        strings = match.group(1).split("</li>")
+        return '\n'.join([replace_li(x) for x in strings]) + "\n"
+    string = TK_OLIST.sub(olist, string)
+
+    for pattern, repl in TK_REPLACEMENTS_2:
+        string = pattern.sub(repl, string)
+    return decode_string(string)
