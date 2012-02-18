@@ -11,7 +11,6 @@ from misc import get_cookie_from_request, kwargs_from_params
 
 def no_task(environ, start_response):
     board = environ['waka.board']
-    board.build_cache()
     start_response('302 Found', [('Location', board.url)])
     return []
 
