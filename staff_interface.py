@@ -532,7 +532,7 @@ def clear_login_cookies():
     misc.make_cookies(wakaadmin='', wakaadminsave='0', expires=0)
 
 def do_login(username=None, password=None, save_login=False,
-             admin=None, board=None, nexttask='mpanel'):
+             admin=None, board=None, nexttask=BOARD_PANEL):
 
     bad_pass = False
     staff_entry = None
