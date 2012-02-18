@@ -60,7 +60,7 @@ def main():
     app.init_database()
     arg = sys.argv[1:] and sys.argv[1] or 'fcgi'
     if arg == 'fcgi':
-        fcgi.WSGIserver(application).run()
+        fcgi.WSGIServer(application).run()
     elif sys.argv[1] == 'rebuild_cache':
         local.environ['DOCUMENT_ROOT'] = sys.argv[3]
         board = Board(sys.argv[2])
