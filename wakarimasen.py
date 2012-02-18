@@ -56,6 +56,7 @@ def main():
     local.environ['waka.rootpath'] \
         = os.path.join('/', config.BOARD_DIR, '')
     local.environ['SCRIPT_NAME'] = sys.argv[0]
+    local.environ['SERVER_NAME'] = config.SERVER_NAME
 
     app.init_database()
     arg = sys.argv[1:] and sys.argv[1] or 'fcgi'

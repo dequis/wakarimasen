@@ -17,6 +17,8 @@ ${
     s/\n\n+/\n/g;
     s/$/\
 BOARD_DIR = \'\'\
+DEBUG = False\
+SERVER_NAME = 'localhost'\
 \
 # add default values to config.py\
 import util as _util\
