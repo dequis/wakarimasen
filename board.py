@@ -180,6 +180,11 @@ class Board(object):
             os.unlink(self.make_path(page=page))
             page += 1
 
+    def rebuild_cache(self, admin):
+        self.check_access(admin)
+        self.build_thread_cache_all()
+        self.build_cache()
+
     def parse_page_threads(self, pagethreads):
         threads = []
         for postlist in pagethreads:

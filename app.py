@@ -18,6 +18,17 @@ def no_task(environ, start_response):
 def init_database():
     model.metadata.create_all(model.engine)
 
+# Cache building
+def task_rebuild(environ, start_response):
+    board = environ['waka.board']
+    board.rebuild_cache()
+    params = {'cookies': ['wakaadmin']}
+    
+    kwargs = kwargs_from_params(request, params)
+    kwargs['admin'] = kwargs.pop('wakaadmin')
+
+    return board.rebuild_cache(kwargs)
+
 # Posting
 def task_post(environ, start_response):
     request = environ['werkzeug.request']
