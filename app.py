@@ -25,7 +25,6 @@ def task_rebuild(environ, start_response):
     params = {'cookies': ['wakaadmin']}
     
     kwargs = kwargs_from_params(request, params)
-    kwargs['admin'] = kwargs.pop('wakaadmin')
 
     return board.rebuild_cache(**kwargs)
 
@@ -35,7 +34,6 @@ def task_rebuildglobal(environ, start_response):
     params = {'cookies': ['wakaadmin']}
     
     kwargs = kwargs_from_params(request, params)
-    kwargs['admin'] = kwargs.pop('wakaadmin')
 
     return interboard.global_cache_rebuild(**kwargs)
 
@@ -55,7 +53,6 @@ def task_post(environ, start_response):
     kwargs['name'] = kwargs.pop('field1')
     kwargs['admin_post_mode'] = kwargs.pop('adminpost')
     kwargs['oekaki_post'] = kwargs['srcinfo'] = kwargs['pch'] = None
-    kwargs['admin'] = kwargs.pop('wakaadmin')
     # kwargs['environ'] = environ
     
     return board.post_stuff(**kwargs)
@@ -97,7 +94,6 @@ def task_delete(environ, start_response, archiving=False):
         # Parse posts string into array.
         kwargs['posts'] = request.form.getlist('num')
 
-    kwargs['admin'] = kwargs.pop('wakaadmin')
     kwargs['archiving'] = archiving
     return board.delete_stuff(**kwargs)
 
@@ -113,7 +109,10 @@ def task_edit(environ, start_response):
    
     kwargs = kwargs_from_params(request, params)
     kwargs['post_num'] = kwargs.pop('num')
-    kwargs['admin_post'] = kwargs.pop('wakaadmin')
+    try:
+        kwargs['admin_post'] = kwargs.pop('admin')
+    except KeyError:
+        kwargs['admin_post'] = False
 
     return board.edit_gateway_window(**kwargs)
 
@@ -128,7 +127,6 @@ def task_editpostwindow(environ, start_response):
               'cookies': ['wakaadmin']}
 
     kwargs = kwargs_from_params(request, params)
-    kwargs['admin'] = kwargs.pop('wakaadmin')
     kwargs['admin_edit_mode'] = kwargs.pop('admineditmode')
     kwargs['post_num'] = kwargs.pop('num')
 
@@ -150,7 +148,6 @@ def task_editpost(environ, start_response):
     kwargs['post_num'] = kwargs.pop('num')
     kwargs['admin_edit_mode'] = kwargs.pop('adminedit')
     kwargs['oekaki_post'] = kwargs['srcinfo'] = kwargs['pch'] = None
-    kwargs['admin'] = kwargs.pop('wakaadmin')
     # kwargs['environ'] = environ
 
     return board.edit_stuff(**kwargs)
@@ -180,7 +177,6 @@ def task_resolve(environ, start_response):
     params = {'cookies': ['wakaadmin'], 'form': ['delete']}
 
     kwargs = kwargs_from_params(request, params)
-    kwargs['admin'] = kwargs.pop('wakaadmin')
 
     posts = {}
     for post in request.form.getlist('num'):
@@ -252,7 +248,6 @@ def task_loginpanel(environ, start_response):
     kwargs['password'] = kwargs.pop('berra')
 
     kwargs['save_login'] = kwargs.pop('wakaadminsave')
-    kwargs['admin'] = kwargs.pop('wakaadmin')
     kwargs['board'] = environ['waka.board']
 
     return staff_interface.do_login(**kwargs)
@@ -275,7 +270,6 @@ def task_mpanel(environ, start_response):
 
     params = {'form': ['page'], 'cookies': ['wakaadmin']}
     kwargs = kwargs_from_params(request, params)
-    kwargs['admin'] = kwargs.pop('wakaadmin')
     kwargs['dest'] = staff_interface.BOARD_PANEL
     kwargs['board'] = environ['waka.board']
 
@@ -325,7 +319,6 @@ def task_reports(environ, start_response):
     kwargs['sortby_type'] = kwargs.pop('sortby')
     kwargs['sortby_dir'] = kwargs.pop('order')
     kwargs['dest'] = staff_interface.REPORTS_PANEL
-    kwargs['admin'] = kwargs.pop('wakaadmin')
 
     return StaffInterface(**kwargs)
 
@@ -338,7 +331,6 @@ def task_addip(environ, start_response):
 
     kwargs = kwargs_from_params(request, params)
     kwargs['option'] = kwargs.pop('type')
-    kwargs['admin'] = kwargs.pop('wakaadmin')
 
     return interboard.add_admin_entry(**kwargs)
 
@@ -350,7 +342,6 @@ def task_addstring(environ, start_response):
     kwargs = kwargs_from_params(request, params)
     kwargs['option'] = kwargs.pop('type')
     kwargs['sval1'] = kwargs.pop('string')
-    kwargs['admin'] = kwargs.pop('wakaadmin')
 
     return interboard.add_admin_entry(**kwargs)
 
@@ -360,7 +351,6 @@ def task_removeban(environ, start_response):
     params = {'form': ['num'], 'cookies': ['wakaadmin']}
 
     kwargs = kwargs_from_params(request, params)
-    kwargs['admin'] = kwargs.pop('wakaadmin')
 
     return interboard.remove_admin_entry(**kwargs)
 
@@ -372,7 +362,6 @@ def task_updatespam(environ, start_response):
     params = {'form': ['spam'], 'cookies': ['wakaadmin']}
 
     kwargs = kwargs_from_params(request, params)
-    kwargs['admin'] = kwargs.pop('wakaadmin')
 
     return interboard.update_spam_file(**kwargs)
 
@@ -382,7 +371,6 @@ def task_deleteuserwindow(environ, start_response):
     params = {'cookies': ['wakaadmin'], 'form': ['username']}
 
     kwargs = kwargs_from_params(request, params)
-    kwargs['admin'] = kwargs.pop('wakaadmin')
     kwargs['dest'] = staff_interface.DEL_STAFF_CONFIRM
 
     return StaffInterface(**kwargs)
@@ -393,7 +381,6 @@ def task_disableuserwindow(environ, start_response):
     params = {'cookies': ['wakaadmin'], 'form': ['username']}
 
     kwargs = kwargs_from_params(request, params)
-    kwargs['admin'] = kwargs.pop('wakaadmin')
     kwargs['dest'] = staff_interface.DISABLE_STAFF_CONFIRM
 
     return StaffInterface(**kwargs)
@@ -404,7 +391,6 @@ def task_enableuserwindow(environ, start_response):
     params = {'cookies': ['wakaadmin'], 'form': ['username']}
 
     kwargs = kwargs_from_params(request, params)
-    kwargs['admin'] = kwargs.pop('wakaadmin')
     kwargs['dest'] = staff_interface.ENABLE_STAFF_CONFIRM
 
     return StaffInterface(**kwargs)
@@ -415,7 +401,6 @@ def task_edituserwindow(environ, start_response):
     params = {'cookies': ['wakaadmin'], 'form': ['username']}
 
     kwargs = kwargs_from_params(request, params)
-    kwargs['admin'] = kwargs.pop('wakaadmin')
     kwargs['dest'] = staff_interface.EDIT_STAFF_CONFIRM
 
     return StaffInterface(**kwargs)
@@ -428,7 +413,6 @@ def task_createuser(environ, start_response):
                           'reign']}
 
     kwargs = kwargs_from_params(request, params)
-    kwargs['admin'] = kwargs.pop('wakaadmin')
     kwargs['reign'] = kwargs.pop('reign').split(',')
 
     return staff_interface.add_staff_proxy(**kwargs)
@@ -439,7 +423,6 @@ def task_deleteuser(environ, start_response):
     params = {'cookies': ['wakaadmin'], 'form': ['mpass', 'username']}
 
     kwargs = kwargs_from_params(request, params)
-    kwargs['admin'] = kwargs.pop('wakaadmin')
 
     return staff_interface.del_staff_proxy(**kwargs)
 
@@ -449,7 +432,6 @@ def task_disableuser(environ, start_response):
     params = {'cookies': ['wakaadmin'], 'form': ['mpass', 'username']}
 
     kwargs = kwargs_from_params(request, params)
-    kwargs['admin'] = kwargs.pop('wakaadmin')
     kwargs['disable'] = True
 
     return staff_interface.edit_staff_proxy(**kwargs)
@@ -460,7 +442,6 @@ def task_enableuser(environ, start_response):
     params = {'cookies': ['wakaadmin'], 'form': ['mpass', 'username']}
 
     kwargs = kwargs_from_params(request, params)
-    kwargs['admin'] = kwargs.pop('wakaadmin')
     kwargs['disable'] = False
 
     return staff_interface.edit_staff_proxy(**kwargs)
@@ -473,7 +454,6 @@ def task_edituser(environ, start_response):
               'cookies': ['wakaadmin']}
 
     kwargs = kwargs_from_params(request, params)
-    kwargs['admin'] = kwargs.pop('wakaadmin')
     kwargs['username'] = kwargs.pop('usernametoedit')
     kwargs['reign'] = request.form.getlist('reign')
 

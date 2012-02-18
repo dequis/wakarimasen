@@ -314,7 +314,7 @@ def make_thumbnail(filename, thumbnail, width, height, quality, convert):
 def get_cookie_from_request(request, key):
     try:
         # Undo conversion done in make_cookies()
-        return urllib.unquote(request.cookies[key]).decode('utf-8')
+        return urllib.unquote(request.cookies.get(key, '')).decode('utf-8')
     except KeyError:
         return ''
 
@@ -332,10 +332,12 @@ def kwargs_from_params(request, params):
     kwargs = {}
     if 'cookies' in params.keys():
         for param in params['cookies']:
-            try:
-                kwargs[param] = get_cookie_from_request(request, param)
-            except KeyError:
-                kwargs[param] = ''
+            kwargs[param] = get_cookie_from_request(request, param)
+            if param == 'wakaadmin':
+                try:
+                    kwargs['admin'] = kwargs.pop('wakaadmin')
+                except KeyError:
+                    kwargs['admin'] = ''
 
     if 'form' in params.keys():
         for param in params['form']:
