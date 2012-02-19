@@ -1269,6 +1269,7 @@ class Board(object):
         self_path = self.url
 
         if force_http:
+            self_path = self_path[1:]
             self_path = 'http://' + os.path.join(local.environ['SERVER_NAME'],
                                                  self_path)
 
