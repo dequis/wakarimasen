@@ -54,15 +54,17 @@ class StaffInterface(Template):
     '''Specialized template.Template class for dynamic administrative
     pages served by Wakarimasen.'''
 
-    def __init__(self, admin, board=None, dest=HOME_PANEL, page=None,
+    def __init__(self, admin, board=None, dest=None, page=None,
                  perpage=50, **kwargs):
         try:
             self.user = staff.check_password(admin)
         except staff.LoginError:
             Template.__init__(self, 'admin_login_template', nexttask=dest)
         else:
-            # TODO: Check if mod is banned.
+            if not dest:
+                dest = HOME_PANEL
 
+            # TODO: Check if mod is banned.
             if not page:
                 if dest in (HOME_PANEL, BOARD_PANEL):
                     # Adjust for different pagination scheme. (Blame Wakaba.)
