@@ -4,7 +4,12 @@ function get_cookie(name)
 	{
 		var regexp=new RegExp("(^|;\\s+)"+name+"=(.*?)(;|$)");
 		var hit=regexp.exec(document.cookie);
-		if(hit&&hit.length>2) return unescape(hit[2]);
+		if(hit&&hit.length>2)
+        {
+          var unicode_esc = unescape(hit[2]);
+          eval("var ret_val = '" + unicode_esc + "'");
+          return ret_val;
+        }
 		else return '';
 	}
 };

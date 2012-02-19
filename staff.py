@@ -39,7 +39,7 @@ class LoginData(object):
             misc.make_cookies(wakaadminsave='1', wakaadmin=self.cookie,
                               expires=time.time()+SAVED_LOGIN_EXPIRE)
         else:
-            misc.make_cookies(wakaadminsave='0', wakaadmin=self.cookie,
+            misc.make_cookies(wakaadminsave='', wakaadmin=self.cookie,
                               expires=time.time()+UNSAVED_LOGIN_EXPIRE)
 
 # Class for representing staff

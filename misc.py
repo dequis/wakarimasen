@@ -200,7 +200,7 @@ def make_cookies(**kwargs):
 
     cookies = environ['waka.cookies']
     for key, value in kwargs.iteritems():
-        cookies[key] = urllib.quote(value.encode('utf-8'))
+        cookies[key] = urllib.quote(value.encode('unicode-escape'))
         cookies[key]['expires'] = expire_date
         cookies[key]['path'] = path
 
