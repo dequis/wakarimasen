@@ -298,7 +298,7 @@ def simple_format(comment, handler):
 TK_REPLACEMENTS = [
     # Strip Oekaki postfix.
     (re.compile('<p(?: class="oekinfo">|>\s*<small>)\s*<strong>(?:Oekaki post|'
-        'Edited in Oekaki)</strong>\s*\(Time\:.*?</p>'), '', re.I),
+        'Edited in Oekaki)</strong>\s*\(Time\:.*?</p>', re.I), ''),
 
     (re.compile('<br\s?/?>'), '\n'),
     (re.compile('<p>'), '\n\n'),
