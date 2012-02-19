@@ -243,6 +243,9 @@ def do_wakabamark(comment, handler):
             line = URL_PATTERN.sub(URL_SUB, line)
             for pattern, repl in WM_REPLACEMENTS:
                 line = pattern.sub(repl, line)
+            # Parse with handler now.
+            if handler:
+                line = handler(line)
 
         # Go through each block type and format.
         match = False
