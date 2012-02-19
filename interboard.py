@@ -132,8 +132,8 @@ def global_cache_rebuild():
     for board_str in boards:
         try:
             board_obj = board.Board(board_str)
-            board_obj.rebuild_cache()
             local.environ['waka.board'] = board_obj
+            board_obj.rebuild_cache()
         except:
             sys.stderr.write('Error in global cache rebuild in '\
                              + board_str + '\n')
