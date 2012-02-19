@@ -133,7 +133,8 @@ def global_cache_rebuild():
             board_obj = board.Board(board_str)
             board_obj.rebuild_cache(admin)
         except Exception, e:
-            sys.stderr.write('Error in global cache rebuild:' + e)
+            sys.stderr.write('Error in global cache rebuild in '\
+                             + board_str + ':' + e)
 
 def global_cache_rebuild_proxy(admin):
     user = staff.check_password(admin)
