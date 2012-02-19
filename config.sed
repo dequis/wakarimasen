@@ -14,6 +14,7 @@ $ {
     s#SQL_DBI_SOURCE = 'DBI:([^:]+):database=([^:]+);host=([^']+)'.*\nSQL_USERNAME = '([^']+)'.*\nSQL_PASSWORD = '([^']+)'[^\n]*\n#SQL_ENGINE = '\1://\4:\5@\3/\2'\n#;
     s/\n\n+/\n/g;
     s|$|\
-    BOARD_DIR = \'\'                         \# Root of board cache relative to document root.|
+    BOARD_DIR = \'\'                         \# Root of board cache relative to document root.\
+    DEBUG = False                            \# Debug mode|
     p;
 }

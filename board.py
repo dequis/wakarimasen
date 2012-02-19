@@ -1269,9 +1269,10 @@ class Board(object):
         self_path = self.url
 
         if force_http:
-            self_path = 'http://' + local.environ['SERVER_NAME'] + self_path
+            self_path = 'http://' + os.path.join(local.environ['SERVER_NAME'],
+                                                 self_path, '')
 
-        return self_path + str_format.percent_encode(filename)
+        return os.path.join(self_path, str_format.percent_encode(filename))
 
     def make_anonymous(self, ip, time):
         # TODO: SILLY_ANONYMOUS not supported
