@@ -617,7 +617,7 @@ def make_first_time_setup_page(admin):
     else:
         return make_first_time_setup_gateway()
         
-def make_login_panel(dest=HOME_PANEL):
+def make_login_panel(dest=BOARD_PANEL):
     dest = HOME_PANEL
 
     return Template('admin_login_template', login_task=dest)
