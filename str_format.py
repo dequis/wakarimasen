@@ -332,12 +332,11 @@ def tag_killa(string):
     string = TK_ULIST.sub(ulist, string)
 
     def olist(match):
-        count = 0
-        def replace_li(entry):
-            count += 1
+        def replace_li(entry, count):
             return entry.replace("<li>", "%s. " % count)
         strings = match.group(1).split("</li>")
-        return '\n'.join([replace_li(x) for x in strings]) + "\n"
+        return '\n'.join([replace_li(str, count) \
+            for str, count in map(None, strings, xrange(len(strings)))]) + "\n"
     string = TK_OLIST.sub(olist, string)
 
     for pattern, repl in TK_REPLACEMENTS_2:
