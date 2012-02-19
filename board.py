@@ -1185,7 +1185,7 @@ class Board(object):
                 icon = os.path.join(self.path, filetypes[ext].lstrip("/"))
 
                 tn_ext, tn_width, tn_height = \
-                    analyze_image(open(icon, "rb"), icon)
+                    misc.analyze_image(open(icon, "rb"), icon)
 
                 # was that icon file really there?
                 if tn_width:
