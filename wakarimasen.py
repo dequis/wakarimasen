@@ -55,20 +55,20 @@ def main():
     # Set up tentative environment variables.
     local.environ['waka.rootpath'] \
         = os.path.join('/', config.BOARD_DIR, '')
-    local.environ['SCRIPT_NAME'] = sys.argv[0]
-    local.environ['SERVER_NAME'] = config.SERVER_NAME
 
     app.init_database()
     arg = sys.argv[1:] and sys.argv[1] or 'fcgi'
     if arg == 'fcgi':
         fcgi.WSGIServer(application).run()
     elif sys.argv[1] == 'rebuild_cache':
-        local.environ['DOCUMENT_ROOT'] = sys.argv[3]
         board = Board(sys.argv[2])
+        (local.environ['DOCUMENT_ROOT'], local.environ['SCRIPT_NAME'],\
+            local.environ['SERVER_NAME']) = sys.argv[3:6]
         local.environ['waka.board'] = board
         board.rebuild_cache()
     elif sys.argv[1] == 'rebuild_global_cache':
-        local.environ['DOCUMENT_ROOT'] = sys.argv[2]
+        (local.environ['DOCUMENT_ROOT'], local.environ['SCRIPT_NAME'],\
+            local.environ['SERVER_NAME']) = sys.argv[2:5]
         interboard.global_cache_rebuild()
     else:
         werkzeug.run_simple('', 8000,

@@ -210,8 +210,7 @@ def get_script_name():
 def get_secure_script_name():
     script_name = get_script_name()
     if config.USE_SECURE_ADMIN:
-        return 'https://' + os.path.join(local.environ['SERVER_NAME'],
-                                         script_name)
+        return 'https://' + local.environ['SERVER_NAME'] + script_name
     return script_name
 
 def get_filestorage_size(filestorage):

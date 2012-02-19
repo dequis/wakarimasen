@@ -139,7 +139,9 @@ def global_cache_rebuild_proxy(admin):
     if user.account != staff.ADMIN:
         raise WakaError(strings.INUSUFFICENTPRIVLEDGES)
     Popen(['python', 'wakarimasen.py', 'rebuild_global_cache',
-           local.environ['DOCUMENT_ROOT']])
+           local.environ['DOCUMENT_ROOT'],
+           local.environ['SCRIPT_NAME'],
+           local.environ['SERVER_NAME']])
     referer = local.environ['HTTP_REFERER']
     return util.make_http_forward(referer, config.ALTERNATE_REDIRECT)
 

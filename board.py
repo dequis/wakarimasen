@@ -59,8 +59,7 @@ class Board(object):
         if url:
             base = self.url
             if force_http:
-                base = 'http://' + os.path.join(local.environ['SERVER_NAME'],
-                                                base)
+                base = 'http://' + local.environ['SERVER_NAME'] + base
         else:
             base = self.path
 
@@ -188,7 +187,9 @@ class Board(object):
     def rebuild_cache_proxy(self, admin):
         self.check_access(admin)
         Popen(['python', 'wakarimasen.py', 'rebuild_cache', self.name,
-               local.environ['DOCUMENT_ROOT']])
+               local.environ['DOCUMENT_ROOT'],
+               local.environ['SCRIPT_NAME'],
+               local.environ['SERVER_NAME']])
         return util.make_http_forward(\
             '?'.join([misc.get_secure_script_name(),
             urlencode({'task': 'mpanel',
@@ -1269,9 +1270,7 @@ class Board(object):
         self_path = self.url
 
         if force_http:
-            self_path = self_path[1:]
-            self_path = 'http://' + os.path.join(local.environ['SERVER_NAME'],
-                                                 self_path)
+            self_path = 'http://' + local.environ['SERVER_NAME'] + self_path
 
         return os.path.join(self_path, str_format.percent_encode(filename))
 
