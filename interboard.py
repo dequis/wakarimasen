@@ -4,6 +4,7 @@ e.g., transferring and merging threads.'''
 import time
 import re
 import os
+import sys
 from urllib import urlencode
 from subprocess import Popen, PIPE
 
@@ -131,8 +132,8 @@ def global_cache_rebuild():
         try:
             board_obj = board.Board(board_str)
             board_obj.rebuild_cache(admin)
-        except Exception:
-            pass
+        except Exception, e:
+            sys.stderr.write('Error in global cache rebuild:' + e)
 
 def global_cache_rebuild_proxy(admin):
     user = staff.check_password(admin)
