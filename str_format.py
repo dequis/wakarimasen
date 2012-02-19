@@ -36,6 +36,9 @@ def clean_string(string, cleanentities=False):
     for old, new in ENTITY_REPLACES.iteritems():
         string = string.replace(old, new)
 
+    # Kill linefeeds.
+    string = string.replace('\r', '')
+
     # remove control chars
     string = CONTROL_CHARS_RE.sub('', string)
 
@@ -124,7 +127,6 @@ def percent_encode(string):
 # The code above will be temporarily replaced by this wakabamark-only
 # version, in this branch only.
 
-
 #format_comment regexps (FC_*)
 FC_HIDE_POSTLINKS = [
     (re.compile('&gt;&gt;&gt;/?([0-9a-zA-Z]+)/?&gt;&gt;([0-9]+)'),
@@ -194,7 +196,6 @@ def format_comment(comment):
         return line
 
     if local.board.options['ENABLE_WAKABAMARK']:
-        raise NotImplementedError('No wakabamark support yet') # TODO
         comment = do_wakabamark(comment, handler)
     else:
         comment = "<p>" + simple_format(comment, handler) + "</p>"
@@ -207,11 +208,70 @@ def format_comment(comment):
 
     return comment
 
+#wakabamark regexps (WM_*)
+WM_REPLACEMENTS = [
+    (re.compile(r'\*\*([^\s].*?)\*\*'), r'<strong>\1</strong>'),
+    (re.compile(r'\*([^\s].*?)\*'), r'<em>\1</em>'),
+    (re.compile(r'`([^\n]*?)</code>`'), r'<code>\1</code>'),
+]
+
+WM_CODEBLOCK = [re.compile(r'^(    |\t)'), '<pre><code>', '', '\n',
+                '</pre></code>', []]
+WM_OLIST = [re.compile(r'^(\d+\.)\s*'), '<ol>', '<li>', '</li>', '</ol>',
+            []]
+WM_ULIST = [re.compile(r'^[\*\+\-]\s*'), '<ul>', '<li>', '</li>', '</ul>',
+            []]
+WM_BLOCKQUOTE = [re.compile(r'^&gt;\s*'), '<blockquote>', '', '<br />',
+                 '</blockquote>', []]
 
 URL_PATTERN = re.compile(
     '(https?://[^\s<>"]*?)((?:\s|<|>|"|\.|\)|\]|!|\?|,|&#44;|&quot;)*'
     '(?:[\s<>"]|$))', re.I | re.S)
 URL_SUB = r'<a href="\1">\1</a>\2'
+
+def do_wakabamark(comment, handler):
+    lines = []
+    orig_lines = comment.split('\n')
+    orig_lines.append('')
+
+    # State variable: Did we previously see an empty line?
+    empty_line_before = False
+
+    for line in orig_lines:
+        # Do spans outside codeblocks.
+        if not WM_CODEBLOCK[0].match(line):
+            line = URL_PATTERN.sub(URL_SUB, line)
+            for pattern, repl in WM_REPLACEMENTS:
+                line = pattern.sub(repl, line)
+
+        # Go through each block type and format.
+        match = False
+        for format_type in (WM_CODEBLOCK, WM_OLIST, WM_ULIST, WM_BLOCKQUOTE):
+            (ptn, open_el, open_item_el, close_item_el, close_el, lst) \
+                = format_type
+            if ptn.match(line):
+                match = True
+                if format_type != WM_BLOCKQUOTE:
+                    line = ptn.sub('', line)
+                lst.append(open_item_el + line + close_item_el)
+            elif lst:
+                # The stack of lines in a format block may now be "popped."
+                lines.append(open_el + ''.join(lst) + close_el)
+                lst = format_type[5] = []
+
+        if not match and line:
+            PARAGRAPH_RE = re.compile(r'</p>$')
+
+            if lines and not empty_line_before \
+              and PARAGRAPH_RE.search(lines[-1]):
+                lines[-1] = PARAGRAPH_RE.sub('<br />' + line + '</p>',
+                                             lines[-1])
+            else:
+                lines.append('<p>' + line + '</p>')
+
+        empty_line_before = not line
+
+    return ''.join(lines)
 
 GREENTEXT_PATTERN = re.compile("^(&gt;[^_]*)$")
 GREENTEXT_SUB = r'<span class="unkfunc">\1</span>'
@@ -241,6 +301,7 @@ TK_REPLACEMENTS = [
         'Edited in Oekaki)</strong>\s*\(Time\:.*?</p>'), '', re.I),
 
     (re.compile('<br\s?/?>'), '\n'),
+    (re.compile('<p>'), '\n\n'),
     (re.compile('</p>$'), ''),
     (re.compile('<code>([^\n]*?)</code>'), r'`\1`'),
     (re.compile('</blockquote>$'), ''),
@@ -262,7 +323,6 @@ def tag_killa(string):
     for pattern, repl in TK_REPLACEMENTS:
         string = pattern.sub(repl, string)
 
-    # TODO do <code> tags consider newlines as line breaks?
     def codeblock(match):
         return '\n'.join(['    ' + x for x in match.group(1).split("\n")]) + "\n"
     string = TK_CODEBLOCK.sub(codeblock, string)
