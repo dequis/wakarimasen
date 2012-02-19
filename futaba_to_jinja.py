@@ -125,6 +125,7 @@ RENAME = {
     'include/boards/announcements_global.html': 'announcements_global.html',
     'include/announcements.html': 'announcements.html',
     '../include/boards/rules.html': 'rules.html',
+    'wakaba': 'wakarimasen',
 }
 
 REMOVE_BACKSLASHES_RE = re.compile(r'\\([^\\])')
@@ -437,9 +438,9 @@ class Jinja2Translator(object):
                 if name == 'void':
                     value = '(%s)' % ', '.join(parsed)
                 elif len(parsed) > 1:
-                    value = '%s|%s(%s)' % (parsed[0], name, ', '.join(parsed[1:]))
+                    value = '(%s)|%s(%s)' % (parsed[0], name, ', '.join(parsed[1:]))
                 elif len(parsed) == 1 and ''.join(parsed):
-                    value = '%s|%s' % (parsed[0], name)
+                    value = '(%s)|%s' % (parsed[0], name)
                 else:
                     value = '%s()' % name
                 
