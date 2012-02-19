@@ -133,6 +133,7 @@ def global_cache_rebuild():
         try:
             board_obj = board.Board(board_str)
             board_obj.rebuild_cache()
+            local.environ['waka.board'] = board_obj
         except:
             sys.stderr.write('Error in global cache rebuild in '\
                              + board_str + '\n')
