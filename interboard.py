@@ -5,6 +5,7 @@ import time
 import re
 import os
 import sys
+import traceback
 from urllib import urlencode
 from subprocess import Popen, PIPE
 
@@ -132,9 +133,10 @@ def global_cache_rebuild():
         try:
             board_obj = board.Board(board_str)
             board_obj.rebuild_cache(admin)
-        except Exception, e:
+        except:
             sys.stderr.write('Error in global cache rebuild in '\
-                             + board_str + ':' + e)
+                             + board_str + '\n')
+            traceback.print_exc(file=sys.stderr)
 
 def global_cache_rebuild_proxy(admin):
     user = staff.check_password(admin)
