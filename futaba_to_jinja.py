@@ -125,6 +125,11 @@ RENAME = {
     'include/boards/announcements_global.html': 'announcements_global.html',
     'include/announcements.html': 'announcements.html',
     '../include/boards/rules.html': 'rules.html',
+}
+
+TOUCHUPS = {
+    '"savelogin"': '"savelogin" value="1"',
+    'wakaba.pl': '{{ get_script_name() }}',
     'wakaba': 'wakarimasen',
 }
 
@@ -382,7 +387,9 @@ class Jinja2Translator(object):
         if type == 'string':
             return value.decode('string-escape')
         elif type == 'html':
-            return value.replace('wakaba.pl', '{{ get_script_name() }}')
+            for old, new in TOUCHUPS.items():            
+                value = value.replace(old, new)
+            return value
         elif type == 'include':
             return self.TAGS['include'] % self.handle_include(value)
         elif type == 'const':

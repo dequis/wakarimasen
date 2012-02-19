@@ -235,9 +235,8 @@ def task_setup(environ, start_response):
 def task_loginpanel(environ, start_response):
     request = environ['werkzeug.request']
 
-    params = {'form': ['nexttask', 'wakaadminsave', 'nexttask', 'berra',
-                       'desu'],
-              'cookies': ['wakaadmin']}
+    params = {'form': ['nexttask', 'nexttask', 'berra', 'desu', 'savelogin'],
+              'cookies': ['wakaadmin', 'wakaadminsave']}
 
     kwargs = kwargs_from_params(request, params)
 
@@ -245,7 +244,11 @@ def task_loginpanel(environ, start_response):
     kwargs['username'] = kwargs.pop('desu')
     kwargs['password'] = kwargs.pop('berra')
 
-    kwargs['save_login'] = kwargs.pop('wakaadminsave')
+    # Login saving.
+    wakaadminsave = kwargs.pop('wakaadminsave')
+    savelogin = kwargs.pop('savelogin')
+    kwargs['save_login'] = wakaadminsave or savelogin
+
     kwargs['board'] = environ['waka.board']
 
     return staff_interface.do_login(**kwargs)

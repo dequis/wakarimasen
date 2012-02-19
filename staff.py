@@ -243,7 +243,9 @@ def check_password(cookie_str, editing=None):
     else:
         # NOTE: This will overwrite the current network address login.
         staff_entry.login_host(remote)
-        staff_entry.login_data.make_cookie()
+        # Needs save_login parameter. Only useful once sessions and
+        # user caches are implemented.
+        # staff_entry.login_data.make_cookie()
 
     return staff_entry
 
