@@ -827,8 +827,15 @@ class Board(object):
         return util.make_http_forward(forward, config.ALTERNATE_REDIRECT)
         # end of this function. fuck yeah
 
-    def edit_gateway_window(self, post_num, admin_post):
-        return self._gateway_window(post_num, 'edit', admin_post=admin_post)
+    def edit_gateway_window(self, post_num):
+        session = model.Session()
+        table = self.table
+        sql = table.select().where(table.c.num == post_num)
+        row = session.execute(sql).fetchone()
+        if not row:
+            raise WakaError(strings.POSTNOTFOUND)
+        return self._gateway_window(post_num, 'edit',
+                                    admin_post=row.admin_post)
 
     def delete_gateway_window(self, post_num):
         return self._gateway_window(post_num, 'delete')

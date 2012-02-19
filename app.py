@@ -103,14 +103,10 @@ def task_edit(environ, start_response):
     request = environ['werkzeug.request']
     board = environ['waka.board']
 
-    params = {'form': ['num'], 'cookies': ['wakaadmin']}
+    params = {'form': ['num']}
    
     kwargs = kwargs_from_params(request, params)
     kwargs['post_num'] = kwargs.pop('num')
-    try:
-        kwargs['admin_post'] = kwargs.pop('admin')
-    except KeyError:
-        kwargs['admin_post'] = False
 
     return board.edit_gateway_window(**kwargs)
 
