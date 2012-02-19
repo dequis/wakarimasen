@@ -312,7 +312,7 @@ def make_thumbnail(filename, thumbnail, width, height, quality, convert):
     # but not by wakaba+desuchan aren't included here
 
 def get_cookie_from_request(request, key):
-    return urllib.unquote(request.cookies.get(key, '')).decode('utf-8')
+    return urllib.unquote(request.cookies.get(key, '')).decode('unicode-escape')
 
 def kwargs_from_params(request, params):
     '''Associate function to convert CGI request data with dictionary
