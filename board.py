@@ -59,8 +59,8 @@ class Board(object):
         if url:
             base = self.url
             if force_http:
-                # TODO: have a SERVER_NAME entry in config
-                base = 'http://' + local.environ['SERVER_NAME'] + base
+                base = 'http://' + os.path.join(local.environ['SERVER_NAME'],
+                                                base)
         else:
             base = self.path
 
@@ -1270,7 +1270,7 @@ class Board(object):
 
         if force_http:
             self_path = 'http://' + os.path.join(local.environ['SERVER_NAME'],
-                                                 self_path, '')
+                                                 self_path)
 
         return os.path.join(self_path, str_format.percent_encode(filename))
 
