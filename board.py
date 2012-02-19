@@ -187,8 +187,7 @@ class Board(object):
     def rebuild_cache_proxy(self, admin):
         self.check_access(admin)
         Popen(['python', 'wakarimasen.py', 'rebuild_cache', self.name,
-               local.environ['DOCUMENT_ROOT'],
-               local.environ['SCRIPT_NAME'],
+               local.environ['DOCUMENT_ROOT'], local.environ['SCRIPT_NAME'],
                local.environ['SERVER_NAME']])
         return util.make_http_forward(\
             '?'.join([misc.get_secure_script_name(),

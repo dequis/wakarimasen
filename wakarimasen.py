@@ -61,9 +61,9 @@ def main():
     if arg == 'fcgi':
         fcgi.WSGIServer(application).run()
     elif sys.argv[1] == 'rebuild_cache':
-        board = Board(sys.argv[2])
         (local.environ['DOCUMENT_ROOT'], local.environ['SCRIPT_NAME'],\
             local.environ['SERVER_NAME']) = sys.argv[3:6]
+        board = Board(sys.argv[2])
         local.environ['waka.board'] = board
         board.rebuild_cache()
     elif sys.argv[1] == 'rebuild_global_cache':
