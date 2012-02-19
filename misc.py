@@ -192,7 +192,7 @@ def make_date(timestamp, style='futaba'):
         
 def make_cookies(**kwargs):
     expires = kwargs.pop('expires', time.time() + 14 * 24 * 3600)
-    path = kwargs.pop('path', None)
+    path = kwargs.pop('path', '/')
 
     expire_date = make_date(expires, "cookie")
 
