@@ -15,6 +15,7 @@ $ {
     s/\n\n+/\n/g;
     s|$|\
     BOARD_DIR = \'\'                         \# Root of board cache relative to document root.\
+    SERVER_NAME = \'desuchan.net\'           \# What's the name of this server?\
     DEBUG = False                            \# Debug mode|
     p;
 }
