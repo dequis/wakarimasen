@@ -352,8 +352,13 @@ class Board(object):
             thread = thread[posts_to_trim:]
             thread.insert(0, op)
 
+            if len(thread) > 1:
+                min_res = thread[1].num
+            else:
+                min_res = op.num
+
             print_thread(thread, abbreviated_filename,
-                omit=posts_to_trim - 1)
+                omit=posts_to_trim - 1, min_res=min_res)
         else:
             if os.path.exists(abbreviated_filename):
                 os.unlink(abbreviated_filename)

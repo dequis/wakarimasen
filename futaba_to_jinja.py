@@ -128,9 +128,19 @@ RENAME = {
 }
 
 TOUCHUPS = {
+    # Fix savelogin checkbox in admin login.
     '"savelogin"': '"savelogin" value="1"',
+    # wakaba.pl -> wakarimasen.py
     'wakaba.pl': '{{ get_script_name() }}',
+    # Replace references to wakaba with wakarimasen.
     'wakaba': 'wakarimasen',
+    # Extend post.comment expression with tag filter for abbreviated pages.
+    '{{ post.comment }}': '{% if omit %}'
+                          '{{ post.comment|redirect_reply_links(min_res) }}'
+                          '{% else %}{{ post.comment }}{% endif %}',
+    # Fix for abbreviated thread message.
+    'if thread and currentthread.omit': 'if thread and omit',
+    'For the other {{ currentthread.omit }}': 'For the other {{ omit }}',
 }
 
 REMOVE_BACKSLASHES_RE = re.compile(r'\\([^\\])')
@@ -190,7 +200,8 @@ class FutabaStyleParser(object):
         # after the self.do_section loop
         current = self.current.getvalue()
         current = self.parse_template_tags(current)
-
+        current = self.do_touchups(current)
+            
         if not self.dry_run:
             file = open(template_filename(name), 'w')
             file.write(current)
@@ -220,6 +231,11 @@ class FutabaStyleParser(object):
 
     def parse_template_tags(self, template):
         return TemplateTagsParser(self.tl).run(template)
+
+    def do_touchups(self, template):
+        for old, new in TOUCHUPS.items():            
+            template = template.replace(old, new)
+        return template
 
 class TemplateTagsParser(object):
     def __init__(self, tl):
@@ -387,8 +403,6 @@ class Jinja2Translator(object):
         if type == 'string':
             return value.decode('string-escape')
         elif type == 'html':
-            for old, new in TOUCHUPS.items():            
-                value = value.replace(old, new)
             return value
         elif type == 'include':
             return self.TAGS['include'] % self.handle_include(value)
@@ -445,7 +459,8 @@ class Jinja2Translator(object):
                 if name == 'void':
                     value = '(%s)' % ', '.join(parsed)
                 elif len(parsed) > 1:
-                    value = '(%s)|%s(%s)' % (parsed[0], name, ', '.join(parsed[1:]))
+                    value = '(%s)|%s(%s)'\
+                            % (parsed[0], name, ', '.join(parsed[1:]))
                 elif len(parsed) == 1 and ''.join(parsed):
                     value = '(%s)|%s' % (parsed[0], name)
                 else:

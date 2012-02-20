@@ -126,6 +126,27 @@ class Template(object):
             force_http)
 
     @filter
+    def redirect_reply_links(self, comment, min_res):
+        res_re = re.compile('(' + os.path.join(self.board.url,
+                                               self.board.options['RES_DIR'],
+                                               r')(?P<op_num>\d+)('
+                                               + config.PAGE_EXT + r'#?)'
+                                               r'(?P<res_num>\d+)?'), re.I)
+
+        # If the reply number is at least
+        def change_to_abbr(match):
+            res_num = match.group('res_num')
+            op_num = match.group('op_num')
+            if not res_num or int(res_num) >= min_res:
+                op_num = op_num + '_abbr'
+
+            if not res_num:
+                return match.group(1) + op_num + match.group(3)
+            return match.group(1) + op_num + match.group(3) + res_num
+
+        return res_re.sub(change_to_abbr, comment)
+
+    @filter
     def clean_string(self, string):
         return str_format.clean_string(string)
 
