@@ -163,6 +163,17 @@ class Template(object):
     @filter
     def get_action_name(self, action, debug=0):
         return interboard.get_action_name(action, debug=debug)
+
+    @function
+    def get_filetypes(self):
+        filetypes = self.board.options['FILETYPES']
+        ret_list = []
+        for pictype in ('gif', 'jpg', 'png'):
+            if pictype not in filetypes:
+                ret_list.append(pictype.upper())
+        ret_list.extend(filetypes.keys())
+        
+        ret_str = ', '.join(ret_list)
     
     def get_stylesheets(self, board=None):
         files = glob.glob(os.path.abspath\
