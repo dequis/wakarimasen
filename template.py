@@ -173,7 +173,7 @@ class Template(object):
                 ret_list.append(pictype.upper())
         ret_list.extend(filetypes.keys())
         
-        ret_str = ', '.join(ret_list)
+        return ', '.join(ret_list)
     
     def get_stylesheets(self, board=None):
         files = glob.glob(os.path.abspath\
