@@ -804,6 +804,7 @@ class Board(object):
         # and the link field (proper)
         elif email.lower() == 'noko':
             noko = True
+            email = ''
 
         forward = ''
         if not admin_post_mode:
