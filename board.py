@@ -675,7 +675,7 @@ class Board(object):
                 self.delete_file(filename, thumbnail)
 
             filename, md5, width, height, thumbnail, tn_width, tn_height = \
-                self.process_file(file, timestamp, parent)
+                self.process_file(file, timestamp, parent, bool(post_num))
 
             if oekaki_post and self.options['ENABLE_OEKAKI']:
                 # TODO: oekaki not supported
@@ -1139,7 +1139,7 @@ class Board(object):
 
         return Template('edit_successful')
 
-    def process_file(self, filestorage, timestamp, parent):
+    def process_file(self, filestorage, timestamp, parent, editing):
         filetypes = self.options['FILETYPES']
 
         # analyze file and check that it's in a supported format
@@ -1191,7 +1191,8 @@ class Board(object):
         md5 = md5h.hexdigest()
 
         # check for duplicate files
-        if ((parent and self.options['DUPLICATE_DETECTION'] == 'thread') or
+        if (not editing  and \
+            (parent and self.options['DUPLICATE_DETECTION'] == 'thread') or
              self.options['DUPLICATE_DETECTION'] == 'board'):
             session = model.Session()
 
