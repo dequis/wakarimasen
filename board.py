@@ -653,7 +653,7 @@ class Board(object):
         comment = comment or self.options['S_ANOTEXT']
 
         # flood protection - must happen after inputs have been cleaned up
-        self.flood_check(numip, timestamp, comment, file, bool(post_num),
+        self.flood_check(numip, timestamp, comment, file, not bool(post_num),
                          False)
 
         # Manager and deletion stuff - duuuuuh?
