@@ -93,7 +93,7 @@ class Template(object):
     @filter
     def expand_image_url(self, filename):
         # TODO: load balancing support?
-	return self.expand_url(percent_encode(filename), '/')
+	return self.expand_url(filename, '/')
 
     @filter
     def root_path_to_filename(self, filename):
