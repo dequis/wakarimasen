@@ -1,5 +1,6 @@
 '''Dynamic panels for administrative work.'''
 
+from datetime import datetime
 from sqlalchemy.sql import case, or_, and_, select, func, null
 from urllib import urlencode
 
@@ -21,6 +22,10 @@ SPAM_PANEL = 'spampanel'
 REPORTS_PANEL = 'reportspanel'
 STAFF_PANEL = 'staffpanel'
 TRASH_PANEL = 'trashpanel'
+POST_SEARCH_PANEL = 'postsearchpanel'
+
+BAN_POPUP = 'banpopup'
+BAN_EDIT_POPUP = 'baneditwindow'
 
 DEL_STAFF_CONFIRM = 'delstaffwindow'
 DISABLE_STAFF_CONFIRM = 'disablestaffwindow'
@@ -60,49 +65,50 @@ class StaffInterface(Template):
             self.user = staff.check_password(admin)
         except staff.LoginError:
             Template.__init__(self, 'admin_login_template', nexttask=dest)
-        else:
-            if not dest:
-                dest = HOME_PANEL
+        if not dest:
+            dest = HOME_PANEL
 
-            # TODO: Check if mod is banned.
-            if not page:
-                if dest in (HOME_PANEL, BOARD_PANEL):
-                    # Adjust for different pagination scheme. (Blame Wakaba.)
-                    page = 0
-                else:
-                    page = 1
-            if not str(perpage).isdigit():
-                perpage = 50
+        self.admin = admin
 
-            # The page attribute is not always a pure integer (thread pages).
-            if str(page).isdigit():
-                page = int(page)
-            self.page = page
-            self.perpage = int(perpage)
-            self.board = board
-
-            self._init_template(dest, **kwargs)
-
-            # Convert user reign list into a list of dictionaries, for
-            # templating.
-            reign = []
-            if self.user.account == staff.MODERATOR:
-                reign = [{'board_entry' : entry} for entry in self.user.reign]
+        # TODO: Check if mod is banned.
+        if not page:
+            if dest in (HOME_PANEL, BOARD_PANEL):
+                # Adjust for different pagination scheme. (Blame Wakaba.)
+                page = 0
             else:
-                if self.board:
-                    reign = interboard.get_all_boards\
-                            (check_board_name=self.board.name)
-                else:
-                    reign = interboard.get_all_boards()
+                page = 1
+        if not str(perpage).isdigit():
+            perpage = 50
 
-            # Set global form variables.
-            Template.update_parameters(self, username=self.user.username,
-                                       type=self.user.account,
-                                       admin=admin,
-                                       boards_select=reign,
-                                       boards=reign,
-                                       page=self.page,
-                                       perpage=self.perpage)
+        # The page attribute is not always a pure integer (thread pages).
+        if str(page).isdigit():
+            page = int(page)
+        self.page = page
+        self.perpage = int(perpage)
+        self.board = local.environ['waka.board']
+
+        self._init_template(dest, **kwargs)
+
+        # Convert user reign list into a list of dictionaries, for
+        # templating.
+        reign = []
+        if self.user.account == staff.MODERATOR:
+            reign = [{'board_entry' : entry} for entry in self.user.reign]
+        else:
+            if self.board:
+                reign = interboard.get_all_boards\
+                        (check_board_name=self.board.name)
+            else:
+                reign = interboard.get_all_boards()
+
+        # Set global form variables.
+        Template.update_parameters(self, username=self.user.username,
+                                   type=self.user.account,
+                                   admin=admin,
+                                   boards_select=reign,
+                                   boards=reign,
+                                   page=self.page,
+                                   perpage=self.perpage)
 
     def _init_template(self, dest, **kwargs):
             TEMPLATE_SELECTIONS = {HOME_PANEL : self.make_admin_home_panel,
@@ -112,6 +118,9 @@ class StaffInterface(Template):
                 STAFF_PANEL : self.make_admin_staff_panel,
                 SPAM_PANEL : self.make_admin_spam_panel,
                 TRASH_PANEL : self.make_admin_trash_panel,
+                POST_SEARCH_PANEL: self.make_admin_post_search_panel,
+                BAN_POPUP: self.make_ban_popup,
+                BAN_EDIT_POPUP: self.make_ban_edit_popup,
                 DEL_STAFF_CONFIRM : self.make_del_staff_window,
                 DISABLE_STAFF_CONFIRM : self.make_disable_staff_window,
                 ENABLE_STAFF_CONFIRM : self.make_enable_staff_window,
@@ -356,6 +365,28 @@ class StaffInterface(Template):
 
         Template.__init__(self, 'ban_panel_template', bans=bans, ip=ip)
 
+    def make_ban_edit_popup(self, num):
+        session = model.Session()
+        table = model.admin
+        sql = table.select().where(table.c.num == num)
+        row = session.execute(sql).fetchone()
+
+        if row.expiration:
+            expiration = datetime.utcfromtimestamp(row.expiration)
+        else:
+            expiration = datetime.utcnow()
+
+        Template.__init__(self, 'edit_window', hash=[row],
+                          year=expiration.year,
+                          month=expiration.month,
+                          day=expiration.day,
+                          hour=expiration.hour,
+                          min=expiration.minute,
+                          sec=expiration.second)
+
+    def make_ban_popup(self, ip, delete=''):
+        Template.__init__(self, 'ban_window', ip=ip, delete=delete)
+
     @global_only
     def make_admin_spam_panel(self):
         # TODO: Paginate this, too.
@@ -460,6 +491,41 @@ class StaffInterface(Template):
                           reportedposts=reportedposts,
                           parent=page)
 
+    def make_admin_post_search_panel(self, ipsearch, id=None, ip=None,
+                                     caller='internal'):
+        board = self.board
+        session = model.Session()
+        table = board.table
+
+        board.check_access(self.admin)
+
+        popup = caller != 'board'
+
+        if ipsearch:
+            sql = table.select().where(table.c.ip == misc.dot_to_dec(ip))
+            page = model.Page(sql, self.page, self.perpage)
+            rowcount = page.total_entries
+            total_pages = page.total_pages
+            posts = page.rows
+            if not posts:
+                raise WakaError("No posts found for IP %s" % (ip))
+        else:
+            rowcount = total_pages = 1
+            sql = table.select().where(table.c.num == id)
+            row = session.execute(sql).fetchone()
+            if not row:
+                raise WakaError("Post not found. (It may have just been"
+                                " deleted.")
+            posts = [row]
+
+        Template.__init__(self, 'post_search', type=type, num=id,
+                          posts=posts, search=('ip' if ipsearch else 'id'),
+                          number_of_pages=total_pages,
+                          rooturl=misc.get_secure_script_name()\
+                            +'?task=searchposts&amp;board='+board.path\
+                            + '&amp;caller='+caller+'&amp;ipsearch=1&amp;ip='\
+                            + ip, rowcount=rowcount, popup=popup)
+
     def make_admin_proxy_panel(self):
         pass
 
@@ -529,6 +595,7 @@ def edit_staff_proxy(admin, mpass, username, newpassword=None, newclass=None,
                                        'board': board.name})))
 
     return make_http_forward(forward, config.ALTERNATE_REDIRECT)
+
 
 def clear_login_cookies():
     misc.make_cookies(wakaadmin='', wakaadminsave='0', expires=0)

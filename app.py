@@ -83,7 +83,6 @@ def task_delete(environ, start_response, archiving=False):
     if singledelete:
         # NOTE: from_window parameter originates from pop-up windows
         #       brought up by clicking "Delete" without JS enabled.
-        #       Not implemented yet.
         params_single = ['postpassword', 'postfileonly', 'from_window']
         for param, single in map(None, params['form'][:3], params_single):
             kwargs[param] = request.form.get(single, '')
@@ -94,6 +93,22 @@ def task_delete(environ, start_response, archiving=False):
 
     kwargs['archiving'] = archiving
     return board.delete_stuff(**kwargs)
+
+def task_deleteall(environ, start_response):
+    request = environ['werkzeug.request']
+
+    params = {'form':    ['ip', 'mask', 'global'],
+              'cookies': ['wakaadmin']}
+
+    kwargs = kwargs_from_params(request, params)
+
+    if kwargs.pop('global'):
+        interboard.delete_by_ip(**kwargs)
+    else:
+        board = environ['waka.board']
+        board.delete_by_ip(**kwargs)
+
+    return task_mpanel(environ, start_response)
 
 def task_archive(environ, start_response):
     return task_delete(environ, start_response, archiving=True)
@@ -245,8 +260,6 @@ def task_loginpanel(environ, start_response):
     savelogin = kwargs.pop('savelogin')
     kwargs['save_login'] = wakaadminsave or savelogin
 
-    kwargs['board'] = environ['waka.board']
-
     return staff_interface.do_login(**kwargs)
 
 task_admin = task_loginpanel
@@ -268,7 +281,6 @@ def task_mpanel(environ, start_response):
     params = {'form': ['page'], 'cookies': ['wakaadmin']}
     kwargs = kwargs_from_params(request, params)
     kwargs['dest'] = staff_interface.BOARD_PANEL
-    kwargs['board'] = environ['waka.board']
 
     return StaffInterface(**kwargs)
 
@@ -279,6 +291,26 @@ def task_bans(environ, start_response):
     kwargs['ip'] = request.values.get('ip', '')
     kwargs['admin'] = get_cookie_from_request(request, 'wakaadmin')
     kwargs['dest'] = staff_interface.BAN_PANEL
+
+    return StaffInterface(**kwargs)
+
+def task_baneditwindow(environ, start_response):
+    request = environ['werkzeug.request']
+
+    params = {'form':    ['num'],
+              'cookies': ['wakaadmin']}
+    kwargs = kwargs_from_params(request, params)
+    kwargs['dest'] = staff_interface.BAN_EDIT_POPUP
+
+    return StaffInterface(**kwargs)
+
+def task_banpopup(environ, start_response):
+    request = environ['werkzeug.request']
+
+    params = {'form':    ['ip', 'delete'],
+              'cookies': ['wakaadmin']}
+    kwargs = kwargs_from_params(request, params)
+    kwargs['dest'] = staff_interface.BAN_POPUP
 
     return StaffInterface(**kwargs)
 
@@ -331,16 +363,56 @@ def task_addip(environ, start_response):
 
     return interboard.add_admin_entry(**kwargs)
 
+def task_addipfrompopup(environ, start_response):
+    request = environ['werkzeug.request']
+    board = environ['waka.board']
+
+    params = {'form':    ['ip', 'total', 'expiration', 'comment', 'delete',
+                          'deleteall'],
+              'cookies': ['wakaadmin']}
+
+    kwargs = kwargs_from_params(request, params)
+    kwargs['option'] = 'ipban'
+    kwargs['caller'] = 'window'
+    delete = [kwargs.pop('delete')]
+    delete_all = kwargs.pop('deleteall')
+
+    try:
+        if delete_all:
+            interboard.delete_by_ip(kwargs['admin'], kwargs['ip'])
+        elif delete:
+            board = environ['waka.board']
+            board.delete_stuff(delete, '', False, False, admindelete=True,
+                               admin=kwargs['admin'], from_window=True,
+                               caller='internal')
+    except WakaError:
+        pass
+
+    return interboard.add_admin_entry(**kwargs)
+
 def task_addstring(environ, start_response):
     request = environ['werkzeug.request']
 
-    params = {'form': ['type', 'string', 'comment']}
+    params = {'form': ['type', 'string', 'comment'],
+              'cookies': ['wakaadmin']}
 
     kwargs = kwargs_from_params(request, params)
     kwargs['option'] = kwargs.pop('type')
     kwargs['sval1'] = kwargs.pop('string')
 
     return interboard.add_admin_entry(**kwargs)
+
+def task_adminedit(environ, start_response):
+    request = environ['werkzeug.request']
+
+    params = {'form':    ['num', 'ival1', 'ival2', 'sval1', 'total', 'year',
+                          'month', 'day', 'hour', 'min', 'sec', 'comment',
+                          'noexpire'],
+              'cookies': ['wakaadmin']}
+
+    kwargs = kwargs_from_params(request, params)
+
+    return interboard.edit_admin_entry(**kwargs)
 
 def task_removeban(environ, start_response):
     request = environ['werkzeug.request']
@@ -469,6 +541,17 @@ def task_move(environ, start_response):
     kwargs['dest_brd_obj'] = Board(request.values.get('destboard', ''))
 
     return interboard.move_thread(**kwargs)
+
+def task_searchposts(environ, start_response):
+    request = environ['werkzeug.request']
+
+    params = {'form':    ['ipsearch', 'id', 'ip', 'caller'],
+              'cookies': ['wakaadmin']}
+    
+    kwargs = kwargs_from_params(request, params)
+    kwargs['dest'] = staff_interface.POST_SEARCH_PANEL
+
+    return StaffInterface(**kwargs)
 
 # Error-handling
 

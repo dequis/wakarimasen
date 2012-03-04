@@ -653,7 +653,8 @@ class Board(object):
         comment = comment or self.options['S_ANOTEXT']
 
         # flood protection - must happen after inputs have been cleaned up
-        self.flood_check(numip, timestamp, comment, file, True, False)
+        self.flood_check(numip, timestamp, comment, file, bool(post_num),
+                         False)
 
         # Manager and deletion stuff - duuuuuh?
 
@@ -869,6 +870,34 @@ class Board(object):
             row['rowtype'] = rowtype
 
         return reported_posts
+
+    def delete_by_ip(self, admin, ip,
+                     mask=misc.dot_to_dec('255.255.255.255')):
+        try:
+            ip = int(ip)
+        except ValueError:
+            ip = misc.dot_to_dec(ip)
+
+        try:
+            mask = int(mask)
+        except ValueError:
+            mask = misc.dot_to_dec(mask or '255.255.255.255')
+
+        self.check_access(admin)
+
+        session = model.Session()
+        table = self.table
+
+        sql = table.select().where(table.c.ip.op('&')(mask) == ip & mask)
+        rows = session.execute(sql)
+
+        for row in rows:
+            try:
+                self.delete_post(row.num, '', False, False, admin=True)
+            except WakaError:
+                pass
+
+        self.build_cache()
 
     def delete_stuff(self, posts, password, file_only, archiving,
                      caller='user', admindelete=False,

@@ -6,6 +6,8 @@ import re
 import os
 import sys
 import traceback
+from datetime import datetime
+from calendar import timegm
 from urllib import urlencode
 from subprocess import Popen, PIPE
 
@@ -209,6 +211,8 @@ def add_admin_entry(admin, option, comment, ip='', mask='255.255.255.255',
                             urlencode({'task' : 'bans',
                                        'board': board.name})))
 
+    if caller == 'window':
+        return Template('edit_successful')
     return util.make_http_forward(forward_url, config.ALTERNATE_REDIRECT)
 
 def remove_admin_entry(admin, num, override_log=False, no_redirect=False):
@@ -247,7 +251,7 @@ def remove_old_bans():
         session.execute(sql)
         if row['total']:
             ip = misc.dec_to_dot(row['ival1'])
-            remove_htaccess_entry(misc.dec_to_dot(ip))
+            remove_htaccess_entry(ip)
 
 def add_htaccess_entry(ip):
     pass
@@ -341,7 +345,55 @@ def mark_resolved(admin, delete, posts):
                                        referer=referer)
 
 
-# TODO: Implement edit_admin_entry().
+def edit_admin_entry(admin, num, comment='', ival1=None,
+                     ival2='255.255.255.255', sval1='', total=False,
+                     sec=None, min=None, hour=None, day=None, month=None,
+                     year=None, noexpire=False):
+
+    staff.check_password(admin)
+
+    session = model.Session()
+    table = model.admin
+    sql = table.select().where(table.c.num == num)
+    row = session.execute(sql).fetchone()
+
+    if not row:
+        raise WakaError('Entry was not created or was removed.')
+
+    if row.type == 'ipban':
+        if not noexpire:
+            try:
+                expiration = datetime(int(year), int(month), int(day),
+                                      int(hour), int(min), int(sec))
+            except:
+                raise WakaError('Invalid date.')
+            expiration = timegm(expiration.utctimetuple())
+        else:
+            expiration = 0
+        ival1 = misc.dot_to_dec(ival1)
+        ival2 = misc.dot_to_dec(ival2)
+    else:
+        expiration = 0
+
+    sql = table.update().where(table.c.num == num)\
+               .values(comment=comment, ival1=ival1, ival2=ival2, sval1=sval1,
+                       total=total, expiration=expiration)
+    row = session.execute(sql)
+
+    return Template('edit_successful')
+
+def delete_by_ip(admin, ip, mask='255.255.255.255'):
+    user = staff.check_password(admin)
+
+    if user.account == staff.MODERATOR:
+        reign = user.reign
+    else:
+        reign = [x['board_entry'] for x in get_all_boards()]
+
+    for board_name in reign:
+        board_obj = board.Board(board_name)
+        # TODO: Fork this.
+        board_obj.delete_by_ip(admin, ip, mask=mask)
 
 def trim_reported_posts(date=0):
     mintime = 0

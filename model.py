@@ -208,9 +208,10 @@ class Page(object):
         if self.rows:
             ren_board = 'board' in self.rows[0].keys()
 
-        row_ctr = 1
+        row_ctr = row_cycle = 1
         for row in self.rows:
-            row_ctr ^= 0x3
-            row['rowtype'] = row_ctr
+            row_cycle ^= 0x3
+            row['rowtype'] = row_cycle
+            row['entry_number'] = row_ctr
             if ren_board:
                 row['board_name'] = row['board']
