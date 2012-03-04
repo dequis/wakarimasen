@@ -589,7 +589,7 @@ class Board(object):
 
         # process the tripcode - maybe the string should be decoded later
         name, temp = misc.process_tripcode(name, self.options['TRIPKEY'])
-        trip = temp or trip
+        trip = trip or temp
 
         if not whitelisted:
             # check for bans
