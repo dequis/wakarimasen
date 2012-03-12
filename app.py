@@ -364,6 +364,19 @@ def task_reports(environ, start_response):
 
     return StaffInterface(**kwargs)
 
+def task_resolvedreports(environ, start_response):
+    request = environ['werkzeug.request']
+
+    params = {'form': ['page', 'perpage', 'sortby', 'order'],
+              'cookies': ['wakaadmin']}
+
+    kwargs = kwargs_from_params(request, params)
+    kwargs['sortby_type'] = kwargs.pop('sortby')
+    kwargs['sortby_dir'] = kwargs.pop('order')
+    kwargs['dest'] = staff_interface.RESOLVED_REPORTS_PANEL
+
+    return StaffInterface(**kwargs)
+
 def task_postbackups(environ, start_response):
     request = environ['werkzeug.request']
 
