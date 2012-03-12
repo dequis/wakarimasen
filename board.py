@@ -12,6 +12,7 @@ import oekaki
 import util
 import model
 import staff
+import staff_interface
 # NOTE: I'm not sure if interboard is a good module to have here.
 import interboard
 import config
@@ -892,9 +893,14 @@ class Board(object):
         sql = table.select().where(table.c.ip.op('&')(mask) == ip & mask)
         rows = session.execute(sql)
 
+        timestamp = None
+        if config.POST_BACKUP:
+            timestamp = time.time()
+
         for row in rows:
             try:
-                self.delete_post(row.num, '', False, False, admin=True)
+                self.delete_post(row.num, '', False, False, admin=True,
+                                 timestampofarchival=timestamp)
             except WakaError:
                 pass
 
@@ -903,19 +909,24 @@ class Board(object):
     def delete_stuff(self, posts, password, file_only, archiving,
                      caller='user', admindelete=False,
                      from_window=False, admin=''):
-        if admin and admindelete and caller == 'user':
+        if admindelete and caller == 'user':
             self.check_access(admin)
         elif caller == 'internal':
             # Internally called; force admin.
             admindelete = True
 
+        timestamp = None
+        if config.POST_BACKUP:
+            timestamp = time.time()
+
         for post in posts:
             self.delete_post(post, password, file_only, archiving,
-                             from_window=False, admin=admindelete)
+                             from_window=False, admin=admindelete,
+                             timestampofarchival=timestamp)
 
         self.build_cache()
 
-        if admin and admindelete:
+        if admindelete:
             forward = '?'.join((misc.get_secure_script_name(),
                 urlencode({'task' : 'mpanel', 'board' : self.name})))
         else:
@@ -924,7 +935,8 @@ class Board(object):
             return util.make_http_forward(forward, config.ALTERNATE_REDIRECT)
 
     def delete_post(self, post, password, file_only, archiving,
-                    from_window=False, admin=False):
+                    from_window=False, admin=False,
+                    timestampofarchival=None):
         '''Delete a single post from the board. This method does not rebuild
         index cache automatically.'''
         thumb = self.options['THUMB_DIR']
@@ -949,6 +961,39 @@ class Board(object):
 
             if password != row.password:
                 raise WakaError(post + strings.BADDELPASS)
+
+        if config.POST_BACKUP and not archiving:
+            if not timestampofarchival:
+                timestampofarchival = time.time()
+            sql = model.backup.insert().values(board_name=self.name,
+                                               postnum=row.num,
+                                               parent=row.parent,
+                                               timestamp=row.timestamp,
+                                               lasthit=row.lasthit,
+                                               ip=row.ip,
+                                               date=row.date,
+                                               name=row.name,
+                                               trip=row.trip,
+                                               email=row.email,
+                                               subject=row.subject,
+                                               password=row.password,
+                                               comment=row.comment,
+                                               image=row.image,
+                                               size=row.size,
+                                               md5=row.md5,
+                                               width=row.width,
+                                               heigh=row.height,
+                                               thumbnail=row.thumbnail,
+                                               tn_width=row.tn_width,
+                                               tn_height=row.tn_height,
+                                               lastedit=row.lastedit,
+                                               lastedit_ip=row.lastedit_ip,
+                                               admin_post=row.admin_post,
+                                               stickied=row.stickied,
+                                               locked=row.locked,
+                                               timestampofarchival=\
+                                                  timestampofarchival)
+            session.execute(sql)
 
         if file_only:
             # remove just the image and update the database
@@ -998,20 +1043,134 @@ class Board(object):
         full_thumb_path = os.path.join(self.path, relative_thumb_path)
         archive_base = os.path.join(self.path,
                                     self.options['ARCHIVE_DIR'], '')
-        full_backup_path = os.path.join(archive_base,relative_file_path)
-        full_tbackup_path = os.path.join(archive_base, relative_thumb_path)
+        full_archive_path = os.path.join(archive_base,
+                                         relative_file_path)
+        full_tarchive_path = os.path.join(archive_base,
+                                          relative_thumb_path)
+        full_backup_path = os.path.join(archive_base,
+                                        self.options['BACKUP_DIR'],
+                                        os.path.basename(relative_file_path))
+        full_tbackup_path = os.path.join(archive_base, 
+                                         self.options['BACKUP_DIR'],
+                                         os.path.basename(relative_thumb_path))
 
         if os.path.exists(full_file_path):
             if archiving:
+                os.renames(full_file_path, full_archive_path)
+            elif config.POST_BACKUP:
                 os.renames(full_file_path, full_backup_path)
             else:
                 os.unlink(full_file_path)
         if os.path.exists(full_thumb_path) and \
            re.match(self.options['THUMB_DIR'], relative_file_path):
             if archiving:
-                os.renames(full_thumb_path, full_tbackup_path)
+                os.renames(full_thumb_path, full_tarchive_path)
+            elif config.POST_BACKUP:
+                os.renames(full_file_path, full_tbackup_path)
             else:
                 os.unlink(full_thumb_path)
+
+    def remove_backup_stuff(self, admin, posts, restore=False):
+        self.check_access(admin)
+
+        for post in posts:
+            self.remove_backup_post(post, restore=restore)
+
+        # Board pages need refereshing.
+        self.build_cache()
+
+        return staff_interface.StaffInterface(admin, board=self,
+                                              dest=staff_interface.TRASH_PANEL)
+
+    def remove_backup_post(self, post, restore=False, child=False):
+        session = model.Session()
+        table = model.backup
+        sql = table.select().where(and_(table.c.postnum == post,
+                                        table.c.board_name == self.name))
+        row = session.execute(sql).fetchone()
+
+        if not row:
+            raise WakaError('Backup record not found for post %s.' % (post))
+
+        arch_dir = os.path.join(self.path,
+                                self.options['ARCHIVE_DIR'],
+                                self.options['BACKUP_DIR'], '')
+        arch_image = os.path.join(arch_dir, os.path.basename(row.image))
+        arch_thumb = os.path.join(arch_dir, os.path.basename(row.thumbnail))
+
+        if restore:
+            my_table = self.table
+            if row.parent and not child:
+                sql = my_table.select().where(my_table.c.num == row.parent)
+                parent = session.execute(sql).fetchone()
+                if not parent:
+                    raise WakaError('Cannot restore post %s: '
+                                    'Parent thread deleted.' % (post))
+                row.stickied = parent.stickied
+                row.locked = parent.locked
+                row.lasthit = parent.lasthit
+
+            # Perform insertion.
+            sql = my_table.insert().values(num=row.postnum,
+                                           parent=row.parent,
+                                           timestamp=row.timestamp,
+                                           lasthit=row.lasthit,
+                                           ip=row.ip,
+                                           date=row.date,
+                                           name=row.name,
+                                           trip=row.trip,
+                                           email=row.email,
+                                           subject=row.subject,
+                                           password=row.password,
+                                           comment=row.comment,
+                                           image=row.image,
+                                           size=row.size,
+                                           md5=row.md5,
+                                           width=row.width,
+                                           heigh=row.height,
+                                           thumbnail=row.thumbnail,
+                                           tn_width=row.tn_width,
+                                           tn_height=row.tn_height,
+                                           lastedit=row.lastedit,
+                                           lastedit_ip=row.lastedit_ip,
+                                           admin_post=row.admin_post,
+                                           stickied=row.stickied,
+                                           locked=row.locked)
+            session.execute(sql)
+
+            # Move file/thumb.
+            if os.path.exists(arch_image):
+                os.renames(arch_image, os.path.join(self.path, row.image))
+            if os.path.exists(arch_thumb):
+                os.renames(arch_thumb, os.path.join(self.path, row.thumb))
+
+            if not child:
+                if row.parent:
+                    self.build_thread_cache(row.parent)
+                else:
+                    self.build_thread_cache(row.postnum)
+        else:
+            # Delete file/thumb.
+            if os.path.exists(arch_image):
+                os.unlink(os.path.join(arch_image))
+            if os.path.exists(arch_thumb):
+                os.unlink(os.path.join(arch_thumb))
+
+        # Remove (and restore if appropriate) all thread backups made at the
+        # point of archival.
+        if not row.parent:
+            sql = table.select(and_(table.c.parent == row.postnum,
+                                    table.c.board_name == self.name,
+                                    table.c.timestampofarchival\
+                                        == row.timestampofarchival))\
+                       .order_by(table.c.num.asc())
+            for row in session.execute(sql):
+                self.remove_post_from_backup(row.num, restore=restore,
+                                             child=True)
+
+        sql = table.delete().where(and_(table.c.postnum == post,
+                                        table.c.board_name == self.name))
+        session.execute(sql)
 
     def make_report_post_window(self, posts, from_window=False):
         if len(posts) == 0:

@@ -86,7 +86,7 @@ KNOWN_LOOPS = {
     'inputs': ('input', ['name', 'value']),
     'S_OEKPAINTERS': ('painters', ['painter', 'name']),
     'threads': ('currentthread', ['posts', 'omit', 'omitimages']),
-    'posts': ('post', _POST_TABLE + ['abbrev']),
+    'posts': ('post', _POST_TABLE + ['abbrev', 'postnum']),
     'pages': ('page', ['page', 'filename', 'current']),
     'loop': ('post', _POST_TABLE),
     'boards_select': ('board', ['board_entry']),

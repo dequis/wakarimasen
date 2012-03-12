@@ -1,7 +1,9 @@
 '''Dynamic panels for administrative work.'''
 
+import os
+import re
 from datetime import datetime
-from sqlalchemy.sql import case, or_, and_, select, func, null
+from sqlalchemy.sql import case, or_, and_, not_, exists, select, func, null
 from urllib import urlencode
 
 import strings
@@ -72,7 +74,7 @@ class StaffInterface(Template):
 
         # TODO: Check if mod is banned.
         if not page:
-            if dest in (HOME_PANEL, BOARD_PANEL):
+            if dest in (HOME_PANEL, BOARD_PANEL, TRASH_PANEL):
                 # Adjust for different pagination scheme. (Blame Wakaba.)
                 page = 0
             else:
@@ -472,24 +474,149 @@ class StaffInterface(Template):
                                 boards=boards)
 
     def make_admin_trash_panel(self):
-        # Get reports. (Why again?)
         board = self.board
-        reports = board.get_local_reports()
+        table = model.backup
+        session = model.Session()
+        template_kwargs = {}
 
-        if self.page.startswith('t'):
-            pass
-        else:
-            pass
+        # List of current threads *and* orphaned posts.
+        threads = []
 
-        Template.__init__(self, 'backup_panel_template',
-                          postform=board.options['ALLOW_TEXTONLY'] or
-                                   board.options['ALLOW_IMAGES'],
-                          image_inp=board.options['ALLOW_IMAGES'],
-                          textonly_inp=0,
-                          threads=threads,
-                          thread=page,
-                          reportedposts=reportedposts,
-                          parent=page)
+        if str(self.page).startswith('t'):
+            self.page = self.page[1:]
+            sql = table.select().where(and_(or_(table.c.postnum == self.page,
+                                                table.c.parent == self.page)),
+                                            table.c.board_name == board.name)\
+                                .order_by(table.c.timestampofarchival.desc(),
+                                          table.c.postnum.asc())
+            thread = [dict(x.items()) for x in session.execute(sql).fetchall()]
+
+            if not row:
+                raise WakaError('Thread not found.')
+
+            threads = [{'posts' : thread}]
+
+            template_kwargs = {'postform' : board.options['ALLOW_TEXTONLY'] or
+                                            board.options['ALLOW_IMAGES'],
+                               'image_inp' : board.options['ALLOW_IMAGES'],
+                               'textonly_inp' : 0,
+                               'threads' : threads,
+                               'thread' : self.page,
+                               'parent' : self.page}
+
+        elif config.ENABLE_POST_BACKUP:
+            max_res = board.options['IMAGES_PER_PAGE']
+
+            # Acquire the number of full threads *and* orphaned posts.
+            sql = select([func.count()], or_(table.c.parent == 0,
+                      and_(table.c.parent > 0,
+                           not_(exists([table.c.num],
+                                       table.c.parent == table.c.postnum)))),
+                      table)\
+                  .order_by(table.c.timestampofarchival.desc(),
+                              table.c.postnum.asc())
+
+            thread_ct = session.execute(sql).fetchone()[0]
+
+            total = int(thread_ct + max_res - 1) / max_res
+            offset = self.page * max_res
+
+            (pages, prevpage, nextpage) \
+                = board.get_board_page_data(self.page, total)
+
+            last_page = len(pages) - 1
+            if self.page > last_page and last_page > 0:
+                self.page = last_page
+
+            sql = table.select().where(or_(table.c.parent == 0,
+                      and_(table.c.parent > 0,
+                           not_(exists([table.c.num],
+                                       table.c.parent == table.c.postnum)))))\
+                  .order_by(table.c.timestampofarchival.desc(),
+                              table.c.num.asc())\
+                  .limit(board.options['IMAGES_PER_PAGE'])\
+                  .offset(offset)
+            threads = [{'posts' : [dict(x.items())]} \
+                for x in session.execute(sql)]
+
+            # Loop through 'posts' key in each dictionary in the threads
+            # list.
+            for item in threads:
+                thread = item['posts']
+                threadnum = thread[0]['postnum']
+                postcount = imgcount = shownimages = 0
+
+                # Orphaned?
+                item['standalone'] = 0
+
+                if not thread[0]['parent']:
+                    sql = select([func.count(), func.count(table.c.image)],
+                                  table.c.parent == threadnum,
+                                  table)
+
+                    (postcount, imgcount) = session.execute(sql).fetchone()
+
+                    max_res = board.options['REPLIES_PER_THREAD']
+                    offset = postcount - imgcount if postcount > max_res \
+                                                  else 0
+
+                    sql = table.select().where(table.c.parent == threadnum)\
+                            .order_by(table.c.timestampofarchival.desc(),
+                                      table.c.postnum.asc())\
+                            .limit(max_res)\
+                            .offset(offset)
+                    thread.extend([dict(x.items()) \
+                                       for x in session.execute(sql)])
+
+                else:
+                    item['standalone'] = 1
+
+                for post in thread:
+                    image_dir \
+                        = os.path.join(board.path, board.options['IMG_DIR'])
+
+                    thumb_dir \
+                        = os.path.join(board.path, board.options['THUMB_DIR'])
+
+                    base_thumb = os.path.basename(post['thumbnail'])
+                    base_image = os.path.basename(post['image'])
+
+                    base_filename \
+                        = post['image'].replace(image_dir, '').lstrip('/')
+
+                    backup_dir = os.path.join(board.path,
+                                                 board.options['ARCHIVE_DIR'],
+                                                 board.options['BACKUP_DIR'])
+
+                    if post['image']:
+                        post['image'] = os.path.join(backup_dir, base_image)
+                        shownimages += 1
+
+                    if re.match(board.options['THUMB_DIR'],
+                                post['thumbnail']):
+                        post['thumbnail'] \
+                            = os.path.join(backup_dir, base_thumb)
+                
+                item['omit'] = postcount - max_res if postcount > max_res\
+                                                   else 0
+
+                item['omitimages'] = imgcount - shownimages \
+                                     if imgcount > shownimages else 0
+
+                template_kwargs = {'postform' \
+                                      : board.options['ALLOW_TEXTONLY'] or
+                                        board.options['ALLOW_IMAGES'],
+                                  'image_inp' : board.options['ALLOW_IMAGES'],
+                                   'textonly_inp' \
+                                      : board.options['ALLOW_IMAGES'] and
+                                        board.options['ALLOW_TEXTONLY'],
+                                   'nextpage' : nextpage,
+                                   'prevpage' : prevpage,
+                                   'threads' : threads,
+                                   'pages' : pages}
+
+        Template.__init__(self, 'backup_panel_template', **template_kwargs)
+
 
     def make_admin_post_search_panel(self, ipsearch, id=None, ip=None,
                                      caller='internal'):

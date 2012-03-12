@@ -198,6 +198,19 @@ def task_resolve(environ, start_response):
 
     return interboard.mark_resolved(**kwargs)
 
+def task_restorebackups(environ, start_response):
+    request = environ['werkzeug.request']
+    board = environ['waka.board']
+
+    params = {'form':    ['handle'],
+              'cookies': ['wakaadmin']}
+
+    kwargs = kwargs_from_params(request, params)
+    kwargs['posts'] = request.form.getlist('num')
+    kwargs['restore'] = kwargs.pop('handle').lower() == 'restore'
+
+    return board.remove_backup_stuff(**kwargs)
+
 def _toggle_thread_state(environ, start_response, operation, enable=True):
     request = environ['werkzeug.request']
     board = environ['waka.board']
@@ -348,6 +361,16 @@ def task_reports(environ, start_response):
     kwargs['sortby_type'] = kwargs.pop('sortby')
     kwargs['sortby_dir'] = kwargs.pop('order')
     kwargs['dest'] = staff_interface.REPORTS_PANEL
+
+    return StaffInterface(**kwargs)
+
+def task_postbackups(environ, start_response):
+    request = environ['werkzeug.request']
+
+    params = {'form':    ['page'],
+              'cookies': ['wakaadmin']}
+    kwargs = kwargs_from_params(request, params)
+    kwargs['dest'] = staff_interface.TRASH_PANEL
 
     return StaffInterface(**kwargs)
 
