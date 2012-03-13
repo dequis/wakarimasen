@@ -26,6 +26,7 @@ RESOLVED_REPORTS_PANEL = 'resolvedreportspanel'
 STAFF_PANEL = 'staffpanel'
 TRASH_PANEL = 'trashpanel'
 POST_SEARCH_PANEL = 'postsearchpanel'
+SQL_PANEL = 'sqlpanel'
 
 BAN_POPUP = 'banpopup'
 BAN_EDIT_POPUP = 'baneditwindow'
@@ -123,6 +124,7 @@ class StaffInterface(Template):
                 SPAM_PANEL : self.make_admin_spam_panel,
                 TRASH_PANEL : self.make_admin_trash_panel,
                 POST_SEARCH_PANEL: self.make_admin_post_search_panel,
+                SQL_PANEL: self.make_sql_interface_panel,
                 BAN_POPUP: self.make_ban_popup,
                 BAN_EDIT_POPUP: self.make_ban_edit_popup,
                 DEL_STAFF_CONFIRM : self.make_del_staff_window,
@@ -667,6 +669,49 @@ class StaffInterface(Template):
                             +'?task=searchposts&amp;board='+board.path\
                             + '&amp;caller='+caller+'&amp;ipsearch=1&amp;ip='\
                             + ip, rowcount=rowcount, popup=popup)
+
+    def make_sql_interface_panel(self, sql='', nuke=''):
+        if self.user.account != staff.ADMIN:
+            raise WakaError(strigns.INUSUFFICENTPRIVLEDGES)
+
+        results = []
+
+        if sql or nuke:
+            if nuke != local.environ['waka.board'].options['NUKE_PASS']:
+                raise WakaError(strings.WRONGPASS)
+
+            session = model.Session()
+            if sql:
+                for sql in sql.split('\r\n'):
+                    # Execute teh string.
+                    try:
+                        results.append('>>> ' + sql)
+                        row = session.execute(sql)
+                    except Exception as errstr:
+                        results.append('ERROR: %s' % (errstr))
+                    else:
+                        try:
+                            results.append(str(row.fetchall()))
+                        except:
+                            results.append('OK')
+            else:
+                # Remove board table contents and board list entry.
+                try:
+                    board = local.environ['waka.board']
+                    board.table.drop(bind=model.engine)
+                    model.common.delete().where(model.common.c.board \
+                                                == board.name)
+                except Exception as errstr:
+                    results.append('ERROR %s' % (errstr))
+                else:
+                    results.append('Comment table dropped. You should '
+                                   'delete/move the board folder now.')
+        else:
+            results.append('(It is recommended that you disable site access '
+                           'while entering SQL or deleting boards.)')
+
+        Template.__init__(self, 'sql_interface_template',
+                          results='<br />'.join(results))
 
     def make_admin_proxy_panel(self):
         pass

@@ -256,6 +256,16 @@ def task_setup(environ, start_response):
 
     return staff_interface.do_first_time_setup(**kwargs)
 
+def task_sql(environ, start_response):
+    request = environ['werkzeug.request']
+
+    params = {'form': ['sql', 'nuke'],
+              'cookies': ['wakaadmin']}
+    kwargs = kwargs_from_params(request, params)
+    kwargs['dest'] = staff_interface.SQL_PANEL
+
+    return StaffInterface(**kwargs)
+
 def task_loginpanel(environ, start_response):
     request = environ['werkzeug.request']
 
