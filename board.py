@@ -1307,7 +1307,7 @@ class Board(object):
 
         known = (width != 0 or ext in filetypes)
         if not (self.options['ALLOW_UNKNOWN'] or known) or \
-           ext in self.options['FORBIDDEN_EXTENSIONS']:
+               ext in self.options['FORBIDDEN_EXTENSIONS']:
             raise WakaError(strings.BADFORMAT)
 
         maxw, maxh, maxp = self.options['MAX_IMAGE_WIDTH'], \
@@ -1319,8 +1319,7 @@ class Board(object):
         # generate "random" filename
         filebase = ("%.3f" % timestamp).replace(".", "")
         filename = self.make_path(filebase, dirc='IMG_DIR', ext=ext)
-        thumbnail = self.make_path(filebase + "s", dirc='THUMB_DIR',
-                                   ext='jpg')
+        thumbnail = self.make_path(filebase + "s", dirc='THUMB_DIR', ext='jpg')
 
 
         if not known:
@@ -1377,7 +1376,12 @@ class Board(object):
         if not width:  # unsupported file
             if ext in filetypes: # externally defined filetype
                 # Compensate for absolute paths, if given.
-                icon = os.path.join(self.path, filetypes[ext].lstrip("/"))
+                icon = filetypes[ext]
+                if icon.startswith('/'):
+                    icon = os.path.join(local.environ['DOCUMENT_ROOT'],
+                                        filetypes[ext].lstrip("/"))
+                else:
+                    icon = os.path.join(self.path, icon)
 
                 tn_ext, tn_width, tn_height = \
                     misc.analyze_image(open(icon, "rb"), icon)
