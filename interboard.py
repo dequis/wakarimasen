@@ -177,7 +177,7 @@ def add_admin_entry(admin, option, comment, ip='', mask='255.255.255.255',
         query = session.execute(sql)
 
         for row in query:
-            if row.ival1 & row.ival2 == ival1 & ival2:
+            if int(row.ival1) & int(row.ival2) == ival1 & ival2:
                 raise WakaError('IP address and mask match ban #%d.' % \
                                 (row.num))
     else:
@@ -196,8 +196,8 @@ def add_admin_entry(admin, option, comment, ip='', mask='255.255.255.255',
     if expiration:
         expiration = expiration + time.time()
 
-    sql = table.insert().values(type=option, comment=comment, ival1=ival1,
-                                ival2=ival2, sval1=sval1, total=total,
+    sql = table.insert().values(type=option, comment=comment, ival1=int(ival1),
+                                ival2=int(ival2), sval1=sval1, total=total,
                                 expiration=expiration)
     session.execute(sql)
 
@@ -283,18 +283,18 @@ def add_htaccess_entry(ip):
                            config.HTACCESS_PATH, '.htaccess'), 'a+') as f:
         ban_entries_found = False
 
-        line = f.read()
+        line = f.readline()
         while line:
-            if line.index('RewriteEngine On') != -1:
+            if line.count('RewriteEngine On'):
                 ban_entries_found = True
                 break
-            line = f.read()
+            line = f.readline()
 
         if not ban_entries_found:
+            f.write("\n"+'# Bans added by Wakarimasen'+"\n")
             f.write("\n"+'RewriteEngine On'+"\n")
 
         ip = ip.replace('.', r'\.')
-        f.write("\n"+'# Ban added by Wakarimasen'+"\n")
         f.write('RewriteCond %{REMOTE_ADDR} ^'+ip+'$'+"\n")
         f.write('RewriteRule !(\+pl|\+js$|\+css$|\+png'\
                 '|ban_images) '+local.environ['SCRIPT_NAME']+'?'\
@@ -302,18 +302,24 @@ def add_htaccess_entry(ip):
 
 def remove_htaccess_entry(ip):
     ip = ip.replace('.', r'\.')
+    htaccess = os.path.join(local.environ['DOCUMENT_ROOT'],
+                            config.HTACCESS_PATH, '.htaccess')
 
-    with open(os.path.join(local.environ['DOCUMENT_ROOT'],
-                           config.HTACCESS_PATH, '.htaccess'), 'w+') as f:
-        line = f.read()
+    lines = []
+    with open(htaccess, 'r') as f:
+        line = f.readline()
         while line:
-            if not line.startswith('RewriteCond %{REMOTE_ADDR} ^%s$' % ip):
-                f.write(line)
+            if not line.count('RewriteCond %{REMOTE_ADDR} ^' + ip + '$'):
+                lines.append(line)
             else:
                 # Do not write, and skip the next line.
-                line = f.read()
+                line = f.readline()
             if line:
-                line = f.read()
+                line = f.readline()
+
+    with open(htaccess, 'w') as f:
+        for l in lines:
+            f.write(l)
 
 def ban_check(numip, name, subject, comment):
     '''This function raises an exception if the IP address is banned, or
