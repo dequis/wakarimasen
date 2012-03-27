@@ -1,5 +1,6 @@
 '''Dynamic panels for administrative work.'''
 
+import time
 import os
 import re
 from datetime import datetime
@@ -27,6 +28,8 @@ STAFF_PANEL = 'staffpanel'
 TRASH_PANEL = 'trashpanel'
 POST_SEARCH_PANEL = 'postsearchpanel'
 SQL_PANEL = 'sqlpanel'
+PROXY_PANEL = 'proxypanel'
+SECURITY_PANEL = 'securitypanel'
 
 BAN_POPUP = 'banpopup'
 BAN_EDIT_POPUP = 'baneditwindow'
@@ -125,6 +128,8 @@ class StaffInterface(Template):
                 TRASH_PANEL : self.make_admin_trash_panel,
                 POST_SEARCH_PANEL: self.make_admin_post_search_panel,
                 SQL_PANEL: self.make_sql_interface_panel,
+                PROXY_PANEL: self.make_admin_proxy_panel,
+                SECURITY_PANEL: self.make_admin_script_security_panel,
                 BAN_POPUP: self.make_ban_popup,
                 BAN_EDIT_POPUP: self.make_ban_edit_popup,
                 DEL_STAFF_CONFIRM : self.make_del_staff_window,
@@ -714,7 +719,27 @@ class StaffInterface(Template):
                           results='<br />'.join(results))
 
     def make_admin_proxy_panel(self):
-        pass
+        Template.__init__(self, 'proxy_panel_template')
+
+    def make_admin_script_security_panel(self):
+        session = model.Session()
+        table = model.passprompt
+        rows = session.execute(table.select())
+
+        now = time.time()
+
+        entries = []
+        for row in rows:
+            if row.passfail:
+                row['expiration']\
+                    = config.PASSFAIL_ROLLBACK - now + row.timestamp
+            else:
+                row['expiration']\
+                    = config.PASSPROMPT_EXPIRE_TO_FAILURE - now \
+                      + row.timestamp
+            entries.append(row)
+        
+        Template.__init__(self, 'script_security_panel', entries=entries)
 
 def add_staff_proxy(admin, mpass, usertocreate, passtocreate, account, reign):
     user = staff.check_password(admin)

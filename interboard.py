@@ -225,7 +225,7 @@ def remove_admin_entry(admin, num, override_log=False, no_redirect=False):
 
     if row:
         if row['total']:
-            ip = misc.dec_to_dot(row['ival'])
+            ip = misc.dec_to_dot(row['ival1'])
             remove_htaccess_entry(ip)
 
         sql = table.delete().where(table.c.num == num)
@@ -261,21 +261,59 @@ def remove_old_backups():
     query = session.execute(sql)
 
     for row in query:
-        # Delete backup image; then, mark post for deletion.
         board_obj = board.Board(row['board_name'])
-        filename = os.path.join(board_obj.path,
-                                board_obj.options['ARCHIVE_DIR'],
-                                board_obj.options['BACKUP_DIR'],
-                                row.image)
-        if os.path.exists(filename):
-            os.unlink(filename)
+        backup_path = os.path.join(board_obj.path,
+                                   board_obj.options['ARCHIVE_DIR'],
+                                   board_obj.options['BACKUP_DIR'], '')
+        if row.image:
+            # Delete backup image; then, mark post for deletion.
+            filename = os.path.join(backup_path, os.path.basename(row.image))
+            if os.path.exists(filename):
+                os.unlink(filename)
+        if row.thumbnail \
+                and re.match(src_brd_obj.options['THUMB_DIR'], row.thumbnail):
+            filename = os.path.join(backup_path,
+                                    os.path.basename(row.thumbnail))
+            if os.path.exists(filename):
+                os.unlink(filename)
         session.delete(row)
 
 def add_htaccess_entry(ip):
-    pass
+    with open(os.path.join(local.environ['DOCUMENT_ROOT'],
+                           config.HTACCESS_PATH, '.htaccess'), 'a+') as f:
+        ban_entries_found = False
+
+        line = f.read()
+        while line:
+            if line.index('RewriteEngine On') != -1:
+                ban_entries_found = True
+                break
+            line = f.read()
+
+        if not ban_entries_found:
+            f.write("\n"+'RewriteEngine On'+"\n")
+
+        ip = ip.replace('.', r'\.')
+        f.write("\n"+'# Ban added by Wakarimasen'+"\n")
+        f.write('RewriteCond %{REMOTE_ADDR} ^'+ip+'$'+"\n")
+        f.write('RewriteRule !(\+pl|\+js$|\+css$|\+png'\
+                '|ban_images) '+local.environ['SCRIPT_NAME']+'?'\
+                'task=banreport&board='+local.environ['waka.board'].name+"\n")
 
 def remove_htaccess_entry(ip):
-    pass
+    ip = ip.replace('.', r'\.')
+
+    with open(os.path.join(local.environ['DOCUMENT_ROOT'],
+                           config.HTACCESS_PATH, '.htaccess'), 'w+') as f:
+        line = f.read()
+        while line:
+            if not line.startswith('RewriteCond %{REMOTE_ADDR} ^%s$' % ip):
+                f.write(line)
+            else:
+                # Do not write, and skip the next line.
+                line = f.read()
+            if line:
+                line = f.read()
 
 def ban_check(numip, name, subject, comment):
     '''This function raises an exception if the IP address is banned, or
@@ -306,7 +344,7 @@ def ban_check(numip, name, subject, comment):
     for row in query:
         bad_string = row.sval1.lower()
         if comment.count(bad_string) or subject.count(bad_string) or \
-            name.count(bad_string):
+                name.count(bad_string):
             raise WakaError(strings.STRREF)
 
 def mark_resolved(admin, delete, posts):

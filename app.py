@@ -266,6 +266,24 @@ def task_sql(environ, start_response):
 
     return StaffInterface(**kwargs)
 
+def task_proxy(environ, start_response):
+    request = environ['werkzeug.request']
+
+    params = {'cookies': ['wakaadmin']}
+    kwargs = kwargs_from_params(request, params)
+    kwargs['dest'] = staff_interface.PROXY_PANEL
+
+    return StaffInterface(**kwargs)
+
+def task_security(environ, start_response):
+    request = environ['werkzeug.request']
+
+    params = {'cookies': ['wakaadmin']}
+    kwargs = kwargs_from_params(request, params)
+    kwargs['dest'] = staff_interface.SECURITY_PANEL
+
+    return StaffInterface(**kwargs)
+
 def task_loginpanel(environ, start_response):
     request = environ['werkzeug.request']
 

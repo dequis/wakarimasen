@@ -1061,8 +1061,8 @@ class Board(object):
                 os.renames(full_file_path, full_backup_path)
             else:
                 os.unlink(full_file_path)
-        if os.path.exists(full_thumb_path) and \
-           re.match(self.options['THUMB_DIR'], relative_file_path):
+        if os.path.exists(full_thumb_path) \
+                and re.match(self.options['THUMB_DIR'], relative_file_path):
             if archiving:
                 os.renames(full_thumb_path, full_tarchive_path)
             elif config.POST_BACKUP:
