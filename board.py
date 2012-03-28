@@ -1095,8 +1095,14 @@ class Board(object):
         arch_dir = os.path.join(self.path,
                                 self.options['ARCHIVE_DIR'],
                                 self.options['BACKUP_DIR'], '')
-        arch_image = os.path.join(arch_dir, os.path.basename(row.image))
-        arch_thumb = os.path.join(arch_dir, os.path.basename(row.thumbnail))
+        if row.image:
+            arch_image = os.path.join(arch_dir, os.path.basename(row.image))
+        else:
+            arch_image = None
+        if row.thumbnail:
+            arch_thumb = os.path.join(arch_dir, os.path.basename(row.thumbnail))
+        else:
+            arch_thumb = None
 
         if restore:
             my_table = self.table
@@ -1139,9 +1145,12 @@ class Board(object):
             session.execute(sql)
 
             # Move file/thumb.
-            if os.path.exists(arch_image):
+            if arch_image and os.path.exists(arch_image):
                 os.renames(arch_image, os.path.join(self.path, row.image))
-            if os.path.exists(arch_thumb):
+            if arch_thumb \
+                    and re.match(src_brd_obj.options['THUMB_DIR'],
+                                 row.thumbnail) \
+                    and os.path.exists(arch_thumb):
                 os.renames(arch_thumb, os.path.join(self.path, row.thumb))
 
             if not child:
@@ -1151,9 +1160,12 @@ class Board(object):
                     self.build_thread_cache(row.postnum)
         else:
             # Delete file/thumb.
-            if os.path.exists(arch_image):
+            if arch_image and os.path.exists(arch_image):
                 os.unlink(os.path.join(arch_image))
-            if os.path.exists(arch_thumb):
+            if arch_thumb \
+                    and re.match(src_brd_obj.options['THUMB_DIR'],
+                                 row.thumbnail) \
+                    and os.path.exists(arch_thumb):
                 os.unlink(os.path.join(arch_thumb))
 
         # Remove (and restore if appropriate) all thread backups made at the

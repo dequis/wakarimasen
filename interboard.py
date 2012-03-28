@@ -276,7 +276,11 @@ def remove_old_backups():
                                     os.path.basename(row.thumbnail))
             if os.path.exists(filename):
                 os.unlink(filename)
-        session.delete(row)
+
+        # Perform SQL DELETE
+        sql = table.delete().where(and_(table.c.postnum == post,
+                                        table.c.board_name == self.name))
+        session.execute(sql)
 
 def add_htaccess_entry(ip):
     with open(os.path.join(local.environ['DOCUMENT_ROOT'],
