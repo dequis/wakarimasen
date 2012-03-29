@@ -651,7 +651,10 @@ class StaffInterface(Template):
         popup = caller != 'board'
 
         if ipsearch:
-            sql = table.select().where(table.c.ip == misc.dot_to_dec(ip))
+            try:
+                sql = table.select().where(table.c.ip == misc.dot_to_dec(ip))
+            except ValueError:
+                raise WakaError('Please enter a valid IP.')
             page = model.Page(sql, self.page, self.perpage)
             rowcount = page.total_entries
             total_pages = page.total_pages
