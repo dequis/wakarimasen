@@ -278,8 +278,8 @@ def remove_old_backups():
                 os.unlink(filename)
 
         # Perform SQL DELETE
-        sql = table.delete().where(and_(table.c.postnum == post,
-                                        table.c.board_name == self.name))
+        sql = table.delete().where(and_(table.c.postnum == row.postnum,
+                                        table.c.board_name == board_obj.name))
         session.execute(sql)
 
 def add_htaccess_entry(ip):
