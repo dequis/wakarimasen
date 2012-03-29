@@ -9,6 +9,7 @@ s/^\}$//;
 s/^use strict;$//;
 s/^\tuse constant S_.*$//g;
 s/^\tdie S_.*$//g;
+s/ENABLE_POST_BACKUPS/POST_BACKUPS/g;
 
 # multiline hack. remove consecutive newlines
 1h;1!H;

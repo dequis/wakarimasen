@@ -624,19 +624,17 @@ class Board(object):
         if self.options['FORCED_ANON']:
             name = ''
             trip = ''
-            if email.lower().count('sage'):
+            if email.lower() == 'sage':
                 email = 'sage'
             else:
                 email = ''
 
-        # clean up the inputs
-        email = str_format.percent_encode(str_format.clean_string\
-                                          (str_format.decode_string(email)))
-        subject = str_format.clean_string(str_format.decode_string(subject))
-
         # fix up the email/link, if it is not a generic URI already.
-        if email and not re.match("(?!^\w+:)|(?:\:\/\/)", email):
-            email = "mailto:%s" % email
+        if email and not re.search("(?:^\w+:)|(?:\:\/\/)", email):
+            email = "mailto:" + email
+
+        # clean up the inputs
+        subject = str_format.clean_string(str_format.decode_string(subject))
 
         # format comment
         if not no_format:
@@ -732,7 +730,7 @@ class Board(object):
 
         if parent and not post_num: # bumping
             # check for sage, or too many replies
-            if not (email.lower().count("sage") or
+            if not (email.lower() == "mailto:sage" or
                     self.sage_count(parent_res) > self.options['MAX_RES']):
                 t = self.table
                 session.execute(t.update()
@@ -1391,16 +1389,19 @@ class Board(object):
                 icon = filetypes[ext]
                 if icon.startswith('/'):
                     icon = os.path.join(local.environ['DOCUMENT_ROOT'],
-                                        filetypes[ext].lstrip("/"))
+                                        icon.lstrip("/"))
                 else:
                     icon = os.path.join(self.path, icon)
 
-                tn_ext, tn_width, tn_height = \
-                    misc.analyze_image(open(icon, "rb"), icon)
+                if os.path.exists(icon):
+                    tn_ext, tn_width, tn_height = \
+                        misc.analyze_image(open(icon, "rb"), icon)
+                else:
+                    tn_ext, tn_width, tn_height = ('', 0, 0)
 
                 # was that icon file really there?
                 if tn_width:
-                    thumbnail = filetypes[ext]
+                    thumbnail = icon
                 else:
                     thumbnail = ''
             else:

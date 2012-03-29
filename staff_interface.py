@@ -526,7 +526,7 @@ class StaffInterface(Template):
                                'thread' : self.page,
                                'parent' : self.page}
 
-        elif config.ENABLE_POST_BACKUP:
+        elif config.POST_BACKUP:
             max_res = board.options['IMAGES_PER_PAGE']
 
             # Acquire the number of full threads *and* orphaned posts.
