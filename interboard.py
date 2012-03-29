@@ -271,7 +271,7 @@ def remove_old_backups():
             if os.path.exists(filename):
                 os.unlink(filename)
         if row.thumbnail \
-                and re.match(src_brd_obj.options['THUMB_DIR'], row.thumbnail):
+                and re.match(board_obj.options['THUMB_DIR'], row.thumbnail):
             filename = os.path.join(backup_path,
                                     os.path.basename(row.thumbnail))
             if os.path.exists(filename):
