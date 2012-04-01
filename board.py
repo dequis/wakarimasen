@@ -1623,7 +1623,9 @@ class Board(object):
         rss_file = os.path.join(self.path, 'board.rss')
 
         session = model.Session()
-        sql = self.table.select().limit(config.RSS_LENGTH)
+        table = self.table
+        sql = table.select().order_by(table.c.num.desc())\
+                   .limit(config.RSS_LENGTH)
         posts = session.execute(sql)
 
         Template('rss_template', items=posts,
