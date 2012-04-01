@@ -180,6 +180,9 @@ class Board(object):
             os.unlink(self.make_path(page=page))
             page += 1
 
+        if config.ENABLE_RSS:
+            self.update_rss()
+
     def rebuild_cache(self):
         self.build_thread_cache_all()
         self.build_cache()
@@ -1615,6 +1618,17 @@ class Board(object):
             row = session.execute(sql).fetchone()
             if row[0] != 0:
                 raise WakaError(strings.RENZOKU3)
+
+    def update_rss(self):
+        rss_file = os.path.join(self.path, 'board.rss')
+
+        session = model.Session()
+        sql = self.table.select().limit(config.RSS_LENGTH)
+        posts = session.execute(sql)
+
+        Template('rss_template', items=posts,
+                 pub_date=misc.make_date(time.time(), 'http'))\
+                 .render_to_file(rss_file)
 
 # utility functions
 

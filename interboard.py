@@ -283,47 +283,53 @@ def remove_old_backups():
     session.execute(sql)
 
 def add_htaccess_entry(ip):
-    with open(os.path.join(local.environ['DOCUMENT_ROOT'],
-                           config.HTACCESS_PATH, '.htaccess'), 'a+') as f:
-        ban_entries_found = False
+    htaccess = os.path.join(local.environ['DOCUMENT_ROOT'],
+                            config.HTACCESS_PATH, '.htaccess')
 
-        line = f.readline()
-        while line:
-            if line.count('RewriteEngine On'):
-                ban_entries_found = True
-                break
+    with util.FileLock(htaccess):
+        with open(htaccess, 'r') as f:
+            ban_entries_found = False
+
             line = f.readline()
+            while line:
+                if line.count('RewriteEngine On'):
+                    ban_entries_found = True
+                    break
+                line = f.readline()
 
-        if not ban_entries_found:
-            f.write("\n"+'# Bans added by Wakarimasen'+"\n")
-            f.write("\n"+'RewriteEngine On'+"\n")
+        with open(htaccess, 'a') as f:
+            if not ban_entries_found:
+                f.write("\n"+'# Bans added by Wakarimasen'+"\n")
+                f.write("\n"+'RewriteEngine On'+"\n")
 
-        ip = ip.replace('.', r'\.')
-        f.write('RewriteCond %{REMOTE_ADDR} ^'+ip+'$'+"\n")
-        f.write('RewriteRule !(\+pl|\+js$|\+css$|\+png'\
-                '|ban_images) '+local.environ['SCRIPT_NAME']+'?'\
-                'task=banreport&board='+local.environ['waka.board'].name+"\n")
+            ip = ip.replace('.', r'\.')
+            f.write('RewriteCond %{REMOTE_ADDR} ^'+ip+'$'+"\n")
+            f.write('RewriteRule !(\+pl|\+js$|\+css$|\+png'\
+                    '|ban_images) '+local.environ['SCRIPT_NAME']+'?'\
+                    'task=banreport&board='\
+                    +local.environ['waka.board'].name+"\n")
 
 def remove_htaccess_entry(ip):
     ip = ip.replace('.', r'\.')
     htaccess = os.path.join(local.environ['DOCUMENT_ROOT'],
                             config.HTACCESS_PATH, '.htaccess')
 
-    lines = []
-    with open(htaccess, 'r') as f:
-        line = f.readline()
-        while line:
-            if not line.count('RewriteCond %{REMOTE_ADDR} ^' + ip + '$'):
-                lines.append(line)
-            else:
-                # Do not write, and skip the next line.
-                line = f.readline()
-            if line:
-                line = f.readline()
+    with util.FileLock(htaccess):
 
-    with open(htaccess, 'w') as f:
-        for l in lines:
-            f.write(l)
+        lines = []
+        with open(htaccess, 'r') as f:
+            line = f.readline()
+            while line:
+                if not line.count('RewriteCond %{REMOTE_ADDR} ^' + ip + '$'):
+                    lines.append(line)
+                else:
+                    # Do not write, and skip the next line.
+                    line = f.readline()
+                if line:
+                    line = f.readline()
+
+        with open(htaccess, 'w') as f:
+            f.write(''.join(lines))
 
 def ban_check(numip, name, subject, comment):
     '''This function raises an exception if the IP address is banned, or

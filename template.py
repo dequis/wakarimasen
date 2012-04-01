@@ -10,7 +10,7 @@ import jinja2
 import config, config_defaults
 import strings
 import misc
-from util import local
+from util import local, FileLock
 import str_format
 
 TEMPLATES_DIR = os.path.join('templates')
@@ -65,17 +65,19 @@ class Template(object):
         contents = self.template.render(**self.vars).encode("utf-8")
 
         if config.USE_TEMPFILES:
-            tempname = os.path.join(self.board.path,
-                self.board.options['RES_DIR'],
+            tempname = os.path.join(os.path.dirname(filename),
                 'tmp' + str(random.randint(1, 1000000000)))
 
-            with open(tempname, "w") as rc:
-                rc.write(contents)
+            with FileLock(tempname):
+                with open(tempname, 'w') as rc:
+                    rc.write(contents)
 
-            os.rename(tempname, filename)
+            with FileLock(filename) as rc:
+                os.rename(tempname, filename)
         else:
-            with open(filename, "w") as rc:
-                rc.write(contents)
+            with FileLock(filename) as rc:
+                with open(filename, 'w') as rc:
+                    rc.write(contents)
 
         os.chmod(filename, 0644)
     
@@ -163,6 +165,10 @@ class Template(object):
     @filter
     def get_action_name(self, action, debug=0):
         return interboard.get_action_name(action, debug=debug)
+
+    @filter
+    def make_date(self, timestamp, style='futaba'):
+        return misc.make_date(timestamp, style)
 
     @function
     def get_filetypes(self):
