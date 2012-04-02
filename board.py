@@ -1626,7 +1626,10 @@ class Board(object):
         table = self.table
         sql = table.select().order_by(table.c.num.desc())\
                    .limit(config.RSS_LENGTH)
-        posts = session.execute(sql)
+
+        posts = [dict(post.items()) for post in session.execute(sql)]
+        for post in posts:
+            post['mime_type'] = 'application/octet-stream'
 
         Template('rss_template', items=posts,
                  pub_date=misc.make_date(time.time(), 'http'))\
