@@ -3,6 +3,7 @@ import re
 import time
 import random
 import hashlib
+import mimetypes
 from subprocess import Popen, PIPE
 from urllib import urlencode
 
@@ -1629,7 +1630,9 @@ class Board(object):
 
         posts = [dict(post.items()) for post in session.execute(sql)]
         for post in posts:
-            post['mime_type'] = 'application/octet-stream'
+            filename = post['image']
+            if filename:
+                post['mime_type'] = mimetypes.guess_type(filename)[0]
 
         Template('rss_template', items=posts,
                  pub_date=misc.make_date(time.time(), 'http'))\
