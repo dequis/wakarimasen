@@ -72,6 +72,7 @@ class StaffInterface(Template):
             self.user = staff.check_password(admin)
         except staff.LoginError:
             Template.__init__(self, 'admin_login_template', nexttask=dest)
+            return
         if not dest:
             dest = HOME_PANEL
 
