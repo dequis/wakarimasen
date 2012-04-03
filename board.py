@@ -1196,7 +1196,7 @@ class Board(object):
         num_parsed = ', '.join(posts)
         referer = ''
         if not from_window:
-            referer = local.environ['HTTP_REFERER']
+            referer = self.url
 
         return Template('post_report_window', num=num_parsed, referer=referer)
 
