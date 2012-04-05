@@ -607,9 +607,9 @@ class StaffInterface(Template):
                     base_filename \
                         = post['image'].replace(image_dir, '').lstrip('/')
 
-                    backup_dir = os.path.join(board.path,
-                                                 board.options['ARCHIVE_DIR'],
-                                                 board.options['BACKUP_DIR'])
+                    backup_dir = os.path.join(board.url,
+                                              board.options['ARCHIVE_DIR'],
+                                              board.options['BACKUP_DIR'])
 
                     if post['image']:
                         post['image'] = os.path.join(backup_dir, base_image)

@@ -204,7 +204,7 @@ class FutabaStyleParser(object):
             
         if not self.dry_run:
             file = open(template_filename(name), 'w')
-            file.write(current[1:])
+            file.write(current)
 
         if len(template) != self.lastend:
             self.debug_item("NOT MATCHED (end)", template[lastend:],
