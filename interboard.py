@@ -201,7 +201,7 @@ def add_admin_entry(admin, option, comment, ip='', mask='255.255.255.255',
                                 expiration=expiration)
     session.execute(sql)
 
-    if total:
+    if total == 'yes':
         add_htaccess_entry(ip)
 
     # TODO: Log this.
