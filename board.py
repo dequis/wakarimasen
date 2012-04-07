@@ -1045,30 +1045,39 @@ class Board(object):
         full_thumb_path = os.path.join(self.path, relative_thumb_path)
         archive_base = os.path.join(self.path,
                                     self.options['ARCHIVE_DIR'], '')
+        backup_base = os.path.join(archive_base, self.options['BACKUP_DIR'])
+
+        if config.POST_BACKUP:
+            os.makedirs(backup_base, 0755)
+        except os.error:
+            pass
+
         full_archive_path = os.path.join(archive_base,
                                          relative_file_path)
         full_tarchive_path = os.path.join(archive_base,
                                           relative_thumb_path)
-        full_backup_path = os.path.join(archive_base,
-                                        self.options['BACKUP_DIR'],
+        full_backup_path = os.path.join(backup_base,
                                         os.path.basename(relative_file_path))
-        full_tbackup_path = os.path.join(archive_base, 
-                                         self.options['BACKUP_DIR'],
+        full_tbackup_path = os.path.join(backup_base, 
                                          os.path.basename(relative_thumb_path))
 
         if os.path.exists(full_file_path):
             if archiving:
                 os.renames(full_file_path, full_archive_path)
+                os.chmod(full_archive_path, 0644)
             elif config.POST_BACKUP:
                 os.renames(full_file_path, full_backup_path)
+                os.chmod(full_backup_path, 0644)
             else:
                 os.unlink(full_file_path)
         if os.path.exists(full_thumb_path) \
                 and re.match(self.options['THUMB_DIR'], relative_file_path):
             if archiving:
                 os.renames(full_thumb_path, full_tarchive_path)
+                os.chmod(full_tarchive_path, 0644)
             elif config.POST_BACKUP:
                 os.renames(full_file_path, full_tbackup_path)
+                os.chmod(full_tbackup_path, 0644)
             else:
                 os.unlink(full_thumb_path)
 
@@ -1149,6 +1158,7 @@ class Board(object):
             # Move file/thumb.
             if arch_image and os.path.exists(arch_image):
                 os.renames(arch_image, os.path.join(self.path, row.image))
+                os.chmod(arch_image, 0644)
             if arch_thumb \
                     and re.match(src_brd_obj.options['THUMB_DIR'],
                                  row.thumbnail) \
@@ -1168,7 +1178,7 @@ class Board(object):
                     and re.match(src_brd_obj.options['THUMB_DIR'],
                                  row.thumbnail) \
                     and os.path.exists(arch_thumb):
-                os.unlink(os.path.join(arch_thumb))
+                os.unlink(arch_thumb)
 
         # Remove (and restore if appropriate) all thread backups made at the
         # point of archival.
