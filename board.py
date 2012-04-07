@@ -1048,9 +1048,10 @@ class Board(object):
         backup_base = os.path.join(archive_base, self.options['BACKUP_DIR'])
 
         if config.POST_BACKUP:
-            os.makedirs(backup_base, 0755)
-        except os.error:
-            pass
+            try:
+                os.makedirs(backup_base, 0755)
+            except os.error:
+                pass
 
         full_archive_path = os.path.join(archive_base,
                                          relative_file_path)
