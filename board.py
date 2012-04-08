@@ -1338,7 +1338,7 @@ class Board(object):
         maxw, maxh, maxp = self.options['MAX_IMAGE_WIDTH'], \
             self.options['MAX_IMAGE_HEIGHT'], self.options['MAX_IMAGE_PIXELS']
         if (maxw and width > maxw) or (maxh and height > maxh) or \
-           (maxp and (width * height) > maxp):
+               (maxp and (width * height) > maxp):
             raise WakaError(strings.BADFORMAT)
 
         # generate "random" filename
@@ -1490,7 +1490,10 @@ class Board(object):
 
         # Clear out the board path name.
         filename = filename.replace(self.path, '').lstrip('/')
-        thumbnail = thumbnail.replace(self.path, '').lstrip('/')
+        if thumbnail.startswith(self.path):
+            thumbnail = thumbnail.replace(self.path, '').lstrip('/')
+        else:
+            thumbnail = thumbnail.replace(local.environ['DOCUMENT_ROOT'], '')
 
         return (filename, md5, width, height, thumbnail, tn_width, tn_height)
 
