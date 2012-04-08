@@ -311,9 +311,9 @@ def make_thumbnail(filename, thumbnail, width, height, quality, convert):
             pass
 
     if is_animated:
-        popen_array.extend([magickname, '-background', 'yellow',
-                            '-fill', 'green', 'label:Animated', '+swap',
-                            '-gravity', 'West', '-append', thumbnail])
+        popen_array.extend([magickname, '-background', config.BG_ANIM_COLOR,
+                            '-fill', config.FG_ANIM_COLOR, "label: Animated",
+                            '+swap', '-gravity', 'West', '-append', thumbnail])
     else:
         popen_array.extend([magickname, thumbnail])
     process = Popen(popen_array)
@@ -327,6 +327,7 @@ def make_thumbnail(filename, thumbnail, width, height, quality, convert):
 
     # other methods supported by the original wakaba
     # but not by wakaba+desuchan aren't included here
+    # because they suck.
 
 def get_cookie_from_request(request, key):
     return urllib.unquote(request.cookies.get(key, '')).decode('unicode-escape')
