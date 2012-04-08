@@ -318,7 +318,7 @@ def make_thumbnail(filename, thumbnail, width, height, quality, convert):
                             '-append', thumbnail])
 
         # FIXME: Find sane way of adding guaranteed width.
-        height += 15
+        height += 13
     else:
         popen_array.extend([magickname, thumbnail])
     process = Popen(popen_array)
