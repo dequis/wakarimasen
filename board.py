@@ -1,6 +1,7 @@
 import os
 import re
 import time
+import sys
 import random
 import hashlib
 import mimetypes
@@ -1467,11 +1468,13 @@ class Board(object):
                                  filetypes[ext] == '.'):
             # cut off any directory in the original filename
             newfilename = self.make_path(filestorage.filename.split("/")[-1],
-                dirc='IMG_DIR', ext=None)
+                                         dirc='IMG_DIR', ext=None)
+                              
 
             # verify no name clash
             if not os.path.exists(newfilename):
-                os.rename(filename, newfilename)
+                os.rename(filename,
+                          newfilename.encode(sys.getfilesystemencoding()))
                 if thumbnail == filename:
                     thumbnail = newfilename 
                 filename = newfilename
@@ -1495,7 +1498,8 @@ class Board(object):
         else:
             thumbnail = thumbnail.replace(local.environ['DOCUMENT_ROOT'], '')
 
-        return (filename, md5, width, height, thumbnail, tn_width, tn_height)
+        return (filename.encode(sys.getfilesystemencoding()), md5, width,
+                height, thumbnail, tn_width, tn_height)
 
     def get_reply_link(self, reply, parent='', abbreviated=False,
                        force_http=False):
