@@ -1451,10 +1451,11 @@ class Board(object):
             if self.options['STUPID_THUMBNAILING']:
                 thumbnail = filename
             else:
-                result = misc.make_thumbnail(filename, thumbnail, tn_width,
-                   tn_height, self.options['THUMBNAIL_QUALITY'],
-                   self.options['CONVERT_COMMAND'])
-                if not result:
+                tn_width, tn_height \
+                    = misc.make_thumbnail(filename, thumbnail, tn_width,
+                        tn_height, self.options['THUMBNAIL_QUALITY'],
+                        self.options['CONVERT_COMMAND'])
+                if not tn_width and tn_height:
                     thumbnail = ''
         else:
             tn_width = width

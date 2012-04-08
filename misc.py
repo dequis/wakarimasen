@@ -312,18 +312,23 @@ def make_thumbnail(filename, thumbnail, width, height, quality, convert):
 
     if is_animated:
         popen_array.extend([magickname, '-background', config.BG_ANIM_COLOR,
-                            '-fill', config.FG_ANIM_COLOR, "label: Animated",
-                            '+swap', '-gravity', 'West', '-append', thumbnail])
+                            '-fill', config.FG_ANIM_COLOR,
+                            '-pointsize', '12',
+                            'label: Animated', '-gravity', 'center',
+                            '-append', thumbnail])
+
+        # FIXME: Find sane way of adding guaranteed width.
+        height += 15
     else:
         popen_array.extend([magickname, thumbnail])
     process = Popen(popen_array)
 
     if process.wait() == 0 and os.path.exists(thumbnail) and \
            os.path.getsize(thumbnail) != 0:
-        return True
+        return width, height
     elif os.path.exists(thumbnail):
         os.unlink(thumbnail)
-    return False
+    return 0, 0
 
     # other methods supported by the original wakaba
     # but not by wakaba+desuchan aren't included here
