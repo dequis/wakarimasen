@@ -20,7 +20,7 @@ ${
 BOARD_DIR = \'\'\
 DEBUG = False\
 SERVER_NAME = 'localhost'\
-\
+IDENTIFY_COMMAND = 'identify'\
 # add default values to config.py\
 import util as _util\
 _util.module_default('config', locals())/;

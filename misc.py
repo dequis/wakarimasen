@@ -293,16 +293,33 @@ def analyze_gif(file):
     return (width, height)
 
 def make_thumbnail(filename, thumbnail, width, height, quality, convert):
+    is_animated = False
     magickname = filename
-    if magickname.endswith(".gif"):
-        magickname += '[0]'
-
     convert = convert or 'convert' # lol
-    process = Popen([convert, '-resize', '%sx%s!' % (width, height),
-                     '-quality', str(quality), magickname, thumbnail])
+    popen_array = [convert, '-resize', '%sx%s!' % (width, height),
+                   '-quality', str(quality)]
+
+    if magickname.endswith(".gif"):
+        identify = config.IDENTIFY_COMMAND
+        gif_check = Popen([identify, '-format', '%n', magickname],
+                          stdout=PIPE).communicate()[0]
+        try:
+            if int(gif_check) > 1:
+                magickname += '[0]'
+                is_animated = True
+        except ValueError:
+            pass
+
+    if is_animated:
+        popen_array.extend([magickname, '-background', 'yellow',
+                            '-fill', 'green', 'label:Animated', '+swap',
+                            '-gravity', 'West', '-append', thumbnail])
+    else:
+        popen_array.extend([magickname, thumbnail])
+    process = Popen(popen_array)
 
     if process.wait() == 0 and os.path.exists(thumbnail) and \
-       os.path.getsize(thumbnail) != 0:
+           os.path.getsize(thumbnail) != 0:
         return True
     elif os.path.exists(thumbnail):
         os.unlink(thumbnail)

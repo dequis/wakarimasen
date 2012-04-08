@@ -716,7 +716,8 @@ class StaffInterface(Template):
                     results.append('Comment table dropped. You should '
                                    'delete/move the board folder now.')
         else:
-            results.append('(It is recommended that you disable site access '
+            results.append('Leave textarea blank to delete the board.\n\n'
+                           '(It is recommended that you disable site access '
                            'while entering SQL or deleting boards.)')
 
         Template.__init__(self, 'sql_interface_template',

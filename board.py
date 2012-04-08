@@ -1344,7 +1344,6 @@ class Board(object):
         # generate "random" filename
         filebase = ("%.3f" % timestamp).replace(".", "")
         filename = self.make_path(filebase, dirc='IMG_DIR', ext=ext)
-        thumbnail = self.make_path(filebase + "s", dirc='THUMB_DIR', ext='jpg')
 
 
         if not known:
@@ -1362,6 +1361,18 @@ class Board(object):
         if re.match("\:.*(?:script|text|executable)", file_response):
             os.unlink(filename)
             raise WakaError(strings.BADFORMAT + " Potential Exploit")
+
+        # Generate thumbnail based on file
+        if file_response.find('JPEG') != -1:
+            thumb_ext = 'jpg'
+        elif file_response.find('GIF') != -1:
+            thumb_ext = 'gif'
+        elif file_response.find('PNG') != -1:
+            thumb_ext = 'png'
+        else:
+            thumb_ext = os.path.splitext(filename)[1]
+        thumbnail = self.make_path(filebase + "s", dirc='THUMB_DIR',
+                                   ext=thumb_ext)
 
         # get the checksum
         md5h = hashlib.md5()
