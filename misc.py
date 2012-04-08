@@ -314,7 +314,7 @@ def make_thumbnail(filename, thumbnail, width, height, quality, convert):
         popen_array.extend([magickname, '-background', config.BG_ANIM_COLOR,
                             '-fill', config.FG_ANIM_COLOR,
                             '-pointsize', '12',
-                            'label: Animated', '-gravity', 'center',
+                            'label: Animated', '-gravity', 'Center',
                             '-append', thumbnail])
 
         # FIXME: Find sane way of adding guaranteed width.

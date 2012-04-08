@@ -685,7 +685,7 @@ use constant MANAGER_HEAD_INCLUDE => NORMAL_HEAD_INCLUDE.q{
 </if>
 <div class="passvalid" style="clear:both"><strong><const S_MANAMODE></strong></div>
 <if $admin><div style="margin-top:0;float:left;font-size:120%;font-weight:bold">&rarr; </div><div style="margin-top:0;margin-left:0.2em;float:left">Logged in as <span class="postername"><var $username></span> (<if $type eq 'admin'>Administrator</if><if $type eq 'mod'>Moderator</if><if $type eq 'globmod'>Global Moderator</if>). [<a href="<var $self>?task=edituserwindow&amp;username=<var $username>&amp;board=<var $board-\>path()>">Options</a>] [<a href="<var $self>?task=logout&amp;board=<var $board-\>path()>"><const S_MANALOGOUT></a>] <form action="wakaba.pl" id="boardselect" method="get" style="display:block"><input type="hidden" name="task" value="admin" /><label>Switch to board: <select name="board"><loop $boards_select><option value="<var $board_entry>"><var $board_entry></option></loop></select></label> <input type="submit" name="switchboard" value="Go" /></form></div>
-<if $type ne 'mod'><div style="margin-top:0;float:right"><strong>Global Options:</strong> [<a href="<var $self>?task=rebuildglobal&amp;board=<var $board-\>path()>">Rebuild Cache</a>]<if $type eq 'admin'> [<a href="<var $self>?task=restart&amp;board=<var $board-\>path()>">Restart Script</a>]</if></div></if></if>
+<if $type ne 'mod'><div style="margin-top:0;float:right"><strong>Global Options:</strong> [<a href="<var $self>?task=rebuildglobal&amp;board=<var $board-\>path()>">Rebuild Cache</a>]<if $type eq 'admin'>&nbsp;[<a href="<var $self>?task=restart&amp;board=<var $board-\>path()>">Restart Script</a>]</if></div></if></if>
 <br clear="all"/>
 };
 
@@ -787,7 +787,7 @@ use constant POST_PANEL_TEMPLATE => compile_template(MANAGER_HEAD_INCLUDE.q{
 	<td><var $date></td>
 	<td><var $comment></td>
 	<td><var dec_to_dot($offender)>
-		[<a href="<var $self>?task=deleteall&amp;board=<var $board-\>path()>&amp;ip=<var $ip>"><const S_MPDELETEALL></a>]
+		[<a href="<var $self>?task=deleteall_confirm&amp;board=<var $board-\>path()>&amp;ip=<var dec_to_dot($offender)>"><const S_MPDELETEALL></a>]
 		[<a href="<var $self>?task=banpopup&amp;board=<var $board-\>path()>&amp;ip=<var dec_to_dot($offender)>" target="_blank" onclick="popUpPost('<var $self>?task=banpopup&amp;board=<var $board-\>path()>&amp;ip=<var dec_to_dot($offender)>');return false"><const S_MPBAN></a>]
 	</td>
 	<td><var dec_to_dot($reporter)> [<a href="<var $self>?task=banpopup&amp;board=<var $board-\>path()>&amp;ip=<var dec_to_dot($reporter)>" target="_blank" onclick="popUpPost('<var $self>?task=banpopup&amp;board=<var $board-\>path()>&amp;ip=<var dec_to_dot($reporter)>');return false"><const S_MPBAN></a>]</td>
@@ -1071,11 +1071,11 @@ use constant POST_PANEL_TEMPLATE => compile_template(MANAGER_HEAD_INCLUDE.q{
 
 <div class="postarea">
 <form action="<var $self>" method="post">
-<input type="hidden" name="task" value="deleteall" />
+<input type="hidden" name="task" value="deleteall_confirm" />
 <input type="hidden" name="board" value="<var $board-\>path()>" />
 <table><tbody>
 <tr><td class="postblock"><const S_BANIPLABEL></td><td><input type="text" name="ip" size="24" /></td></tr>
-<tr><td class="postblock"><const S_BANMASKLABEL></td><td><input type="text" name="mask" size="24" /> 
+<tr><td class="postblock"><const S_BANMASKLABEL></td><td><input type="text" name="mask" size="24" value="255.255.255.255" /> 
 <label> [ <input type="checkbox" name="global" value="1" /> <if $type eq "mod">All controlled boards</if><if $type ne "mod">Global</if> ]</label>
 <input type="submit" value="<const S_MPDELETEIP>" /></td></tr>
 </tbody></table></form>
@@ -1204,6 +1204,20 @@ use constant POST_SEARCH => compile_template(q{<if $popup>}.MINI_HEAD_INCLUDE.q{
 <if !$popup><p style="text-align:center;font-size:1.3em"><a href="<var $self>?task=mpanel&amp;board=<var $board-\>path()>">Return to Panel</a></p></if>
 <if $popup>}.MINI_FOOT_INCLUDE.q{</if><if !$popup>}.NORMAL_FOOT_INCLUDE.q{</if>});
 
+use constant DELETE_CRAP_CONFIRM => compile_template(MANAGER_HEAD_INCLUDE.q{
+	<div class="dellist"><h2>Delete All Posts Confirmation</h2></div>
+
+	<p align="center">Are you sure you want to delete all <strong><var $post_count></strong> posts by IP <var $ip>?</p>
+	<form id="confirm" action="<var $self>" method="post">
+		<input type="hidden" name="board" value="<var $board-\>path()>" />
+		<input type="hidden" name="task" value="deleteall" />
+		<input type="hidden" name="ip" value="<var $ip>" />
+		<input type="hidden" name="mask" value="<var $mask>" />
+		<input type="hidden" name="global" value="<var $global>" />
+		<p align="center"><input type="submit" value="Yes" /></p>
+	</form>
+}.NORMAL_FOOT_INCLUDE);
+
 #
 # Staff 
 #
@@ -1228,7 +1242,7 @@ use constant STAFF_MANAGEMENT => compile_template(MANAGER_HEAD_INCLUDE.q{
 			<if $account eq 'globmod'>Global Moderator</if></td>
 			<td><if $account ne 'mod'><em>All</em></if><if $account eq 'mod'><var $reign></if></td>
 			<td><if $action><var get_action_name($action)> on <var $actiondate> [<a href="<var $self>?task=stafflog&amp;board=<var $board-\>path()>&amp;view=user&amp;usertoview=<var $username>">View All</a>]</if><if !$action><em>None</em></if></td>
-			<td>[<a href="<var $self>?task=edituserwindow&amp;board=<var $board-\>path()>&amp;username=<var $username>">Edit</a>] [<if $disabled><a href="">Enable</a></if><if !$disabled><a href="<var $self>?task=disableuserwindow&amp;board=<var $board-\>path()>&amp;username=<var $username>">Disable</a></if>] [<a href="<var $self>?task=deleteuserwindow&amp;board=<var $board-\>path()>&amp;username=<var $username>">Remove</a>]</td>
+			<td>[<a href="<var $self>?task=edituserwindow&amp;board=<var $board-\>path()>&amp;username=<var $username>">Edit</a>] [<if $disabled><a href="<var $self>?task=enableuserwindow&amp;board=<var $board-\>path()>&amp;username=<var $username>">Enable</a></if><if !$disabled><a href="<var $self>?task=disableuserwindow&amp;board=<var $board-\>path()>&amp;username=<var $username>">Disable</a></if>] [<a href="<var $self>?task=deleteuserwindow&amp;board=<var $board-\>path()>&amp;username=<var $username>">Remove</a>]</td>
 		</tr>
 	</loop>
 	</tbody>
@@ -1649,7 +1663,7 @@ use constant BAN_PANEL_TEMPLATE => compile_template(MANAGER_HEAD_INCLUDE.q{
 	</if>
 	<if $type eq 'wordban'>
 		<td>Word</td>
-		<td><var $sval1></td>
+		<td><var clean_string($sval1)></td>
 	</if>
 	<if $type eq 'trust'>
 		<td>NoCap</td>
@@ -1660,7 +1674,7 @@ use constant BAN_PANEL_TEMPLATE => compile_template(MANAGER_HEAD_INCLUDE.q{
 		<td><var dec_to_dot($ival1)>/<var dec_to_dot($ival2)></td>
 	</if>
 
-	<td><var $comment></td>
+	<td><var clean_string($comment)></td>
 	<td><var $expirehuman></td>
 	<td style="text-align: center"><if $type eq 'ipban'><var $browsingban></if><if $type ne 'ipban'>--</if></td>
 	<td><var $username></td>
@@ -1681,7 +1695,7 @@ use constant BAN_WINDOW => compile_template(MINI_HEAD_INCLUDE.q{
 <input type="hidden" name="delete" value="<var $delete>" />
 <input type="hidden" name="board" value="<var $board-\>path()>" />
 <table align="center"><tbody>
-<tr><td class="postblock"><const S_BANMASKLABEL></td><td><input type="text" name="mask" size="24" /></td></tr>
+<tr><td class="postblock"><const S_BANMASKLABEL></td><td><input type="text" name="mask" value="255.255.255.255" size="24" /></td></tr>
 <tr><td class="postblock"><const S_BANEXPIRE></td><td><input type="text" name="expiration" size="16" /><br/>
 <select name="expirepresets" onchange="this.form.expiration.value = this.form.expirepresets.options[this.form.expirepresets.selectedIndex].value;">
 <option value="" selected="selected">Presets</option>
@@ -1705,7 +1719,7 @@ use constant BAN_WINDOW => compile_template(MINI_HEAD_INCLUDE.q{
 <tr><td class="postblock"><const S_BANCOMMENTLABEL></td><td><input type="text" name="comment" size="24" /></td></tr>
 <tr><td class="postblock"><const S_TOTALBAN></td><td><input type="checkbox" name="total" value="yes" style="float:left; clear:none" /> <input type="submit" value="<const S_BANIP>" style="float: right; clear: none"/></td></tr>
 </tbody></table>
-<if $delete><p align="center">[<label><input type="checkbox" name="deleteall" value="1" /> Delete <strong>All</strong> Posts From IP?</label>]</p></if>
+<if $delete><p align="center">[<label><input type="checkbox" name="deleteall_confirm" value="1" /> Delete <strong>All</strong> Posts From IP/Mask (<var $count> for default mask)?</label>]</p></if>
 </form>
 }.MINI_FOOT_INCLUDE);
 
@@ -2035,7 +2049,7 @@ use constant SPAM_PANEL_TEMPLATE => compile_template(MANAGER_HEAD_INCLUDE.q{
 <input type="reset" value="<const S_SPAMRESET>" />
 </div>
 
-<textarea name="spam" rows="<var $spamlines>" cols="60"><var $spam></textarea>
+<textarea name="spam" rows="<var $spamlines>" cols="79"><var $spam></textarea>
 
 <div class="buttons">
 <input type="submit" value="<const S_SPAMSUBMIT>" />
@@ -2469,7 +2483,7 @@ table.nospace tr td { margin:0px; }
 use constant OEKAKI_INFO_TEMPLATE => compile_template(q{
 <p class="oekinfo">
 	<strong>Oekaki Post</strong>
-	 (Time: <var $time>, Painter: <var $painter><if $source>, Source: <a href="<var $source>"><var $source></a></if><if $animation>, Animation: [<a href="<var $self>?task=oekakianimation&amp;pchfile=<var $animation>" target="_blank">View</a>]</if>)
+	 (Time: <var $time>, Painter: <var $painter><if $source>, Source: <a href="<var $source>"><var $source></a></if><if $animation>, Animation: [<a href="<var $self>?task=oekakianimation&amp;board=<var $board-\>path()>&amp;pchfile=<var $animation>" target="_blank">View</a>]</if>)
 </p>
 });
 

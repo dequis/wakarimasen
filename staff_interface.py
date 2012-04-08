@@ -39,6 +39,7 @@ DISABLE_STAFF_CONFIRM = 'disablestaffwindow'
 ENABLE_STAFF_CONFIRM = 'enablestaffwindow'
 EDIT_STAFF_CONFIRM = 'editstaffwindow'
 ADD_STAFF_CONFIRM = 'addstaffwindow'
+DELETE_ALL_CONFIRM = 'deleteallwindow'
 
 def admin_only(f):
     '''StaffInterface templating function decorator: Indicate and enforce
@@ -136,7 +137,8 @@ class StaffInterface(Template):
                 DEL_STAFF_CONFIRM : self.make_del_staff_window,
                 DISABLE_STAFF_CONFIRM : self.make_disable_staff_window,
                 ENABLE_STAFF_CONFIRM : self.make_enable_staff_window,
-                EDIT_STAFF_CONFIRM : self.make_edit_staff_window}
+                EDIT_STAFF_CONFIRM : self.make_edit_staff_window,
+                DELETE_ALL_CONFIRM: self.make_delete_all_window}
 
             # Initialize underlying parent class instance.
             if dest not in TEMPLATE_SELECTIONS.keys():
@@ -745,6 +747,9 @@ class StaffInterface(Template):
             entries.append(row)
         
         Template.__init__(self, 'script_security_panel', entries=entries)
+
+    def make_delete_all_window(self, **kwargs):
+        Template.__init__(self, 'delete_crap_confirm', **kwargs)
 
 def add_staff_proxy(admin, mpass, usertocreate, passtocreate, account, reign):
     user = staff.check_password(admin)
