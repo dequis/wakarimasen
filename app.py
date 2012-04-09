@@ -444,14 +444,14 @@ def task_addipfrompopup(environ, start_response):
     board = environ['waka.board']
 
     params = {'form':    ['ip', 'total', 'expiration', 'comment', 'delete',
-                          'deleteall'],
+                          'deleteall_confirm'],
               'cookies': ['wakaadmin']}
 
     kwargs = kwargs_from_params(request, params)
     kwargs['option'] = 'ipban'
     kwargs['caller'] = 'window'
     delete = kwargs.pop('delete')
-    delete_all = kwargs.pop('deleteall')
+    delete_all = kwargs.pop('deleteall_confirm')
 
     try:
         if delete_all:
