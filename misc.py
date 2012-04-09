@@ -312,13 +312,12 @@ def make_thumbnail(filename, thumbnail, width, height, quality, convert):
 
     if is_animated:
         popen_array.extend([magickname, '-background', config.BG_ANIM_COLOR,
+                            '-gravity', 'Center',
                             '-fill', config.FG_ANIM_COLOR,
-                            '-pointsize', '12',
-                            'label: Animated', '-gravity', 'Center',
-                            '-append', thumbnail])
+                            '-size', 'x15',
+                            'label:Animated', '-append', thumbnail])
 
-        # FIXME: Find sane way of adding guaranteed width.
-        height += 13
+        height += 15
     else:
         popen_array.extend([magickname, thumbnail])
     process = Popen(popen_array)
