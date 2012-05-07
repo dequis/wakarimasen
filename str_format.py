@@ -212,7 +212,7 @@ def format_comment(comment):
 WM_REPLACEMENTS = [
     (re.compile(r'\*\*([^\s].*?)\*\*'), r'<strong>\1</strong>'),
     (re.compile(r'\*([^\s].*?)\*'), r'<em>\1</em>'),
-    (re.compile(r'`([^\n]*?)</code>`'), r'<code>\1</code>'),
+    (re.compile(r'`([^\n]*?)`'), r'<code>\1</code>'),
 ]
 
 WM_CODEBLOCK = [re.compile(r'^(    |\t)'), '<pre><code>', '', '\n',
@@ -304,10 +304,9 @@ TK_REPLACEMENTS = [
         'Edited in Oekaki)</strong>\s*\(Time\:.*?</p>', re.I), ''),
 
     (re.compile('<br\s?/?>'), '\n'),
-    (re.compile('<p>'), '\n\n'),
-    (re.compile('</p>$'), ''),
+    (re.compile('<p>'), ''),
+    (re.compile('</p>'), '\n\n'),
     (re.compile('<code>([^\n]*?)</code>'), r'`\1`'),
-    (re.compile('</blockquote>$'), ''),
     (re.compile('</blockquote>'), '\n\n'),
 ]
 
@@ -319,6 +318,7 @@ TK_REPLACEMENTS_2 = [
     (re.compile('</?em>'), '*'),
     (re.compile('</?strong>'), '**'),
     (re.compile('<.*?>'), ''),
+    (re.compile(r'\s+$'), '')
 ]
 
 def tag_killa(string):
@@ -327,11 +327,13 @@ def tag_killa(string):
         string = pattern.sub(repl, string)
 
     def codeblock(match):
-        return '\n'.join(['    ' + x for x in match.group(1).split("\n")]) + "\n"
+        return '\n'.join(['    ' + x for x in match.group(1).split("\n")]) \
+               + '\n'
     string = TK_CODEBLOCK.sub(codeblock, string)
 
     def ulist(match):
-        return match.group(1).replace("<li>", "* ").replace("</li>", "\n") + "\n"
+        return match.group(1).replace("<li>", "* ").replace("</li>", "\n") \
+               + '\n'
     string = TK_ULIST.sub(ulist, string)
 
     def olist(match):
@@ -339,7 +341,8 @@ def tag_killa(string):
             return entry.replace("<li>", "%s. " % count)
         strings = match.group(1).split("</li>")
         return '\n'.join([replace_li(string, count) \
-            for string, count in map(None, strings, xrange(len(strings)))]) + "\n"
+            for string, count in map(None, strings, xrange(len(strings)))]) \
+                + "\n"
     string = TK_OLIST.sub(olist, string)
 
     for pattern, repl in TK_REPLACEMENTS_2:
