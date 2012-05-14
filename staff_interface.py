@@ -185,7 +185,7 @@ class StaffInterface(Template):
             pagethreads = board.get_some_threads(self.page)
             (pages, prevpage, nextpage)\
                 = board.get_board_page_data(self.page, total,
-                                            admin_mode=True)
+                                            admin_page='mpanel')
             threads = board.parse_page_threads(pagethreads)
             kwargs = {'pages' : pages,
                       'prevpage' : prevpage,
@@ -549,7 +549,8 @@ class StaffInterface(Template):
             offset = self.page * max_res
 
             (pages, prevpage, nextpage) \
-                = board.get_board_page_data(self.page, total)
+                = board.get_board_page_data(self.page, total,
+                                            admin_page='postbackups')
 
             last_page = len(pages) - 1
             if self.page > last_page and last_page > 0:
