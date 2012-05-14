@@ -595,3 +595,6 @@ def move_thread(admin, parent, src_brd_obj, dest_brd_obj):
                                        'page' : 't' + str(new_parent)})))
 
     return util.make_http_forward(forward_url)
+
+class StaffAction(object):
+    pass

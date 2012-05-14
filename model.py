@@ -186,7 +186,10 @@ class Page(object):
             'Invalid page entry count.'
 
         self.num = page_num
-        self.per_page = per_page
+        if per_page > 200:
+            self.per_page = 200
+        else:
+            self.per_page = per_page
         self.offset = (page_num - 1) * per_page
 
         session = Session()

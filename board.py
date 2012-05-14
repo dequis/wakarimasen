@@ -1125,15 +1125,19 @@ class Board(object):
                 if not parent:
                     raise WakaError('Cannot restore post %s: '
                                     'Parent thread deleted.' % (post))
-                row.stickied = parent.stickied
-                row.locked = parent.locked
-                row.lasthit = parent.lasthit
+                stickied = parent.stickied
+                locked = parent.locked
+                lasthit = parent.lasthit
+            else:
+                stickied = row.stickied
+                locked = row.locked
+                lasthit = row.lasthit
 
             # Perform insertion.
             sql = my_table.insert().values(num=row.postnum,
                                            parent=row.parent,
                                            timestamp=row.timestamp,
-                                           lasthit=row.lasthit,
+                                           lasthit=lasthit,
                                            ip=row.ip,
                                            date=row.date,
                                            name=row.name,
@@ -1153,8 +1157,8 @@ class Board(object):
                                            lastedit=row.lastedit,
                                            lastedit_ip=row.lastedit_ip,
                                            admin_post=row.admin_post,
-                                           stickied=row.stickied,
-                                           locked=row.locked)
+                                           stickied=stickied,
+                                           locked=locked)
             session.execute(sql)
 
             # Move file/thumb.

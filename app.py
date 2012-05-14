@@ -629,6 +629,18 @@ def task_searchposts(environ, start_response):
 
     return StaffInterface(**kwargs)
 
+def task_stafflog(environ, start_response):
+    request = environ['werkzeug.request']
+
+    params = {'form':    ['user_to_view', 'action_to_view', 'ip_to_view',
+                          'post_to_view', 'sortby_name', 'sortby_dir'],
+              'cookies': ['wakaadmin']}
+
+    kwargs = kwargs_from_params(request, params)
+    kwargs['dest'] = staff_interface.STAFF_ACTIVITY_PANEL
+
+    return StaffInterface(**kwargs)
+
 # Error-handling
 
 def fffffff(environ, start_response, error):

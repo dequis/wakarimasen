@@ -30,6 +30,7 @@ POST_SEARCH_PANEL = 'postsearchpanel'
 SQL_PANEL = 'sqlpanel'
 PROXY_PANEL = 'proxypanel'
 SECURITY_PANEL = 'securitypanel'
+STAFF_ACTIVITY_PANEL = 'stafflog'
 
 BAN_POPUP = 'banpopup'
 BAN_EDIT_POPUP = 'baneditwindow'
@@ -132,6 +133,7 @@ class StaffInterface(Template):
                 SQL_PANEL: self.make_sql_interface_panel,
                 PROXY_PANEL: self.make_admin_proxy_panel,
                 SECURITY_PANEL: self.make_admin_script_security_panel,
+                STAFF_ACTIVITY_PANEL: self.make_admin_activity_panel,
                 BAN_POPUP: self.make_ban_popup,
                 BAN_EDIT_POPUP: self.make_ban_edit_popup,
                 DEL_STAFF_CONFIRM : self.make_del_staff_window,
@@ -233,10 +235,12 @@ class StaffInterface(Template):
         Template.__init__(self, 'staff_management', users=users)
 
     @admin_only
-    def make_admin_activity_panel(self, admin, view=None, user_to_view=None,
+    def make_admin_activity_panel(self, view='', user_to_view=None,
                                   action_to_view=None, ip_to_view=None,
                                   post_to_view=None, sortby_name='date',
                                   sortby_dir='desc'):
+
+        board = self.board
 
         template_view = 'staff_activity_unfiltered'
         action_name = action_content = ''
@@ -248,13 +252,12 @@ class StaffInterface(Template):
         dual_table_select = [account_table.c.username,
                              account_table.c.account,
                              account_table.c.disabled,
-                             account_table.c.info,
                              table.c.date,
                              table.c.date,
                              table.c.ip]
 
         rooturl=''.join((misc.get_secure_script_name(),
-                       '?task=stafflog&amp;board=', board.path,
+                       '?task=stafflog&amp;board=', board.name,
                        '&amp;view=', view,
                        '&amp;sortby=', sortby_name,
                        '&amp;order=', sortby_dir)),
@@ -300,7 +303,7 @@ class StaffInterface(Template):
 
         # Acquire staff info.
         session = model.Session()
-        staff_sql = table.select(username)
+        staff_get = table.select()
         staff = session.execute(staff_get).fetchall()
 
         # Establish list of hidden inputs.
@@ -317,7 +320,7 @@ class StaffInterface(Template):
 
         res = model.Page(sql, self.page, self.perpage)
 
-        Template.__init__(self, template_view, post_to_view,
+        Template.__init__(self, template_view,
                           entries=res.rows,
                           staff=staff,
                           rowcount=res.total_entries,
@@ -328,7 +331,6 @@ class StaffInterface(Template):
                           content_name=action_content,
                           sortby=sortby_name,
                           rooturl=rooturl,
-                          boards_select=user.reign,
                           inputs=inputs)
 
     def make_admin_ban_panel(self, ip=''):
