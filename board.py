@@ -1013,21 +1013,36 @@ class Board(object):
             session.execute(postupdate)
 
         else:
-            select_thread_images = select([table.c.image, table.c.thumbnail],
-                                          or_(table.c.num == post,
-                                              table.c.parent == post))
+            if config.POST_BACKUP and not archiving:
+                select_thread_images \
+                    = select([table.c.image, table.c.thumbnail],
+                             table.c.num == post)
+            else:
+                select_thread_images \
+                    = select([table.c.image, table.c.thumbnail],
+                             or_(table.c.num == post, table.c.parent == post))
             images_to_baleet = session.execute(select_thread_images)
             
             for i in images_to_baleet:
                 if i.image and i.thumbnail:
-                    self.delete_file(i.image, i.thumbnail,
-                                     archiving=archiving)
+                    self.delete_file(i.image, i.thumbnail, archiving=archiving)
 
-            delete_query = table.delete(or_(
-                table.c.num == post,
-                table.c.parent == post))
+            if config.POST_BACKUP and not archiving:
+                delete_query = table.delete(table.c.num == post)
+            else:
+                delete_query = table.delete(or_(
+                    table.c.num == post, table.c.parent == post))
             session.execute(delete_query)
 
+            # Also back-up child posts.
+            if config.POST_BACKUP and not archiving:
+                sql = table.select().where(table.c.parent == post)
+                sel_posts = session.execute(sql).fetchall()
+                for i in [p.num for p in sel_posts]:
+                    self.delete_post(i, '', False, False,
+                                     from_window=from_window, admin=True)
+
+        # Cache building
         if not row.parent:
             if file_only:
                 # removing parent (OP) image
@@ -1195,8 +1210,8 @@ class Board(object):
                                         == row.timestampofarchival))\
                        .order_by(table.c.num.asc())
             for row in session.execute(sql):
-                self.remove_post_from_backup(row.num, restore=restore,
-                                             child=True)
+                self.remove_backup_post(row.postnum, restore=restore,
+                                        child=True)
 
         sql = table.delete().where(and_(table.c.postnum == post,
                                         table.c.board_name == self.name))
