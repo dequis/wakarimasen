@@ -713,6 +713,7 @@ class StaffInterface(Template):
                 try:
                     board = local.environ['waka.board']
                     board.table.drop(bind=model.engine)
+                    del model._boards[board.name]
                     model.common.delete().where(model.common.c.board \
                                                 == board.name)
                 except Exception as errstr:
