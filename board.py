@@ -93,8 +93,7 @@ class Board(object):
         else:
             return os.path.join(base, dir) + hash
 
-    def check_access(self, admin):
-        user = staff.check_password(admin)
+    def check_access(self, user):
         if user.account == staff.MODERATOR and self.name not in user.reign:
             raise WakaError('Access to this board (%s) denied.' % self.name)
 
@@ -189,8 +188,10 @@ class Board(object):
         self.build_thread_cache_all()
         self.build_cache()
 
-    def rebuild_cache_proxy(self, admin):
-        self.check_access(admin)
+    def rebuild_cache_proxy(self, task_data):
+        self.check_access(task_data.user)
+        task_data.contents.append(self.name)
+
         Popen(['python', 'wakarimasen.py', 'rebuild_cache', self.name,
                local.environ['DOCUMENT_ROOT'], local.environ['SCRIPT_NAME'],
                local.environ['SERVER_NAME']])
@@ -428,10 +429,10 @@ class Board(object):
             self.build_thread_cache(row[0])
 
     def _handle_post(self, name, email, subject, comment, file,
-                      password, nofile, captcha, admin, no_captcha,
+                      password, nofile, captcha, no_captcha,
                       no_format, oekaki_post, srcinfo, pch, sticky, lock,
                       admin_post_mode, post_num=None, killtrip=False,
-                      parent='0'):
+                      parent='0', admin_task_data=None):
 
         session = model.Session()
 
@@ -504,7 +505,7 @@ class Board(object):
 
         # check admin password - allow both encrypted and non-encrypted
         if admin_post_mode:
-            user = self.check_access(admin)
+            user = self.check_access(admin_task_data.user)
             username = user.username
             accounttype = user.account
             admin_post = 'yes'
@@ -556,9 +557,9 @@ class Board(object):
 
         # check for excessive amounts of text
         if (len(name) > self.options['MAX_FIELD_LENGTH'] or
-           len(email) > self.options['MAX_FIELD_LENGTH'] or
-           len(subject) > self.options['MAX_FIELD_LENGTH'] or
-           len(comment) > self.options['MAX_COMMENT_LENGTH']):
+               len(email) > self.options['MAX_FIELD_LENGTH'] or
+               len(subject) > self.options['MAX_FIELD_LENGTH'] or
+               len(comment) > self.options['MAX_COMMENT_LENGTH']):
             raise WakaError(strings.TOOLONG)
 
         # check to make sure the user selected a file, or clicked the checkbox
@@ -733,15 +734,15 @@ class Board(object):
         else:
             result = session.execute(db_update)
 
-        if parent and not post_num: # bumping
-            # check for sage, or too many replies
-            if not (email.lower() == "mailto:sage" or
-                    self.sage_count(parent_res) > self.options['MAX_RES']):
-                t = self.table
-                session.execute(t.update()
-                    .where(or_(t.c.num == parent, t.c.parent == parent))
-                    .values(lasthit=timestamp))
-        elif not post_num:
+        if not post_num:
+            if parent: # bumping
+                # check for sage, or too many replies
+                if not (email.lower() == "mailto:sage" or
+                        self.sage_count(parent_res) > self.options['MAX_RES']):
+                    t = self.table
+                    session.execute(t.update()
+                        .where(or_(t.c.num == parent, t.c.parent == parent))
+                        .values(lasthit=timestamp))
             post_num = result.last_inserted_ids()[0]
 
         # remove old threads from the database
@@ -781,20 +782,21 @@ class Board(object):
             path = '/'
 
         misc.make_cookies(name=c_name, email=c_email, password=c_password,
-            path=path) # yum !
+                          path=path) # yum !
 
         return post_num
 
     def post_stuff(self, parent, name, email, subject, comment, file,
-                   password, nofile, captcha, admin, no_captcha,
-                   no_format, oekaki_post, srcinfo, pch, sticky, lock,
-                   admin_post_mode):
+                   password, nofile, captcha, no_captcha, no_format,
+                   oekaki_post, srcinfo, pch, sticky, lock,
+                   admin_post_mode, admin_task_data=None):
     
         post_num = self._handle_post(name, email, subject, comment,
-                                      file, password, nofile, captcha, admin,
-                                      no_captcha, no_format, oekaki_post,
-                                      srcinfo, pch, sticky, lock,
-                                      admin_post_mode, parent=parent)
+                                     file, password, nofile, captcha,
+                                     no_captcha, no_format, oekaki_post,
+                                     srcinfo, pch, sticky, lock,
+                                     admin_post_mode, parent=parent,
+                                     admin_task_data=admin_task_data)
 
         # For use with noko, below.
         if not parent:
@@ -834,6 +836,7 @@ class Board(object):
                     urlencode({'task' : 'mpanel',
                                'board' : self.name,
                                'page' : parent})))
+            admin_task_data.contents.append('/%s/%d' % (self.name, post_num))
 
         return util.make_http_forward(forward, config.ALTERNATE_REDIRECT)
         # end of this function. fuck yeah
@@ -876,8 +879,11 @@ class Board(object):
 
         return reported_posts
 
-    def delete_by_ip(self, admin, ip,
-                     mask=misc.dot_to_dec('255.255.255.255')):
+    def delete_by_ip(self, task_data, ip, mask='255.255.255.255'):
+        if not task_data.content:
+            task_data.contents.append(ip + ' (' + mask + ')' + ' @ ' \
+                                      + self.name)
+
         try:
             ip = int(ip)
         except ValueError:
@@ -887,8 +893,6 @@ class Board(object):
             mask = int(mask)
         except ValueError:
             mask = misc.dot_to_dec(mask or '255.255.255.255')
-
-        self.check_access(admin)
 
         session = model.Session()
         table = self.table
@@ -911,10 +915,8 @@ class Board(object):
 
     def delete_stuff(self, posts, password, file_only, archiving,
                      caller='user', admindelete=False,
-                     from_window=False, admin=''):
-        if admindelete and caller == 'user':
-            self.check_access(admin)
-        elif caller == 'internal':
+                     admin_task_data=None, from_window=False):
+        if caller == 'internal':
             # Internally called; force admin.
             admindelete = True
 
@@ -925,7 +927,8 @@ class Board(object):
         for post in posts:
             self.delete_post(post, password, file_only, archiving,
                              from_window=False, admin=admindelete,
-                             timestampofarchival=timestamp)
+                             timestampofarchival=timestamp,
+                             admin_task_data=admin_task_data)
 
         self.build_cache()
 
@@ -938,7 +941,7 @@ class Board(object):
             return util.make_http_forward(forward, config.ALTERNATE_REDIRECT)
 
     def delete_post(self, post, password, file_only, archiving,
-                    from_window=False, admin=False,
+                    admin_task_data=None, from_window=False, admin=False,
                     timestampofarchival=None):
         '''Delete a single post from the board. This method does not rebuild
         index cache automatically.'''
@@ -1054,6 +1057,9 @@ class Board(object):
             # removing a reply, or a reply's image
             self.build_thread_cache(row.parent)
 
+        if admin_task_data:
+            admin_task_data.contents.append('/%s/%d' % (self.name, int(post)))
+
     def delete_file(self, relative_file_path, relative_thumb_path,
                     archiving=False):
         # pch = oekaki.find_pch(row.image)
@@ -1098,19 +1104,25 @@ class Board(object):
             else:
                 os.unlink(full_thumb_path)
 
-    def remove_backup_stuff(self, admin, posts, restore=False):
-        self.check_access(admin)
+    def remove_backup_stuff(self, admin_task_data, posts, restore=False):
+        user = self.check_access(admin_task_data.user)
+
+        if restore:
+            admin_task_data.action = 'backup_restore'
 
         for post in posts:
-            self.remove_backup_post(post, restore=restore)
+            self.remove_backup_post(admin_task_data, post, restore=restore)
+            # Log.
+            admin_task_data.contents.append('/%s/%d' % (self.name, int(post)))
 
         # Board pages need refereshing.
         self.build_cache()
 
-        return staff_interface.StaffInterface(admin, board=self,
+        return staff_interface.StaffInterface(user.login_data.cookie,
+                                              board=self,
                                               dest=staff_interface.TRASH_PANEL)
 
-    def remove_backup_post(self, post, restore=False, child=False):
+    def remove_backup_post(self, task_data, post, restore=False, child=False):
         session = model.Session()
         table = model.backup
         sql = table.select().where(and_(table.c.postnum == post,
@@ -1323,7 +1335,7 @@ class Board(object):
             raise WakaError('Post not found') # TODO
         
         if admin_edit_mode:
-            self.check_access(admin)
+            self.check_access(staff.check_password(admin))
         elif password != row['password']:
             raise WakaError('Wrong pass for editing') # TODO
 
@@ -1331,15 +1343,19 @@ class Board(object):
                                               admin=admin_edit_mode)
 
     def edit_stuff(self, post_num, name, email, subject, comment, file,
-                   password, nofile, captcha, admin, no_captcha,
+                   password, nofile, captcha, no_captcha,
                    no_format, oekaki_post, srcinfo, pch, sticky, lock,
-                   admin_edit_mode, killtrip, postfix):
+                   admin_edit_mode, killtrip, postfix, admin_task_data=None):
 
         self._handle_post(name, email, subject, comment, file,
-                          password, nofile, captcha, admin, no_captcha,
+                          password, nofile, captcha, no_captcha,
                           no_format, oekaki_post, srcinfo, pch, sticky, lock,
                           admin_edit_mode, post_num=post_num,
-                          killtrip=killtrip)
+                          killtrip=killtrip, admin_task_data=admin_task_data)
+
+        if admin_edit_mode:
+            admin_task_data.contents\
+                           .append('/%s/%d' % (self.name, int(post_num)))
 
         return Template('edit_successful')
 
@@ -1598,8 +1614,9 @@ class Board(object):
         # TODO: Implement other maxes (even though no one freakin' uses
         #       them). :3c
 
-    def toggle_thread_state(self, admin, num, operation, enable_state=True):
-        self.check_access(admin)
+    def toggle_thread_state(self, task_data, num, operation,
+                            enable_state=True):
+        self.check_access(task_data.user)
 
         # Check thread
         session = model.Session()
@@ -1608,7 +1625,7 @@ class Board(object):
         row = session.execute(sql).fetchone()
         
         if not row:
-            raise WakaError('Thread %s,%d not found.' % (self.name, num))
+            raise WakaError('Thread %s,%s not found.' % (self.name, num))
         if row['parent']:
             raise WakaError(strings.S_NOTATHREAD)
 
@@ -1625,7 +1642,7 @@ class Board(object):
 
         self.build_cache()
 
-        # TODO: Log this.
+        task_data.contents.append('/%s/%s' % (self.name, num))
 
         forward_url = '?'.join((misc.get_secure_script_name(),
             urlencode({'task' : 'mpanel', 'board' : self.name})))

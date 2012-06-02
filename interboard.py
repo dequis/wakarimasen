@@ -24,71 +24,6 @@ from util import WakaError, local
 
 from sqlalchemy.sql import case, or_, and_, select, func, null
 
-# Staff Action Logging
-
-# Dictionary of what action keywords mean. It's like a real dictionary!
-ACTION_TRANSLATION \
-    = {'ipban' : {'name' : 'IP Ban', 'content' : 'Affected IP Address'},
-       'ipban_edit'
-            : {'name' : 'IP Ban Revision', 'content' : 'Revised Data'},
-       'ipban_remove'
-            : {'name' : 'IP Ban Removal',
-                'content' : 'Unbanned IP Address'},
-       'wordban' : {'name' : 'Word Ban', 'content' : 'Banned Phrase'},
-       'wordban_edit' : {'name' : 'Word Ban Revision',
-                         'content' : 'Revised Data'},
-       'wordban_remove' : {'name' : 'Word Ban Removal',
-                           'content' : 'Unbanned Phrase'},
-       'whitelist' : {'name' : 'IP Whitelist',
-                      'content' : 'Whitelisted IP Address'},
-       'whitelist_edit' : {'name' : 'IP Whitelist Revision',
-                           'content' : 'Revised Data'},
-       'whitelist_remove' : {'name' : 'IP Whitelist Removal',
-                                      'content' : 'Removed IP Address'},
-       'trust' : {'name' : 'Captcha Exemption',
-                  'content' : 'Exempted Tripcode'},
-       'trust_edit' : {'name' : 'Revised Captcha Exemption',
-                       'content' : 'Revised Data'},
-       'trust_remove' : {'name' : 'Removed Captcha Exemption',
-                         'content' : 'Removed Tripcode'},
-       'admin_post' : {'name' : 'Manager Post', 'content' : 'Post'},
-       'admin_edit' : {'name' : 'Administrative Edit',
-                       'content' : 'Post'},
-       'admin_delete' : {'name' : 'Administrative Deletion',
-                         'content' : 'Post'},
-       'thread_sticky' : {'name' : 'Thread Sticky',
-                          'content' : 'Thread Parent'},
-       'thread_unsticky' : {'name' : 'Thread Unsticky',
-                            'content': 'Thread Parent'},
-       'thread_lock' : {'name' : 'Thread Lock',
-                        'content' : 'Thread Parent'},
-       'thread_unlock' : {'name' : 'Thread Unlock',
-                          'content' : 'Thread Parent'},
-       'report_resolve' : {'name' : 'Report Resolution',
-                           'content' : 'Resolved Post'},
-       'backup_restore' : {'name' : 'Restoration From Trash Bin',
-                           'content' : 'Restored Post'},
-       'backup_remove' : {'name' : 'Deletion From Trash Bin',
-                          'content' : 'Deleted Post'},
-       'thread_move' : {'name' : 'Thread Move',
-                        'content' : 'Source and Destination'},
-       'script_ban_forgive' : {'name' : 'Script Access Restoration',
-                               'content' : 'IP Address'}}
-
-def get_action_name(action_to_view, debug=0):
-    try:
-        name = ACTION_TRANSLATION[action_to_view]['name']
-        content = ACTION_TRANSLATION[action_to_view]['content'] 
-    except KeyError:
-        raise WakaError('Missing action key or unknown action key.')
-
-    if not debug:
-        return name
-    elif debug == 1:
-        return (name, content)
-    else:
-        return content
-
 # Common Site Table!
 
 def get_all_boards(check_board_name=''):
@@ -141,24 +76,22 @@ def global_cache_rebuild():
                              + board_str + '\n')
             traceback.print_exc(file=sys.stderr)
 
-def global_cache_rebuild_proxy(admin):
-    user = staff.check_password(admin)
-    if user.account != staff.ADMIN:
+def global_cache_rebuild_proxy(task_data):
+    if task_data.user.account != staff.ADMIN:
         raise WakaError(strings.INUSUFFICENTPRIVLEDGES)
     Popen(['python', 'wakarimasen.py', 'rebuild_global_cache',
            local.environ['DOCUMENT_ROOT'],
            local.environ['SCRIPT_NAME'],
            local.environ['SERVER_NAME']])
     referer = local.environ['HTTP_REFERER']
+    task_data.contents.append(referer)
     return util.make_http_forward(referer, config.ALTERNATE_REDIRECT)
 
 # Bans and Whitelists
 
-def add_admin_entry(admin, option, comment, ip='', mask='255.255.255.255',
+def add_admin_entry(task_data, option, comment, ip='', mask='255.255.255.255',
                     sval1='', total='', expiration=0,
                     caller=''):
-    staff.check_password(admin)
-
     session = model.Session()
     table = model.admin
 
@@ -180,6 +113,15 @@ def add_admin_entry(admin, option, comment, ip='', mask='255.255.255.255',
             if int(row.ival1) & int(row.ival2) == ival1 & ival2:
                 raise WakaError('IP address and mask match ban #%d.' % \
                                 (row.num))
+        # Add info to task data.
+        content = ip + (' (' + mask + ')' if mask else '')
+
+        if total == 'yes':
+            add_htaccess_entry(ip)
+            content += ' (no browse)'
+
+        content += ' "' + comment + '"'
+        task_data.contents.append(content)
     else:
         if not sval1:
             raise WakaError(STRINGFIELDMISSING)
@@ -189,6 +131,8 @@ def add_admin_entry(admin, option, comment, ip='', mask='255.255.255.255',
 
         if row:
             raise WakaError('Duplicate String in ban #%d.' % (row.num))
+        # Add ifno to task data.
+        task_data.contents.append(sval1)
 
     comment = str_format.clean_string(\
         str_format.decode_string(comment, config.CHARSET))
@@ -201,10 +145,8 @@ def add_admin_entry(admin, option, comment, ip='', mask='255.255.255.255',
                                 expiration=expiration)
     session.execute(sql)
 
-    if total == 'yes':
-        add_htaccess_entry(ip)
-
-    # TODO: Log this.
+    # Add specific action name to task data.
+    task_data.action = option
 
     board = local.environ['waka.board']
     forward_url = '?'.join((misc.get_secure_script_name(),
@@ -215,21 +157,30 @@ def add_admin_entry(admin, option, comment, ip='', mask='255.255.255.255',
         return Template('edit_successful')
     return util.make_http_forward(forward_url, config.ALTERNATE_REDIRECT)
 
-def remove_admin_entry(admin, num, override_log=False, no_redirect=False):
-    staff.check_password(admin)
-
+def remove_admin_entry(task_data, num, override_log=False, no_redirect=False):
     session = model.Session()
     table = model.admin
     sql = table.select().where(table.c.num == num)
     row = session.execute(sql).fetchone()
 
-    if row:
-        if row['total']:
-            ip = misc.dec_to_dot(row['ival1'])
-            remove_htaccess_entry(ip)
+    if not row:
+        raise WakaError('Entry not found. Deleted?')
 
-        sql = table.delete().where(table.c.num == num)
-        session.execute(sql)
+    ival1 = row['ival1']
+    ip = misc.dec_to_dot(ival1) if ival1 else ''
+    string_val = row['sval1']
+
+    if row['total']:
+        remove_htaccess_entry(ip)
+
+    sql = table.delete().where(table.c.num == num)
+    session.execute(sql)
+    task_data.action = row['type'] + '_remove'
+    if string_val:
+        task_data.contents.append(row['sval1'])
+    else:
+        task_data.contents.append(ip + ' (' + misc.dec_to_dot(row['ival2']) \
+                                  + ')')
 
     board = local.environ['waka.board']
     forward_url = '?'.join((misc.get_secure_script_name(),
@@ -315,7 +266,6 @@ def remove_htaccess_entry(ip):
                             config.HTACCESS_PATH, '.htaccess')
 
     with util.FileLock(htaccess):
-
         lines = []
         with open(htaccess, 'r') as f:
             line = f.readline()
@@ -363,10 +313,9 @@ def ban_check(numip, name, subject, comment):
                 name.count(bad_string):
             raise WakaError(strings.STRREF)
 
-def mark_resolved(admin, delete, posts):
-    user = staff.check_password(admin)
-
+def mark_resolved(task_data, delete, posts):
     referer = local.environ['HTTP_REFERER']
+    user = task_data.user
 
     errors = []
     board_obj = None
@@ -392,6 +341,9 @@ def mark_resolved(admin, delete, posts):
                                             table.c.board == board_name))
             session.execute(sql)
 
+            # Log the resolved post.
+            task_data.contents.append('/'.join(['', board_name, post]))
+
         if delete:
             try:
                 board_obj = board.Board(board_name)
@@ -400,30 +352,26 @@ def mark_resolved(admin, delete, posts):
                                          % (board_name)})
                 continue
             try:
-                board_obj.delete_stuff(posts, '', False, False, admin=admin)
+                board_obj.delete_stuff(posts, '', False, False,
+                                       admin_task_data=task_data)
             except WakaError:
                 errors.append({'error' : '%s,%d: Post already deleted.'\
                                          % (board_name, int(post))})
 
-    # TODO: Staff logging
-
     # TODO: This probably should be refactored into StaffInterface.
     return Template('report_resolved', errors=errors,
                                        error_occurred=len(errors)>0,
-                                       admin=admin,
+                                       admin=user.login_data.cookie,
                                        username=user.username,
                                        type=user.account,
                                        boards_select=user.reign,
                                        referer=referer)
 
 
-def edit_admin_entry(admin, num, comment='', ival1=None,
+def edit_admin_entry(task_data, num, comment='', ival1=None,
                      ival2='255.255.255.255', sval1='', total=False,
                      sec=None, min=None, hour=None, day=None, month=None,
                      year=None, noexpire=False):
-
-    staff.check_password(admin)
-
     session = model.Session()
     table = model.admin
     sql = table.select().where(table.c.num == num)
@@ -432,7 +380,9 @@ def edit_admin_entry(admin, num, comment='', ival1=None,
     if not row:
         raise WakaError('Entry was not created or was removed.')
 
-    if row.type == 'ipban':
+    task_data.action = row.type + '_edit'
+
+    if row.type in ('ip', 'whitelist'):
         if not noexpire:
             try:
                 expiration = datetime(int(year), int(month), int(day),
@@ -444,8 +394,10 @@ def edit_admin_entry(admin, num, comment='', ival1=None,
             expiration = 0
         ival1 = misc.dot_to_dec(ival1)
         ival2 = misc.dot_to_dec(ival2)
+        task_data.contents.append(ival1 + ' (' + ival2 + ')')
     else:
         expiration = 0
+        task_data.contents.append(sval1)
 
     sql = table.update().where(table.c.num == num)\
                .values(comment=comment, ival1=ival1, ival2=ival2, sval1=sval1,
@@ -454,8 +406,8 @@ def edit_admin_entry(admin, num, comment='', ival1=None,
 
     return Template('edit_successful')
 
-def delete_by_ip(admin, ip, mask='255.255.255.255'):
-    user = staff.check_password(admin)
+def delete_by_ip(task_data, ip, mask='255.255.255.255'):
+    task_data.contents.append(ip)
 
     if user.account == staff.MODERATOR:
         reign = user.reign
@@ -465,7 +417,7 @@ def delete_by_ip(admin, ip, mask='255.255.255.255'):
     for board_name in reign:
         board_obj = board.Board(board_name)
         # TODO: Fork this.
-        board_obj.delete_by_ip(admin, ip, mask=mask)
+        board_obj.delete_by_ip(task_data, ip, mask=mask)
 
 def trim_reported_posts(date=0):
     mintime = 0
@@ -497,15 +449,16 @@ def update_spam_file(admin, spam):
 
 # Thread Transfer
 
-def move_thread(admin, parent, src_brd_obj, dest_brd_obj):
+def move_thread(task_data, parent, src_brd_obj, dest_brd_obj):
     if not parent:
         raise WakaError('No thread specified.')
     if src_brd_obj.name == dest_brd_obj.name:
         raise WakaError('Source and destination boards match.')
 
     # Check administrative access rights to both boards.
-    src_brd_obj.check_access(admin)
-    dest_brd_obj.check_access(admin)
+    user = task_data.user
+    src_brd_obj.check_access(user)
+    dest_brd_obj.check_access(user)
 
     session = model.Session()
     src_table = src_brd_obj.table
@@ -594,7 +547,10 @@ def move_thread(admin, parent, src_brd_obj, dest_brd_obj):
                                        'board' : dest_brd_obj.name,
                                        'page' : 't' + str(new_parent)})))
 
+    # Log.
+    task_data.contents.append('/%s/%d to /%s/%d' \
+                              % (src_brd_obj.name, int(parent),
+                                 dest_brd_obj.name, int(new_parent)))
+
     return util.make_http_forward(forward_url)
 
-class StaffAction(object):
-    pass

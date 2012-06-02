@@ -7,9 +7,10 @@ from datetime import datetime
 from sqlalchemy.sql import case, or_, and_, not_, exists, select, func, null
 from urllib import urlencode
 
+import staff_tasks
+import interboard
 import strings
 import staff
-import interboard
 import model
 import str_format
 import misc
@@ -247,26 +248,29 @@ class StaffInterface(Template):
 
         table = model.activity
         account_table = model.account
-        sql = table.select()
         
         dual_table_select = [account_table.c.username,
                              account_table.c.account,
                              account_table.c.disabled,
-                             table.c.date,
+                             table.c.action,
+                             table.c.info,
                              table.c.date,
                              table.c.ip]
+        sql = select(dual_table_select,
+                     from_obj=[table.join(account_table,
+                     table.c.username == model.account.c.username)])
 
-        rooturl=''.join((misc.get_secure_script_name(),
+        rooturl=''.join([misc.get_secure_script_name(),
                        '?task=stafflog&amp;board=', board.name,
                        '&amp;view=', view,
                        '&amp;sortby=', sortby_name,
-                       '&amp;order=', sortby_dir)),
+                       '&amp;order=', sortby_dir])
 
         if view == 'user':
             if not user_to_view:
                 raise WakaError('Please select a user to view.')
             template_view = 'staff_activity_by_user'
-            sql = table.select().where(table.c.username == user_to_view)
+            sql = sql.where(table.c.username == user_to_view)
             rooturl += '&amp;usertoview=%s' % (user_to_view)
 
         elif view == 'action':
@@ -274,53 +278,57 @@ class StaffInterface(Template):
                 raise WakaError('Please select an action to view.')
             template_view = 'staff_activity_by_actions'
             (action_name, action_content) \
-                = misc.get_action_name(action_to_view, 1)
-            sql = select(dual_table_select,
-                         from_obj=[table.join(account_table,
-                         table.c.username == model.account.c.username)])\
-                  .where(table.c.action == action_to_view)
+                = staff_tasks.get_action_name(action_to_view, 1)
+            sql = sql.where(table.c.action == action_to_view)
             rooturl += '&amp;actiontoview=%s' % (action_to_view)
 
         elif view == 'ip':
             if not ip_to_view:
                 raise WakaError('Please specify an IP address to view.')
             template_view = 'staff_activity_by_ip_address'
-            sql = select(dual_table_select,
-                         from_obj=[table.join(account_table,
-                         table.c.username == model.account.c.username)])\
-                  .where(table.c.info.like_(ip_to_view))
+            sql = sql.where(table.c.info.like('%' + ip_to_view + '%'))
             rooturl += '&amp;iptoview=%s' % (ip_to_view)
 
         elif view == 'post':
             if not post_to_view:
                 raise WakaError('Post key missing.')
             template_view = 'staff_activity_by_post'
-            sql = select(dual_table_select,
-                         from_obj=[join(table, account_table,
-                         table.c.username == model.account.c.username)])\
-                  .where(table.c.info.like_(post_to_view))
+            sql = sql.where(table.c.info.like('%' + post_to_view + '%'))
             rooturl += '&amp;posttoview=%s' % (post_to_view)
 
         # Acquire staff info.
         session = model.Session()
-        staff_get = table.select()
+        staff_get = model.account.select()
         staff = session.execute(staff_get).fetchall()
 
         # Establish list of hidden inputs.
-        inputs = [{'name' : 'actiontoview', 'value' : action_to_view},
-                  {'name' : 'task', 'value' : 'stafflog'},
-                  {'name' : 'posttoview', 'value' : post_to_view},
-                  {'name' : 'usertoview', 'value' : user_to_view},
-                  {'name' : 'iptoview', 'value' : ip_to_view},
-                  {'name' : 'order', 'value' : sortby_dir},
-                  {'name' : 'sortby', 'value' : sortby_name}]
+        inputs = [
+            {'name' : 'actiontoview', 'value' : action_to_view},
+            {'name' : 'task', 'value' : 'stafflog'},
+            {'name' : 'posttoview', 'value' : post_to_view},
+            {'name' : 'usertoview', 'value' : user_to_view},
+            {'name' : 'iptoview', 'value' : ip_to_view},
+            {'name' : 'order', 'value' : sortby_dir},
+            {'name' : 'sortby', 'value' : sortby_name},
+            {'name' : 'view', 'value': view}
+        ]
 
         if self.board:
             inputs.append({'name' : 'board', 'value' : self.board.name})
 
+        # Apply sorting.
+        if sortby_name and hasattr(table.c, sortby_name):
+            order_col = getattr(table.c, sortby_name)
+            if sortby_dir.lower() == 'asc':
+                sort_spec = order_col.asc()
+            else:
+                sort_spec = order_col.desc()
+            sql = sql.order_by(sort_spec)
+
         res = model.Page(sql, self.page, self.perpage)
 
         Template.__init__(self, template_view,
+                          user_to_view=user_to_view,
                           entries=res.rows,
                           staff=staff,
                           rowcount=res.total_entries,
@@ -330,6 +338,7 @@ class StaffInterface(Template):
                           action_name=action_name,
                           content_name=action_content,
                           sortby=sortby_name,
+                          number_of_pages=res.total_pages,
                           rooturl=rooturl,
                           inputs=inputs)
 
@@ -523,13 +532,15 @@ class StaffInterface(Template):
 
             threads = [{'posts' : thread}]
 
-            template_kwargs = {'postform' : board.options['ALLOW_TEXTONLY'] or
-                                            board.options['ALLOW_IMAGES'],
-                               'image_inp' : board.options['ALLOW_IMAGES'],
-                               'textonly_inp' : 0,
-                               'threads' : threads,
-                               'thread' : self.page,
-                               'parent' : self.page}
+            template_kwargs = {
+                'postform' : board.options['ALLOW_TEXTONLY'] or
+                             board.options['ALLOW_IMAGES'],
+                'image_inp' : board.options['ALLOW_IMAGES'],
+                'textonly_inp' : 0,
+                'threads' : threads,
+                'thread' : self.page,
+                'parent' : self.page
+            }
 
         elif config.POST_BACKUP:
             max_res = board.options['IMAGES_PER_PAGE']
@@ -652,7 +663,7 @@ class StaffInterface(Template):
         session = model.Session()
         table = board.table
 
-        board.check_access(self.admin)
+        board.check_access(self.user)
 
         popup = caller != 'board'
 
@@ -712,7 +723,7 @@ class StaffInterface(Template):
                 # Remove board table contents and board list entry.
                 try:
                     board = local.environ['waka.board']
-                    board.table.drop(bind=model.engine)
+                    board.table.drop(bind=model.engine, checkfirst=True)
                     del model._boards[board.name]
                     model.common.delete().where(model.common.c.board \
                                                 == board.name)

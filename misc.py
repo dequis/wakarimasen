@@ -16,14 +16,20 @@ import urllib
 from util import local
 
 def dot_to_dec(ip):
-    parts = [int(x) for x in ip.split(".")]
-    return struct.unpack('>L', struct.pack('>4B', *parts))[0]
+    try:
+        parts = [int(x) for x in ip.split(".")]
+        return struct.unpack('>L', struct.pack('>4B', *parts))[0]
+    except ValueError:
+        return ip
 
 def dec_to_dot(numip):
-    # Parse 64-bit integer for compatibility with database written
-    # with Perl's 'N' packing format.
-    parts = struct.unpack('>8B', struct.pack('>Q', long(numip)))
-    return '.'.join([str(x) for x in parts[4:8]])
+    try:
+        # Parse 64-bit integer for compatibility with database written
+        # with Perl's 'N' packing format.
+        parts = struct.unpack('>8B', struct.pack('>Q', long(numip)))
+        return '.'.join([str(x) for x in parts[4:8]])
+    except ValueError:
+        return numip
 
 def is_whitelisted(numip):
     return False

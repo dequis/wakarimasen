@@ -12,6 +12,7 @@ import strings
 import misc
 from util import local, FileLock
 import str_format
+import staff_tasks
 
 TEMPLATES_DIR = os.path.join('templates')
 CACHE_DIR = os.path.join(TEMPLATES_DIR, '.cache')
@@ -164,7 +165,7 @@ class Template(object):
 
     @filter
     def get_action_name(self, action, debug=0):
-        return interboard.get_action_name(action, debug=debug)
+        return staff_tasks.get_action_name(action, debug=debug)
 
     @filter
     def make_date(self, timestamp, style='futaba'):

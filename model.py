@@ -200,7 +200,8 @@ class Page(object):
         self.rows = [dict(row.items()) for row in row_proxies]
 
         self.total_entries = len(self.rows)
-        self.total_pages = (self.total_entries + per_page - 1) / per_page
+        self.total_pages = (self.total_entries + self.per_page - 1)\
+                            / self.per_page
         if self.total_pages == 0:
             self.total_pages = 1
 
