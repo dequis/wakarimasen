@@ -353,6 +353,7 @@ def mark_resolved(task_data, delete, posts):
                 continue
             try:
                 board_obj.delete_stuff(posts, '', False, False,
+                                       admindelete=True,
                                        admin_task_data=task_data)
             except WakaError:
                 errors.append({'error' : '%s,%d: Post already deleted.'\
