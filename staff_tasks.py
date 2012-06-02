@@ -163,6 +163,7 @@ class StaffAction(object):
                 self._log_action()
 
     def _log_action(self):
+        interboard.trim_activity()
         session = model.Session()
         table = model.activity
         ip = misc.dot_to_dec(self.user.login_data.addr)

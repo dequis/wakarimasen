@@ -433,6 +433,13 @@ def trim_reported_posts(date=0):
         sql = table.delete().where(table.c.timestamp <= mintime)
         session.execute(sql)
 
+def trim_activity():
+    mintime = time.time() - config.STAFF_LOG_RETENTION
+    session = model.Session
+    table = model.activity
+    sql = table.delete().where(table.c.timestamp <= mintime)
+    session.execute(sql)
+
 def update_spam_file(admin, spam):
     user = staff.check_password(admin)
     if user.account == staff.MODERATOR:
