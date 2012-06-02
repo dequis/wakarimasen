@@ -3,6 +3,7 @@ from sqlalchemy import create_engine
 from sqlalchemy import Table, Column, Integer, Text, String, MetaData, Boolean
 from sqlalchemy.orm import sessionmaker, mapper, scoped_session
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.sql import func
 
 engine = create_engine(config.SQL_ENGINE, pool_size=100, max_overflow=10)
 Session = scoped_session(sessionmaker(bind=engine))
@@ -190,16 +191,17 @@ class Page(object):
             self.per_page = 200
         else:
             self.per_page = per_page
-        self.offset = (page_num - 1) * per_page
+        self.offset = (page_num - 1) * self.per_page
 
         session = Session()
 
+        count = query.column(func.count())
+        self.total_entries = session.execute(count).fetchone()['count_1']
         row_proxies = session.execute(query.limit(per_page)\
                                            .offset(self.offset))
 
         self.rows = [dict(row.items()) for row in row_proxies]
 
-        self.total_entries = len(self.rows)
         self.total_pages = (self.total_entries + self.per_page - 1)\
                             / self.per_page
         if self.total_pages == 0:

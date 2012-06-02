@@ -660,8 +660,8 @@ def task_searchposts(environ, start_response):
 def task_stafflog(environ, start_response):
     request = environ['werkzeug.request']
 
-    params = {'form':    ['sortby', 'order', 'iptoview', 'view',
-                          'actiontoview', 'posttoview', 'usertoview'],
+    params = {'form':    ['sortby', 'order', 'iptoview', 'view', 'perpage',
+                          'page', 'actiontoview', 'posttoview', 'usertoview'],
               'cookies': ['wakaadmin']}
 
     kwargs = kwargs_from_params(request, params)
