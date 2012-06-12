@@ -207,8 +207,8 @@ class FutabaStyleParser(object):
             file.write(current)
 
         if len(template) != self.lastend:
-            self.debug_item("NOT MATCHED (end)", template[lastend:],
-                span=(lastend, len(template)))
+            self.debug_item("NOT MATCHED (end)", template[self.lastend:],
+                span=(self.lastend, len(template)))
 
     def do_section(self, match):
         if not match.group():

@@ -124,7 +124,7 @@ def add_admin_entry(task_data, option, comment, ip='', mask='255.255.255.255',
         task_data.contents.append(content)
     else:
         if not sval1:
-            raise WakaError(STRINGFIELDMISSING)
+            raise WakaError(strings.STRINGFIELDMISSING)
         sql = table.select().where(and_(table.c.sval1 == sval1,
                                         table.c.type == option))
         row = session.execute(sql).fetchone()
@@ -409,6 +409,7 @@ def edit_admin_entry(task_data, num, comment='', ival1=None,
 
 def delete_by_ip(task_data, ip, mask='255.255.255.255'):
     task_data.contents.append(ip)
+    user = task_data.user
 
     if user.account == staff.MODERATOR:
         reign = user.reign
@@ -435,7 +436,7 @@ def trim_reported_posts(date=0):
 
 def trim_activity():
     mintime = time.time() - config.STAFF_LOG_RETENTION
-    session = model.Session
+    session = model.Session()
     table = model.activity
     sql = table.delete().where(table.c.timestamp <= mintime)
     session.execute(sql)
@@ -520,8 +521,8 @@ def move_thread(task_data, parent, src_brd_obj, dest_brd_obj):
                 r'a href="\1' + os.path.join(\
                                dest_brd_obj.path,
                                dest_brd_obj.options['RES_DIR'],
-                               '%d%s' % (int((new_parent), config.PAGE_EXT)),
-                post['comment']))
+                               '%d%s' % (int((new_parent), config.PAGE_EXT))),
+                post['comment'])
 
             post['comment'] = new_comment
 

@@ -547,7 +547,7 @@ class Board(object):
         if not post_num and ((len(parent) != 0 and not parent.isdigit())
            or len(parent) > 10 or has_crlf(name) or has_crlf(email)
            or has_crlf(subject)):
-            raise WakaError(UNUSUAL)
+            raise WakaError(strings.UNUSUAL)
 
         # convert parent to integer type
         if not post_num and len(parent) == 0:
@@ -693,12 +693,12 @@ class Board(object):
                 srcinfo_array = srcinfo.split(",")
                 if len(srcinfo_array) >= 3:
                     source_file = srcinfo_array[2].lstrip("/")
-                    source_pch = misc.find_pch(source_file)
+                    source_pch = oekaki.find_pch(source_file)
 
                 # If applicable, copy PCH file with the same filename base
                 # as the file we just copied.
                 if pch and (not source_file or os.path.exists(source_pch)):
-                    new_pch_filename = misc.copy_animation_file(pch, filename)
+                    new_pch_filename = oekaki.copy_animation_file(pch, filename)
                     # TODO create postfix from OEKAKI_INFO_TEMPLATE
                     postfix = 'TODO'
                     #my $postfix = OEKAKI_INFO_TEMPLATE->(decode_srcinfo($srcinfo,$uploadname,$new_pch_filename));
@@ -1193,7 +1193,7 @@ class Board(object):
                 os.renames(arch_image, os.path.join(self.path, row.image))
                 os.chmod(arch_image, 0644)
             if arch_thumb \
-                    and re.match(src_brd_obj.options['THUMB_DIR'],
+                    and re.match(self.options['THUMB_DIR'],
                                  row.thumbnail) \
                     and os.path.exists(arch_thumb):
                 os.renames(arch_thumb, os.path.join(self.path, row.thumb))
@@ -1208,7 +1208,7 @@ class Board(object):
             if arch_image and os.path.exists(arch_image):
                 os.unlink(os.path.join(arch_image))
             if arch_thumb \
-                    and re.match(src_brd_obj.options['THUMB_DIR'],
+                    and re.match(self.options['THUMB_DIR'],
                                  row.thumbnail) \
                     and os.path.exists(arch_thumb):
                 os.unlink(arch_thumb)
@@ -1222,7 +1222,7 @@ class Board(object):
                                         == row.timestampofarchival))\
                        .order_by(table.c.num.asc())
             for row in session.execute(sql):
-                self.remove_backup_post(row.postnum, restore=restore,
+                self.remove_backup_post(None, row.postnum, restore=restore,
                                         child=True)
 
         sql = table.delete().where(and_(table.c.postnum == post,
@@ -1627,7 +1627,7 @@ class Board(object):
         if not row:
             raise WakaError('Thread %s,%s not found.' % (self.name, num))
         if row['parent']:
-            raise WakaError(strings.S_NOTATHREAD)
+            raise WakaError(strings.NOTATHREAD)
 
         update = {}
         if operation == 'sticky':

@@ -545,7 +545,7 @@ def task_deleteuserwindow(environ, start_response):
     kwargs = kwargs_from_params(request, params)
     kwargs['dest'] = staff_interface.DEL_STAFF_CONFIRM
 
-    return StaffInterface(**kwargs).execute()
+    return StaffInterface(**kwargs)
 
 def task_disableuserwindow(environ, start_response):
     request = environ['werkzeug.request']

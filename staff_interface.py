@@ -173,7 +173,7 @@ class StaffInterface(Template):
         else:
             # Grab count of all threads.
             table = board.table
-            session = model.Session
+            session = model.Session()
             sql = select([func.count()], table.c.parent == 0)
             thread_count = session.execute(sql).fetchone()[0]
             total = (thread_count + self.perpage - 1) / self.perpage
@@ -521,13 +521,13 @@ class StaffInterface(Template):
         if str(self.page).startswith('t'):
             self.page = self.page[1:]
             sql = table.select().where(and_(or_(table.c.postnum == self.page,
-                                                table.c.parent == self.page)),
-                                            table.c.board_name == board.name)\
+                                                table.c.parent == self.page),
+                                            table.c.board_name == board.name))\
                                 .order_by(table.c.timestampofarchival.desc(),
                                           table.c.postnum.asc())
             thread = [dict(x.items()) for x in session.execute(sql).fetchall()]
 
-            if not row:
+            if not thread:
                 raise WakaError('Thread not found.')
 
             threads = [{'posts' : thread}]
@@ -697,7 +697,7 @@ class StaffInterface(Template):
 
     def make_sql_interface_panel(self, sql='', nuke=''):
         if self.user.account != staff.ADMIN:
-            raise WakaError(strigns.INUSUFFICENTPRIVLEDGES)
+            raise WakaError(strings.INUSUFFICENTPRIVLEDGES)
 
         results = []
 
@@ -901,7 +901,7 @@ def do_first_time_setup(admin, username, password):
     # Checks.
     if admin != staff.crypt_pass(config.ADMIN_PASS,
                                  local.environ['REMOTE_ADDR']):
-        return staff_interface.make_first_time_setup_gateway()
+        return make_first_time_setup_gateway()
     if not username:
         raise WakaError('Missing username.')
     if not password:

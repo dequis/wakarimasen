@@ -5,6 +5,7 @@ import staff
 import interboard
 import misc
 import config
+from util import WakaError
 
 # Dictionary of what action keywords mean. It's like a real dictionary!
 ACTION_TRANSLATION  = {
