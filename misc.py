@@ -369,6 +369,6 @@ def kwargs_from_params(request, params):
 
     if 'file' in params.keys():
         for param in params['file']:
-            kwargs[param] = request.files[param]
+            kwargs[param] = request.files.get(param, None)
 
     return kwargs
