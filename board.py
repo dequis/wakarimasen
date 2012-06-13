@@ -942,7 +942,7 @@ class Board(object):
 
     def delete_post(self, post, password, file_only, archiving,
                     admin_task_data=None, from_window=False, admin=False,
-                    timestampofarchival=None):
+                    timestampofarchival=None, recur=False):
         '''Delete a single post from the board. This method does not rebuild
         index cache automatically.'''
         thumb = self.options['THUMB_DIR']
@@ -1039,11 +1039,12 @@ class Board(object):
 
             # Also back-up child posts.
             if config.POST_BACKUP and not archiving:
-                sql = table.select().where(table.c.parent == post)
+                sql = select([table.c.num], table.c.parent == post)
                 sel_posts = session.execute(sql).fetchall()
-                for i in [p.num for p in sel_posts]:
+                for i in [p[0] for p in sel_posts]:
                     self.delete_post(i, '', False, False,
-                                     from_window=from_window, admin=True)
+                                     from_window=from_window, admin=True,
+                                     recur=True)
 
         # Cache building
         if not row.parent:
@@ -1053,7 +1054,7 @@ class Board(object):
             else:
                 # removing an entire thread
                 self.delete_thread_cache(post, archiving)
-        else:
+        elif not recur:
             # removing a reply, or a reply's image
             self.build_thread_cache(row.parent)
 
