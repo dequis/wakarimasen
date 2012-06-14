@@ -687,12 +687,24 @@ class StaffInterface(Template):
                                 " deleted.")
             posts = [row]
 
-        Template.__init__(self, 'post_search', type=type, num=id,
+        inputs = [
+            {'name': 'board', 'value': board.name},
+            {'name' : 'task', 'value' : 'searchposts'},
+            {'name' : 'num', 'value' : id},
+            {'name' : 'ip', 'value' : ip},
+            {'name' : 'ipsearch', 'value' : ('1' if ipsearch else '')},
+            {'name': 'caller', 'value': caller},
+            {'name' : 'search', 'value': ('ip' if ipsearch else 'id')}
+        ]
+
+        Template.__init__(self, 'post_search', num=id,
                           posts=posts, search=('ip' if ipsearch else 'id'),
+                          inputs=inputs,
                           number_of_pages=total_pages,
                           rooturl=misc.get_secure_script_name()\
-                            +'?task=searchposts&amp;board='+board.path\
-                            + '&amp;caller='+caller+'&amp;ipsearch=1&amp;ip='\
+                            +'?task=searchposts&amp;board='+board.name\
+                            + '&amp;caller='+caller+'&amp;ipsearch='\
+                            + ('1' if ipsearch else '') + '&amp;ip='\
                             + ip, rowcount=rowcount, popup=popup)
 
     def make_sql_interface_panel(self, sql='', nuke=''):

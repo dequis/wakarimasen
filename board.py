@@ -1191,8 +1191,9 @@ class Board(object):
 
             # Move file/thumb.
             if arch_image and os.path.exists(arch_image):
+                orig_path = os.path.join(self.path, row.image)
                 os.renames(arch_image, os.path.join(self.path, row.image))
-                os.chmod(arch_image, 0644)
+                os.chmod(orig_path, 0644)
             if arch_thumb \
                     and re.match(self.options['THUMB_DIR'],
                                  row.thumbnail) \
