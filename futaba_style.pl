@@ -1141,6 +1141,7 @@ use constant POST_SEARCH => compile_template(q{<if $popup>}.MINI_HEAD_INCLUDE.q{
 <if $search ne 'ip'><if $popup><h1 style="text-align:center;font-size:1em"></if><if !$popup><div class="dellist"><h2></if>Showing Post No.<var $num><if $popup></h1></if><if !$popup></h2></div></if></if>
 <if !$popup><hr /></if>
 <form action="<var $self>" id="delform">
+<input type="hidden" name="board" value="<var $board-\>path()>" />
 <loop $posts>
 	<table><tbody><tr><td class="doubledash"><if $search eq 'ip'><span style="font-size:200%;font-weight:bold;padding-right:0.5em"><em><var $post_number></em></span></if><if $search ne 'ip'>&gt;&gt;</if></td>
 	<td class="reply" id="reply<var $num>">
