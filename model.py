@@ -4,6 +4,7 @@ from sqlalchemy import Table, Column, Integer, Text, String, MetaData, Boolean
 from sqlalchemy.orm import sessionmaker, mapper, scoped_session
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.sql import func
+from sqlalchemy.exc import OperationalError
 
 engine = create_engine(config.SQL_ENGINE, pool_size=100, max_overflow=10)
 Session = scoped_session(sessionmaker(bind=engine))

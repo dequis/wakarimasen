@@ -13,24 +13,36 @@ import util
 import model
 import board
 import interboard
-from board import Board
+from board import Board, NoBoard
 from util import WakaError, local
 
 @util.headers
 def application(environ, start_response):
     '''Main routing application'''
+
     local.environ = environ
     request = werkzeug.BaseRequest(environ)
 
     task = request.values.get('task', request.values.get('action', ''))
-    boardname = request.values.get('board', '9001') # temp. default value
+    boardname = request.values.get('board', '')
+
 
     environ['waka.task'] = task
     environ['waka.boardname'] = boardname
     # Indicate "pop-up window" UI style.
     environ['waka.fromwindow'] = False
     environ['waka.rootpath'] = os.path.join('/', config.BOARD_DIR, '')
-    environ['waka.board'] = Board(boardname)
+
+    if not task and not boardname:
+        environ['waka.board'] = NoBoard()
+        return app.check_setup(environ, start_response)
+
+    try:
+        if not boardname:
+            raise WakaError("No board parameter set")
+        environ['waka.board'] = Board(boardname)
+    except WakaError, e:
+        return app.fffffff(environ, start_response, e)
 
     # the task function if it exists, otherwise no_task()
     function = getattr(app, 'task_%s' % task.lower(), app.no_task)
@@ -56,8 +68,14 @@ def main():
     # Set up tentative environment variables.
     local.environ['waka.rootpath'] \
         = os.path.join('/', config.BOARD_DIR, '')
+    try:
+        app.init_database()
+    except model.OperationalError, e:
+        # CGI-friendly error message
+        print "Content-Type: text/plain\n"
+        print "Error initializing database: %s" % e.args[0]
+        return
 
-    app.init_database()
     arg = sys.argv[1:] and sys.argv[1] or 'fcgi'
     if arg == 'fcgi':
         fcgi.WSGIServer(application).run()

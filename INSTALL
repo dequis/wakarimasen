@@ -1,34 +1,24 @@
 Wakarimasen installation guide.
 
-TODO: turn this into a script.
 Wakarimasen is still experimental software - use it at your own risk and
 if you know how to fix stuff when it breaks.
-
 
 - Requirements: python2.6, werkzeug, sqlalchemy, jinja2
 Fastcgi is highly recommended, but cgi is supported.
 
-- Copy/create a few extra files needed for templates and other stuff:
-
-  mkdir -p templates/include/boards/
-  cp /path/to/wakaba/include/* templates/include/boards/
-  mkdir -p include/common/css
-  cp /path/to/wakaba/board/css/* include/common/css
-  touch spam.txt
-
 - Copy config.py.example to config.py. Edit it and set ADMIN_PASS, SECRET and
-  SQL_ENGINE.  The format for SQL_ENGINE is the following:
+SQL_ENGINE.  The format for SQL_ENGINE is the following:
 
   SQL_ENGINE = 'mysql://USERNAME:PASSWORD@HOSTNAME/DATABASE'
 
 - Now make sure the shebang line in wakarimasen.py points to the right
-python interpreter. If you use suexec for cgi, it must be chmod 755, too.
+python interpreter and that the file has execute permissions. If you use suexec
+for cgi, it must be chmod 755, too.
 Visit
 
   http://example.com/wakarimasen.py
 
-You should get a board not found WakaError. That means cgi is working.
-Adding fastcgi support is explained later.
+This should open the first time setup page. Enter the ADMIN_PASS here.
 
 - To create a new board called /temp/, copy the base_board directory:
 
@@ -43,13 +33,5 @@ cache and redirect you to your board. If you see the directory listing, add
 this to your .htaccess (apache only)
 
   DirectoryIndex wakaba.html
-
-Or .xhtml if you haven't changed PAGE_EXT. You might want to add additional
-filenames after wakaba.html (like index.html, index.php, etc) if you put this
-.htaccess in the site root. You can also put that htaccess on each individual
-board.
-
-- Edit the menu in templates/include/boards/header.html and other templates
-as you please.
 
 - Enjoy

@@ -1706,6 +1706,19 @@ class Board(object):
                  pub_date=misc.make_date(time.time(), 'http'))\
                  .render_to_file(rss_file)
 
+class NoOptions(object):
+    FAVICON = ''
+
+class NoBoard(object):
+    '''Object that provides the minimal attributes to use a few templates
+    when no board is defined.'''
+    name = ''
+    path = ''
+    options = NoOptions()
+
+    def expand_url(self, url, force_http=False):
+        return url
+
 # utility functions
 
 def get_page_count(threads, per_page):

@@ -7,7 +7,7 @@ from template import Template
 from util import WakaError
 from staff_interface import StaffInterface
 from staff_tasks import StaffAction
-from board import Board
+from board import Board, NoBoard
 from misc import get_cookie_from_request, kwargs_from_params
 
 def no_task(environ, start_response):
@@ -692,3 +692,38 @@ def not_found(environ, start_response):
     start_response('302 Found',
         [('Location', MAIN_SITE_URL + environ['PATH_INFO'])])
     return []
+
+# Initial setup
+
+def check_setup(environ, start_response):
+    import os, config
+    from template import TEMPLATES_DIR
+
+    issues = []
+
+    if ('DOCUMENT_ROOT' not in environ or 'SCRIPT_NAME' not in environ or
+        'SERVER_NAME' not in environ):
+        return ["CGI environment not complete\n"]
+
+    full_board_dir = os.path.join(environ['DOCUMENT_ROOT'], config.BOARD_DIR)
+    if not os.access(full_board_dir, os.W_OK):
+        issues.append("No write access to DOCUMENT_ROOT+BOARD_DIR (%s)" %
+            full_board_dir)
+
+    script_name_dir = os.path.join(environ['DOCUMENT_ROOT'],
+        os.path.dirname(environ['SCRIPT_NAME']).lstrip("/"))
+    if not os.access(script_name_dir, os.W_OK):
+        issues.append("No write access to DOCUMENT_ROOT+SCRIPT_NAME dir (%s)" %
+            script_name_dir)
+
+    templates_dir = os.path.abspath(TEMPLATES_DIR)
+    if not os.access(templates_dir, os.W_OK):
+        issues.append("No write access to templates dir (%s)" % templates_dir)
+
+    if issues:
+        return ["<p>Setup issues found:</p> <ul>"] + \
+            ["<li>%s</li>\n" % x for x in issues] + ["</ul>"]
+    elif model.Session().query(model.account).count() == 0:
+        return Template("first_time_setup")
+    else:
+        return ["Nothing to do."]

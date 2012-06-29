@@ -24,7 +24,8 @@ CHARSET = 'utf-8'
 CONVERT_CHARSETS = 1
 PAGE_EXT = '.html'
 HTACCESS_PATH = './'
-WAKABA_VERSION = '3.0.7 + desuchan'
+WAKABA_VERSION = ''
+WAKARIMASEN_VERSION = '' # we should put something here
 ALTERNATE_REDIRECT = 0
 
 SPAM_FILES = ['spam.txt']
