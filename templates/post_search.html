@@ -1,0 +1,71 @@
+{% if popup %}{% include 'mini_head_include.html' %}{% endif %}{% if not popup %}{% include 'manager_head_include.html' %}{% endif %}
+{% if search == 'ip' %}
+	<div class="dellist"><h2>Searching By IP {{ addr }}</h2></div>
+	{% include 'pagination_section.html' %}
+{% endif %}
+{% if search != 'ip' %}{% if popup %}<h1 style="text-align:center;font-size:1em">{% endif %}{% if not popup %}<div class="dellist"><h2>{% endif %}Showing Post No.{{ num }}{% if popup %}</h1>{% endif %}{% if not popup %}</h2></div>{% endif %}{% endif %}
+{% if not popup %}<hr />{% endif %}
+<form action="{{ get_script_name() }}" id="delform">
+<input type="hidden" name="board" value="{{ board.name }}" />
+{% for post in posts %}
+	<table><tbody><tr><td class="doubledash">{% if search == 'ip' %}<span style="font-size:200%;font-weight:bold;padding-right:0.5em"><em>{{ post_number }}</em></span>{% endif %}{% if search != 'ip' %}&gt;&gt;{% endif %}</td>
+	<td class="reply" id="reply{{ post.num }}">
+
+	<a name="{{ post.num }}"></a>
+	<label><input type="checkbox" name="num" value="{{ post.num }}" />
+	<span class="replytitle">{{ post.subject }}</span>
+	{% if post.email %}<span class="commentpostername"><a href="{{ post.email }}">{{ post.name }}</a></span>{% if post.trip %}<span class="postertrip"><a href="{{ post.email }}">{{ post.trip }}</a></span>{% endif %}{% endif %}
+	{% if not post.email %}<span class="commentpostername">{{ post.name }}</span>{% if post.trip %}<span class="postertrip">{{ post.trip }}</span>{% endif %}{% endif %} 
+	<span class="ipaddr">(IP: {{ (post.ip)|dec_to_dot }})</span> 
+	{{ post.date }}</label>
+	<span class="reflink">No.{{ post.num }}</span>&nbsp;
+	<span><em>{% if post.parent %}<a href="{{ get_script_name() }}?task=mpanel&amp;board={{ board.name }}&amp;page=t{{ post.parent }}#{{ post.num }}">Response to Thread No.{{ post.parent }}</a>{% endif %}{% if not post.parent %}<a href="{{ get_script_name() }}?task=mpanel&amp;board={{ board.name }}&amp;page=t{{ post.num }}">Thread Opener</a>{% endif %}</em></span>&nbsp;
+	<span class="deletelink" id="deletelink{{ post.num }}">
+		[<a href="#" target="_blank" onclick="passfield('{{ post.num }}',true); return false">Delete</a>
+		<span id="delpostcontent{{ post.num }}" style="display:inline"></span>
+	</span> 
+	<a href="{{ get_script_name() }}?task=banpopup&amp;board={{ board.name }}&amp;ip={{ (post.ip)|dec_to_dot }}&amp;delete={{ post.num }}" onclick="popUpPost('{{ get_script_name() }}?task=banpopup&amp;board={{ board.name }}&amp;ip={{ (post.ip)|dec_to_dot }}&amp;delete={{ post.num }}');return false">&amp;</a> 
+	<a href="{{ get_script_name() }}?task=bans&amp;board={{ board.name }}&amp;ip={{ post.ip }}">{{ strings.MPBAN }}</a>]&nbsp;
+	[<a href="{{ get_script_name() }}?task=editpostwindow&amp;board={{ board.name }}&amp;num={{ post.num }}&amp;admineditmode=1" target="_blank" onclick="popUpPost('{{ get_script_name() }}?task=editpostwindow&amp;board={{ board.name }}&amp;num={{ post.num }}&amp;admineditmode=1'); return false">Edit</a>]
+	{% if post.image %}
+		<br />
+		<span class="filesize">{{ strings.PICNAME }}<a target="_blank" href="{{ (post.image)|expand_image_url }}">{{ (post.image)|basename }}</a>
+		-(<em>{{ post.size }} B, {{ post.width }}x{{ post.height }}</em>)</span>
+		<span class="thumbnailmsg">{{ strings.THUMB }}</span><br />
+
+		{% if post.thumbnail %}
+			<a target="_blank" href="{{ (post.image)|expand_image_url }}">
+			<img src="{{ (post.thumbnail)|expand_url }}" width="{{ post.tn_width }}" height="{{ post.tn_height }}" alt="{{ post.size }}" class="thumb" id="img{{ (post.image)|basename }}" /></a>
+		{% endif %}
+		{% if not post.thumbnail %}
+			{% if board.options.DELETED_THUMBNAIL %}
+				<a target="_blank" href="{{ (board.options.DELETED_IMAGE)|expand_image_url }}">
+				<img src="{{ (board.options.DELETED_THUMBNAIL)|expand_url }}" width="{{ post.tn_width }}" height="{{ post.tn_height }}" alt="" class="thumb" /></a>
+			{% endif %}
+			{% if not (board.options.DELETED_THUMBNAIL) %}
+				<div class="nothumb"><a target="_blank" href="{{ (post.image)|expand_image_url }}">{{ strings.NOTHUMB }}</a></div>
+			{% endif %}
+		{% endif %}
+	{% endif %}
+
+	<blockquote>
+	{% if omit %}{{ post.comment|redirect_reply_links(min_res) }}{% else %}{{ post.comment }}{% endif %}
+	{% if post.lastedit %}<p style="font-size: small; font-style: italic">Last edited{% if post.admin_post == 'yes' %} by moderator{% endif %} {{ post.lastedit }}.</p>{% endif %}
+	</blockquote>
+
+	</td></tr></tbody></table>
+	{% if not popup %}<hr />{% endif %}
+{% endfor %}
+{% if not popup %}
+	<div class="delbuttons" style="float:right">
+	<input type="hidden" name="caller" value="board" />
+	<input type="submit" value="{{ strings.MPDELETE }}" />
+	<input type="submit" name="archive" value="{{ strings.MPARCHIVE }}" />
+	<input type="reset" value="{{ strings.MPRESET }}" />
+	[<label><input type="checkbox" name="fileonly" value="on" />{{ strings.MPONLYPIC }}</label>]
+	</div>
+{% endif %}
+</form>
+<br clear="all" />
+{% if not popup %}<p style="text-align:center;font-size:1.3em"><a href="{{ get_script_name() }}?task=mpanel&amp;board={{ board.name }}">Return to Panel</a></p>{% endif %}
+{% if popup %}{% include 'mini_foot_include.html' %}{% endif %}{% if not popup %}{% include 'normal_foot_include.html' %}{% endif %}

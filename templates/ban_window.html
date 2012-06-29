@@ -1,0 +1,35 @@
+{% include 'mini_head_include.html' %}
+<h1 style="text-align: center; font-size: 1em">{% if delete %}Banning IP Address {{ ip }} and Deleting Post {{ delete }}{% endif %}{% if not delete %}Banning IP Address {{ ip }}{% endif %}</h1>
+<form action="{{ get_script_name() }}" method="post">
+<input type="hidden" name="ip" value="{{ ip }}" />
+<input type="hidden" name="task" value="addipfrompopup" />
+<input type="hidden" name="delete" value="{{ delete }}" />
+<input type="hidden" name="board" value="{{ board.name }}" />
+<table align="center"><tbody>
+<tr><td class="postblock">{{ strings.BANMASKLABEL }}</td><td><input type="text" name="mask" value="255.255.255.255" size="24" /></td></tr>
+<tr><td class="postblock">{{ strings.BANEXPIRE }}</td><td><input type="text" name="expiration" size="16" /><br/>
+<select name="expirepresets" onchange="this.form.expiration.value = this.form.expirepresets.options[this.form.expirepresets.selectedIndex].value;">
+<option value="" selected="selected">Presets</option>
+<option value="300">5 minutes</option>
+<option value="900">15 minutes</option>
+<option value="1800">30 minutes</option>
+<option value="3600">1 hour</option>
+<option value="7200">2 hours</option>
+<option value="43200">12 hours</option>
+<option value="86400">1 day</option>
+<option value="172800">2 days</option>
+<option value="604800">1 week</option>
+<option value="1209600">2 weeks</option>
+<option value="2419200">~1 month</option>
+<option value="4838400">~2 months</option>
+<option value="15768000">6 months</option>
+<option value="31536000">1 year</option>
+<option value="0">Eternity</option>
+</select> (Javascript)
+</td></tr>
+<tr><td class="postblock">{{ strings.BANCOMMENTLABEL }}</td><td><input type="text" name="comment" size="24" /></td></tr>
+<tr><td class="postblock">{{ strings.TOTALBAN }}</td><td><input type="checkbox" name="total" value="yes" style="float:left; clear:none" /> <input type="submit" value="{{ strings.BANIP }}" style="float: right; clear: none"/></td></tr>
+</tbody></table>
+{% if delete %}<p align="center">[<label><input type="checkbox" name="deleteall_confirm" value="1" /> Delete <strong>All</strong> Posts From IP/Mask ({{ count }} for default mask)?</label>]</p>{% endif %}
+</form>
+{% include 'mini_foot_include.html' %}

@@ -1,0 +1,33 @@
+{% include 'manager_head_include.html' %}
+
+<div align="center"><form action="{{ get_script_name() }}" method="post">
+<input type="hidden" name="board" value="{{ board.name }}" />
+<input type="hidden" name="task" value="admin" />
+Username:
+<input type="text" name="desu" size="16" value="" />
+<br />
+Password:
+<input type="password" name="berra" size="16" value="" />
+<br />
+<label><input type="checkbox" name="savelogin" value="1" /> {{ strings.MANASAVE }}</label>
+<br />
+<select name="nexttask">
+<option value="mpanel" {% if login_task == "mpanel" or not login_task %}selected="selected"{% endif %}>{{ strings.MANAPANEL }}</option>
+<option value="bans" {% if login_task == "bans" %}selected="selected"{% endif %}>{{ strings.MANABANS }}</option>
+<option value="proxy" {% if login_task == "proxy" %}selected="selected"{% endif %}>{{ strings.MANAPROXY }}</option>
+<option value="spam" {% if login_task == "spam" %}selected="selected"{% endif %}>{{ strings.MANASPAM }}</option>
+<option value="sqldump" {% if login_task == "sqldump" %}selected="selected"{% endif %}>{{ strings.MANASQLDUMP }}</option>
+<option value="sql" {% if login_task == "sql" %}selected="selected"{% endif %}>{{ strings.MANASQLINT }}</option>
+<option value="mpost" {% if login_task == "mpost" %}selected="selected"{% endif %}>{{ strings.MANAPOST }}</option>
+<option value="rebuild" {% if login_task == "rebuild" %}selected="selected"{% endif %}>{{ strings.MANAREBUILD }}</option>
+<option value="reports" {% if login_task == "reports" %}selected="selected"{% endif %}>Reports</option>
+<option value="staff" {% if login_task == "staff" %}selected="selected"{% endif %}>Staff Management</option>
+<option value="staff" {% if login_task == "stafflog" %}selected="selected"{% endif %}>Staff Activity</option>
+<option value=""></option>
+<option value="nuke" {% if login_task == "nuke" %}selected="selected"{% endif %}>{{ strings.MANANUKE }}</option>
+</select>
+<input type="submit" value="{{ strings.MANASUB }}" />
+<p><em>Cookies required for login.</em></p>
+</form></div>
+
+{% include 'normal_foot_include.html' %}

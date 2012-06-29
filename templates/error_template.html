@@ -1,0 +1,7 @@
+{% include 'normal_head_include.html' %}
+
+<h1 style="text-align: center">{{ error }}<br /><br />
+<a href="{{ (environ['HTTP_REFERER'])|escape }}">{{ strings.RETURN }}</a><br /><br />
+</h1>
+
+{% include 'normal_foot_include.html' %}

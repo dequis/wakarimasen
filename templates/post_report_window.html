@@ -1,0 +1,21 @@
+{% include 'normal_head_include.html' %}
+<div class="dellist"><h2>Reporting Post(s) {{ num }}</h2></div>
+<form action="{{ get_script_name() }}" method="post">
+<input type="hidden" name="task" value="confirmreport" />
+<input type="hidden" name="referer" value="{{ referer }}" />
+<input type="hidden" name="board" value="{{ board.name }}" />
+<input type="hidden" name="num" value="{{ num }}" />
+{% if referer %}<input type="hidden" name="referer" value="{{ referer }}" />{% endif %}
+<table align="center">
+<tbody>
+<tr>
+<td class="postblock">Reason</td>
+<td><textarea name="comment" cols="48" rows="2"></textarea></td>
+</tr>
+<tr>
+<td colspan="2"><input type="submit" value="Submit" /></td>
+</tr>
+</tbody>
+</table>
+</form>
+{% include 'normal_foot_include.html' %}

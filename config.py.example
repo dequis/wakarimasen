@@ -1,0 +1,42 @@
+
+# Wakarimasen configuration
+ADMIN_PASS = 'desu'			# Admin password. For fucks's sake, change this.
+SECRET = 'desu'				# Cryptographic secret. CHANGE THIS to something totally random, and long.
+SQL_ENGINE = 'mysql://desu:desu@localhost/desu'
+#SQL_BACKUP_TABLE = '__waka_backup'	# Table backup
+#SQL_ADMIN_TABLE = 'admin'		# Table used for admin information
+#SQL_PROXY_TABLE = 'proxy'		# Table used for proxy information
+#DATE_STYLE = 'futaba'			# Date style ('futaba', '2ch', 'localtime', 'tiny')
+#ERRORLOG = ''				# Writes out all errors seen by user, mainly useful for debugging
+#CONVERT_COMMAND = 'convert'		# location of the ImageMagick convert command (usually just 'convert', but sometime a full path is needed)
+#ALTERNATE_REDIRECT = 0			# Use alternate redirect method. (Javascript/meta-refresh instead of HTTP forwards. Needed to run on certain servers, like IIS.)
+#USE_SECURE_ADMIN = 1			# Use HTTPS for admin logins.
+#USE_TEMPFILES = 1			# Set this to 1 under Unix and 0 under Windows! (Use tempfiles when creating pages)
+#PAGE_EXT = '.html'			# File extension for all board pages.
+#CHARSET = 'utf-8'
+#CONVERT_CHARSETS = 1			# Do character set conversions internally
+#SPAM_FILES = 'spam.txt'
+#USE_XHTML = 1
+#HOME = './'
+#HTACCESS_PATH = './'
+#PASSFAIL_THRESHOLD = 5			# Number of times a user may fail a password prompt prior to banning.
+#PASSFAIL_ROLLBACK = 1*24*3600		# How long a failed password prompt is held against a host.
+#PASSPROMPT_EXPIRE_TO_FAILURE = 300	# How long password prompts last before timing out and counting against the user.
+#MAX_FCGI_LOOPS = 250
+#TIME_OFFSET = 0				# Time offset in seconds, for display on board pages. You can use this to adjust board time to your local time!
+							# Positive value adjusts forward; negative value adjusts backward.
+#SQL_REPORT_TABLE = 'user_report'
+#STAFF_LOG_RETENTION = 30*24*3600	# How long should staff log entries be retained? (Seconds)
+#REPORT_RETENTION = 30*24*3600		# How long should report entries be retained? (Seconds)
+#POST_BACKUP = 1				# 1: Back up posts that are deleted or edited. 0: Do not back up.
+#POST_BACKUP_EXPIRE = 3600*24*14		# How long should backups last prior to purging?
+#REPLIES_PER_STICKY = 1			# Number of replies per stickied thread.
+#ENABLE_ABBREVIATED_THREAD_PAGES = 1	# Want to enable "Last xx Posts?" Then set this to 1.
+#POSTS_IN_ABBREVIATED_THREAD_PAGES = 50	# Number of posts to show in abbreviated reply views.
+#ENABLE_RSS = 1				# Do RSS feeds.
+#RSS_LENGTH = 10				# Number of items in each feed.
+#RSS_WEBMASTER = "dark.master.schmidt@gmail.com (Dark^Master^Schmidt)"
+							# Webmaster email address and name. Example format should be preserved for RSS spec.
+#BOARD_DIR = ''                         # Root of board cache relative to document root.
+#SERVER_NAME = 'desuchan.net'           # What's the name of this server?
+#DEBUG = False                          # Debug mode

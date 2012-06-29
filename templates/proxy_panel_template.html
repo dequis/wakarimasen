@@ -1,0 +1,47 @@
+{% include 'manager_head_include.html' %}
+
+<div class="dellist"><h2>{{ strings.MANAPROXY }}</h2></div>
+        
+<div class="postarea">
+<table><tbody><tr><td valign="bottom">
+
+{% if not (board.options.ENABLE_PROXY_CHECK) %}
+	<div class="dellist">{{ strings.PROXYDISABLED }}</div>
+	<br />
+{% endif %}        </td></tr></tbody></table>
+<form action="{{ get_script_name() }}?board={{ board.name }}" method="post">
+<input type="hidden" name="task" value="addproxy" />
+<input type="hidden" name="type" value="white" />
+<table><tbody>
+<tr><td class="postblock">{{ strings.PROXYIPLABEL }}</td><td><input type="text" name="ip" size="24" /></td></tr>
+<tr><td class="postblock">{{ strings.PROXYTIMELABEL }}</td><td><input type="text" name="timestamp" size="24" />
+<input type="submit" value="{{ strings.PROXYWHITELIST }}" /></td></tr>
+</tbody></table></form>
+</div><br />
+
+<table align="center"><tbody>
+<tr class="managehead">{{ strings.PROXYTABLE }}</tr>
+
+{% for proxy in scanned %}
+        {% if proxy.divider %}<tr class="managehead"><th colspan="6"></th></tr>{% endif %}
+
+        <tr class="row{{ proxy.rowtype }}">
+
+        {% if proxy.type == 'white' %}
+                <td>White</td>
+	        <td>{{ proxy.ip }}</td>
+        	<td>{{ proxy.timestamp + config.PROXY_WHITE_AGE - time() }}</td>
+        {% endif %}
+        {% if proxy.type == 'black' %}
+                <td>Black</td>
+	        <td>{{ proxy.ip }}</td>
+        	<td>{{ proxy.timestamp + config.PROXY_BLACK_AGE - time() }}</td>
+        {% endif %}
+
+        <td>{{ proxy.date }}</td>
+        <td><a href="{{ get_script_name() }}?task=removeproxy&amp;board={{ board.name }}&amp;num={{ proxy.num }}">{{ strings.PROXYREMOVEBLACK }}</a></td>
+        </tr>
+{% endfor %}
+</tbody></table><br />
+
+{% include 'normal_foot_include.html' %}

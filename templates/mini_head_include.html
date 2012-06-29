@@ -1,0 +1,35 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
+<title>{{ board.name }} - {{ board.options.TITLE }}</title>
+<meta http-equiv="Content-Type" content="text/html;charset={{ config.CHARSET }}" />
+<link rel="shortcut icon" href="{{ (board.options.FAVICON)|expand_url }}" />
+
+<style type="text/css">
+	#adv { background: url('/include/common/unblockad.png') center no-repeat;padding: 0px;margin: 0px auto;text-align:center;width:750px;height:107px;} 
+	body { margin: 0; padding: 8px; margin-bottom: auto; }
+	blockquote blockquote { margin-left: 0em }
+	form { margin-bottom: 0px }
+	form .trap { display:none }
+	.postarea { text-align: center }
+	.postarea table { margin: 0px auto; text-align: left }
+	.thumb { border: none; float: left; margin: 2px 20px }
+	.nothumb { float: left; background: #eee; border: 2px dashed #aaa; text-align: center; margin: 2px 20px; padding: 1em 0.5em 1em 0.5em; }
+	.reply blockquote, blockquote :last-child { margin-bottom: 0em }
+	.reflink a { color: inherit; text-decoration: none }
+	.reply .filesize { margin-left: 20px }
+	.userdelete { float: right; text-align: center; white-space: nowrap }
+	.replypage .replylink { display: none }
+</style>
+
+{% for stylesheet in stylesheets %}
+<link rel="{% if not stylesheet.default %}alternate {% endif %}stylesheet" type="text/css" href="{{ stylesheet.filename }}" title="{{ stylesheet.title }}" />
+{% endfor %}
+
+<script type="text/javascript">var style_cookie="{{ board.options.STYLE_COOKIE }}"; var thread_cookie = "{{ board.name }}_hidden_threads"; var lastopenfield = 0;</script>
+<script type="text/javascript" src="{{ (config.JS_FILE)|root_path_to_filename }}"></script>
+</head>
+<body>

@@ -1,0 +1,329 @@
+{% include 'manager_head_include.html' %}
+
+<div class="dellist"><h2>{{ strings.MANAPANEL }}</h2></div>
+	
+<!-- User Reports -->
+<div class="dellist"><h3>Reported Posts for /{{ board.name }}/</h3></div>
+<form action="{{ get_script_name() }}" method="post" id="reportedposts">
+<input type="hidden" name="task" value="resolve" />
+<input type="hidden" name="board" value="{{ board.name }}" />
+<table align="center"><tbody>
+<tr class="managehead"><th>Post</th><th>Date</th><th>Comment</th><th>Poster IP</th><th>Reporting IP</th></tr>
+{% for rpost in reportedposts %}
+	<tr class="row{{ rowtype }}">
+	<td>
+		<table>
+		<tbody>
+		<tr>
+		<td>
+		<label><input type="checkbox" name="num" value="{{ board.name }}-{{ rpost.postnum }}" /><big><b>{{ rpost.postnum }}</b></big>&nbsp;&nbsp;</label>
+		</td>
+		<td>
+		<big><strong><a href="{{ get_script_name() }}?task=searchposts&amp;board={{ board.name }}&amp;idview=1&amp;id={{ rpost.postnum }}&amp;caller=field" target="_blank" onclick="popUpPost('{{ get_script_name() }}?task=searchposts&amp;board={{ board.name }}&amp;idview=1&amp;id={{ rpost.postnum }}&amp;caller=field');return false">View post</a></strong></big><br />
+		[<a href="{{ get_script_name() }}?task=editpostwindow&amp;board={{ board.name }}&amp;num={{ rpost.postnum }}&amp;admineditmode=1" target="_blank" onclick="popUpPost('{{ get_script_name() }}?task=editpostwindow&amp;board={{ board.name }}&amp;admineditmode=1&amp;num={{ num }}'); return false">Edit</a>]
+		</td>
+		</tr>
+		</tbody>
+		</table>
+	</td>
+
+	<td>{{ rpost.date }}</td>
+	<td>{{ rpost.comment }}</td>
+	<td>{{ (rpost.offender)|dec_to_dot }}
+		[<a href="{{ get_script_name() }}?task=deleteall_confirm&amp;board={{ board.name }}&amp;ip={{ (rpost.offender)|dec_to_dot }}">{{ strings.MPDELETEALL }}</a>]
+		[<a href="{{ get_script_name() }}?task=banpopup&amp;board={{ board.name }}&amp;ip={{ (rpost.offender)|dec_to_dot }}" target="_blank" onclick="popUpPost('{{ get_script_name() }}?task=banpopup&amp;board={{ board.name }}&amp;ip={{ (rpost.offender)|dec_to_dot }}');return false">{{ strings.MPBAN }}</a>]
+	</td>
+	<td>{{ (rpost.reporter)|dec_to_dot }} [<a href="{{ get_script_name() }}?task=banpopup&amp;board={{ board.name }}&amp;ip={{ (rpost.reporter)|dec_to_dot }}" target="_blank" onclick="popUpPost('{{ get_script_name() }}?task=banpopup&amp;board={{ board.name }}&amp;ip={{ (rpost.reporter)|dec_to_dot }}');return false">{{ strings.MPBAN }}</a>]</td>
+	</tr>
+{% endfor %}
+</tbody></table>
+<br />
+<div class="delbuttons">
+<input type="hidden" name="caller" value="board" />
+<input type="submit" name="delete" value="Delete and Mark Resolved" /> <input type="submit" value="Mark Resolved (Do not Delete)" />
+</div>
+</form>
+
+<p align="center"><a href="{{ get_script_name() }}?task=reports&amp;board={{ board.name }}">View All Available Reports</a></p>
+<!-- END User Reports -->
+
+<hr />
+
+<!-- Search -->
+<div class="postarea">
+<div class="dellist"><h3>Quick Search</h3></div>
+<form action="{{ get_script_name() }}" method="get">
+<input type="hidden" name="task" value="searchposts" />
+<input type="hidden" name="caller" value="board" />
+<input type="hidden" name="board" value="{{ board.name }}" />
+<table><tbody>
+<tr>
+	<td><input type="text" name="id" size="24" /></td>
+	<td><input type="submit" name="idsearch" value="Search Posts by ID" /></td>
+</tr>
+</tbody></table>
+</form>
+<form action="{{ get_script_name() }}" method="get">
+<input type="hidden" name="task" value="searchposts" />
+<input type="hidden" name="caller" value="board" />
+<input type="hidden" name="board" value="{{ board.name }}" />
+<table><tbody>
+<tr>
+	<td><input type="text" name="ip" size="24" /></td>
+	<td><input type="submit" name="ipsearch" value="Search Posts by IP Address" /></td>
+</tr>
+</tbody></table>
+</form>
+</div><br />
+<!-- END Search -->
+
+<hr />
+
+<!-- Manager Post Area -->
+<div class="dellist"><h3>{{ strings.MANAPOST }}</h3></div>
+	
+<br />
+
+<div class="postarea">
+<form id="postform" action="{{ get_script_name() }}" method="post" enctype="multipart/form-data">
+<input type="hidden" name="task" value="post" />
+<input type="hidden" name="board" value="{{ board.name }}" />
+<input type="hidden" name="adminpost" value="1" />
+<input type="hidden" name="no_captcha" value="1" />
+
+{% if thread %}<input type="hidden" name="parent" value="{{ thread }}" />{% endif %}
+
+<table><tbody>
+<tr><td class="postblock">{{ strings.NAME }}</td><td><input type="text" name="field1" size="28" /></td></tr>
+<tr><td class="postblock">{{ strings.EMAIL }}</td><td><input type="text" name="email" size="28" /></td></tr>
+<tr><td class="postblock">{{ strings.SUBJECT }}</td><td><input type="text" name="subject" size="35" />
+<input type="submit" value="{{ strings.SUBMIT }}" /></td></tr>
+<tr><td class="postblock">{{ strings.COMMENT }}</td><td><textarea name="comment" cols="48" rows="4"></textarea></td></tr>
+<tr><td class="postblock">{{ strings.UPLOADFILE }}</td><td><input type="file" name="file" size="35" />
+[<label><input type="checkbox" name="nofile" value="on" />{{ strings.NOFILE }}</label>]
+</td></tr>
+{% if not thread %}<tr><td class="postblock">{{ strings.PARENT }}</td><td><input type="text" name="parent" size="8" /></td></tr>{% endif %}
+<tr><td class="postblock">Posting Mode</td>
+<td>
+	<label><input type="radio" name="no_format" value="0" checked="checked" /><strong> User Friendly:</strong> Posts will be formatted with board settings.</label>
+	<br />
+	<label><input type="radio" name="no_format" value="1" /><strong> Advanced:</strong> {{ strings.NOTAGS }}</label>
+</td>
+</tr>
+<tr><td class="postblock">Other Options</td><td>[<label><input type="checkbox" name="sticky" value="1" /> Sticky Thread After Posting</label>]<br />[<label><input type="checkbox" name="lock" value="1" /> Lock Thread After Posting</label>]</td></tr>
+</tbody></table></form></div>
+<script type="text/javascript">set_inputs("postform",true)</script>
+
+<!-- END Manager Post Area -->
+
+<hr />
+
+{% if not thread %}
+	<table border="1" style="float:left"><tbody><tr><td>
+
+	{% if prevpage != 'none' %}<form method="get" action="{{ get_script_name() }}"><input type="hidden" name="task" value="mpanel" /><input type="hidden" name="board" value="{{ board.name }}" /><input type="hidden" name="page" value="{{ prevpage }}" /><input value="{{ strings.PREV }}" type="submit" /></form>{% endif %}
+	{% if prevpage == 'none' %}{{ strings.FIRSTPG }}{% endif %}
+
+	</td><td>
+
+	{% for page in pages %}
+		{% if not page.current %}[<a href="{{ page.filename }}">{{ page.page }}</a>]{% endif %}
+		{% if page.current %}[{{ page.page }}]{% endif %}
+	{% endfor %}
+
+	</td><td>
+
+	{% if nextpage != 'none' %}<form method="get" action="{{ get_script_name() }}"><input type="hidden" name="task" value="mpanel" /><input type="hidden" name="board" value="{{ board.name }}" /><input type="hidden" name="page" value="{{ nextpage }}" /><input value="{{ strings.NEXT }}" type="submit" /></form>{% endif %}
+	{% if nextpage == 'none' %}{{ strings.LASTPG }}{% endif %}
+
+	</td></tr></tbody></table>
+{% endif %}
+{% if thread %}
+	<span style="float:left">[<a href="{{ get_script_name() }}?task=mpanel&amp;board={{ board.name }}">Return to Panel</a>]</span>
+{% endif %}
+
+<form action="{{ get_script_name() }}" method="post" id="delform">
+<input type="hidden" name="board" value="{{ board.name }}" />
+<input type="hidden" name="admindelete" value="1" />
+
+<div class="delbuttons" style="float:right">
+<input type="hidden" name="caller" value="board" />
+<input type="submit" name="task" value="{{ strings.MPDELETE }}" />
+<input type="submit" name="task" value="{{ strings.MPARCHIVE }}" />
+<input type="reset" value="{{ strings.MPRESET }}" />
+[<label><input type="checkbox" name="fileonly" value="on" />{{ strings.MPONLYPIC }}</label>]
+</div>
+
+<br clear="all" />
+<hr />
+
+{% for currentthread in threads %}
+	{% for post in currentthread.posts %}
+		{% if not post.parent %}
+			<div id="t{{ post.num }}">
+			{% if post.image %}
+				<span class="filesize">{{ strings.PICNAME }}<a target="_blank" href="{{ (post.image)|expand_image_url }}">{{ (post.image)|basename }}</a>
+				-(<em>{{ post.size }} B, {{ post.width }}x{{ post.height }}</em>)</span>
+				<span class="thumbnailmsg">{{ strings.THUMB }}</span><br />
+
+				{% if post.thumbnail %}
+					<a target="_blank" href="{{ (post.image)|expand_image_url }}" >
+					<img src="{{ (post.thumbnail)|expand_url }}" width="{{ post.tn_width }}" height="{{ post.tn_height }}" alt="{{ post.size }}" class="thumb" id="img{{ (post.image)|basename }}" /></a>
+				{% endif %}
+				{% if not post.thumbnail %}
+					{% if board.options.DELETED_THUMBNAIL %}
+						<a target="_blank" href="{{ (board.options.DELETED_IMAGE)|expand_image_url }}">
+						<img src="{{ (board.options.DELETED_THUMBNAIL)|expand_url }}" width="{{ post.tn_width }}" height="{{ post.tn_height }}" alt="" class="thumb" /></a>
+					{% endif %}
+					{% if not (board.options.DELETED_THUMBNAIL) %}
+						<div class="nothumb"><a target="_blank" href="{{ (post.image)|expand_image_url }}">{{ strings.NOTHUMB }}</a></div>
+					{% endif %}
+				{% endif %}
+			{% endif %}
+
+			<a name="{{ post.num }}"></a>
+			<label><input type="checkbox" name="num" value="{{ post.num }}" />
+			<span class="filetitle">{{ post.subject }}</span>
+			{% if post.email %}<span class="postername"><a href="{{ post.email }}">{{ post.name }}</a></span>{% if post.trip %}<span class="postertrip"><a href="{{ post.email }}">{{ post.trip }}</a></span>{% endif %}{% endif %}
+			{% if not post.email %}<span class="postername">{{ post.name }}</span>{% if post.trip %}<span class="postertrip">{{ post.trip }}</span>{% endif %}{% endif %} 
+			<span class="ipaddr">(IP: {{ (post.ip)|dec_to_dot }}{% if post.admin_post == 'yes' %}; {% if not post.lastedit %}<strong>Moderator Post</strong>{% endif %}{% if post.lastedit %}<strong>Moderator Edit</strong>{% endif %}{% endif %})</span> 
+			{% if post.stickied %} <img src="{{ ('/include/boards/sticky.gif')|expand_url }}" alt="{{ strings.STICKIEDALT }}" title="{{ strings.STICKIED }}" /> {% endif %}
+			{% if post.locked == 'yes' %} <img src="{{ ('/include/boards/locked.gif')|expand_url }}" alt="{{ strings.LOCKEDALT }}" title="{{ strings.LOCKED }}" /> {% endif %}
+			{{ post.date }}</label>
+			<span class="reflink">
+			{% if not thread %}<span><a href="{{ (post.num)|get_reply_link(0) }}#{{ post.num }}">No.</a><a href="{{ (post.num)|get_reply_link(0) }}#i{{ post.num }}">{{ post.num }}</a></span>{% endif %}
+			{% if thread %}<span><a href="#{{ post.num }}">No.</a><a href="javascript:insert('&gt;&gt;{{ post.num }}')">{{ post.num }}</a></span>{% endif %}
+			</span>&nbsp;
+			<span class="deletelink" id="deletelink{{ post.num }}">
+				[<a href="{{ get_script_name() }}?task=delpostwindow&amp;num={{ post.num }}" target="_blank" onclick="passfield('{{ post.num }}',true); return false">Delete</a>
+				<span id="delpostcontent{{ post.num }}" style="display:inline"></span>
+			</span> 
+			<a href="{{ get_script_name() }}?task=banpopup&amp;board={{ board.name }}&amp;ip={{ (post.ip)|dec_to_dot }}&amp;delete={{ post.num }}" onclick="popUpPost('{{ get_script_name() }}?task=banpopup&amp;board={{ board.name }}&amp;ip={{ (post.ip)|dec_to_dot }}&amp;delete={{ post.num }}');return false">&amp;</a> 
+			<a href="{{ get_script_name() }}?task=banpopup&amp;board={{ board.name }}&amp;ip={{ (post.ip)|dec_to_dot }}" onclick="popUpPost('{{ get_script_name() }}?task=banpopup&amp;board={{ board.name }}&amp;ip={{ (post.ip)|dec_to_dot }}');return false">{{ strings.MPBAN }}</a>]&nbsp;
+			[<a href="{{ get_script_name() }}?task=editpostwindow&amp;board={{ board.name }}&amp;num={{ post.num }}&amp;admineditmode=1" target="_blank" onclick="popUpPost('{{ get_script_name() }}?task=editpostwindow&amp;board={{ board.name }}&amp;num={{ post.num }}&amp;admineditmode=1'); return false">Edit</a>]&nbsp;
+			{% if not thread %}
+				[<a href="{{ get_script_name() }}?task=mpanel&amp;board={{ board.name }}&amp;page=t{{ post.num }}">{{ strings.REPLY }}</a>]
+			{% endif %}
+			<br />
+			<span class="threadopts" style="padding-left:2em;font-size:small"><strong>Thread Options:</strong> [{% if not post.stickied %}<a href="{{ get_script_name() }}?task=sticky&amp;thread={{ post.num }}&amp;board={{ board.name }}">Sticky</a>{% endif %}{% if post.stickied %}<a href="{{ get_script_name() }}?task=unsticky&amp;thread={{ post.num }}&amp;board={{ board.name }}">Unsticky</a>{% endif %}] [{% if post.locked != 'yes' %}<a href="{{ get_script_name() }}?task=lock&amp;thread={{ post.num }}&amp;board={{ board.name }}">Lock</a>{% endif %}{% if post.locked == 'yes' %}<a href="{{ get_script_name() }}?task=unlock&amp;thread={{ post.num }}&amp;board={{ board.name }}">Unlock</a>{% endif %}] [<a href="{{ get_script_name() }}?task=banthread&amp;board={{ board.name }}&amp;num={{ post.num }}" onclick="popUpPost('{{ get_script_name() }}?task=banthread&amp;board={{ board.name }}&amp;num={{ post.num }}');return false">Ban Thread</a>] <span id="movelink{{ post.num }}">[<a href="#" onclick="move_thread_field({{ post.num }}); return false">Move</a>]<span id="movethreadcontent{{ post.num }}"></span></span></span>
+
+			<blockquote>
+			{% if omit %}{{ post.comment|redirect_reply_links(min_res) }}{% else %}{{ post.comment }}{% endif %}
+			{% if post.abbrev %}<div class="abbrev">{% filter reverse_format(strings.ABBRTEXT) %}{{ get_script_name() }}?task=mpanel&amp;board={{ board.name }}&amp;page=t{{ post.num }}{% endfilter %}</div>{% endif %}
+			{% if post.lastedit %}<p style="font-size: small; font-style: italic">{{ strings.LASTEDITED }}{% if post.admin_post == 'yes' %} {{ strings.BYMOD }}{% endif %} {{ post.lastedit }}. (IP: {{ (post.lastedit_ip)|dec_to_dot }})</p>{% endif %}
+			</blockquote>
+
+			{% if currentthread.omit %}
+				<span class="omittedposts">
+				{% if currentthread.omitimages %}{{ (strings.ABBRIMG)|format(currentthread.omit, currentthread.omitimages) }}{% endif %}
+				{% if not currentthread.omitimages %}{{ (strings.ABBR)|format(currentthread.omit) }}{% endif %}
+				</span>
+			{% endif %}
+		{% endif %}
+		{% if post.parent %}
+			<table><tbody><tr><td class="doubledash">&gt;&gt;</td>
+			<td class="reply" id="reply{{ post.num }}">
+
+			<a name="{{ post.num }}"></a>
+			<label><input type="checkbox" name="num" value="{{ post.num }}" />
+			<span class="replytitle">{{ post.subject }}</span>
+			{% if post.email %}<span class="commentpostername"><a href="{{ post.email }}">{{ post.name }}</a></span>{% if post.trip %}<span class="postertrip"><a href="{{ post.email }}">{{ post.trip }}</a></span>{% endif %}{% endif %}
+			{% if not post.email %}<span class="commentpostername">{{ post.name }}</span>{% if post.trip %}<span class="postertrip">{{ post.trip }}</span>{% endif %}{% endif %} 
+			<span class="ipaddr">(IP: {{ (post.ip)|dec_to_dot }}{% if post.admin_post == 'yes' %}; {% if not post.lastedit %}<strong>Moderator Post</strong>{% endif %}{% if post.lastedit %}<strong>Moderator Edit</strong>{% endif %}{% endif %})</span> 
+			{{ post.date }}</label>
+			<span class="reflink">
+			{% if not thread %}<span><a href="{{ (post.parent)|get_reply_link(0) }}#{{ post.num }}">No.</a><a href="{{ (post.parent)|get_reply_link(0) }}#i{{ post.num }}">{{ post.num }}</a></span>{% endif %}
+			{% if thread %}<span><a href="#{{ post.num }}">No.</a><a href="javascript:insert('&gt;&gt;{{ post.num }}')">{{ post.num }}</a></span>{% endif %}
+			</span>&nbsp;
+			<span class="deletelink" id="deletelink{{ post.num }}">
+				[<a href="#" target="_blank" onclick="passfield('{{ post.num }}',true); return false">Delete</a>
+				<span id="delpostcontent{{ post.num }}" style="display:inline"></span>
+			</span> 
+			<a href="{{ get_script_name() }}?task=banpopup&amp;board={{ board.name }}&amp;ip={{ (post.ip)|dec_to_dot }}&amp;delete={{ post.num }}" onclick="popUpPost('{{ get_script_name() }}?task=banpopup&amp;board={{ board.name }}&amp;ip={{ (post.ip)|dec_to_dot }}&amp;delete={{ post.num }}');return false">&amp;</a> 
+			<a href="{{ get_script_name() }}?task=banpopup&amp;board={{ board.name }}&amp;ip={{ (post.ip)|dec_to_dot }}" onclick="popUpPost('{{ get_script_name() }}?task=banpopup&amp;board={{ board.name }}&amp;ip={{ (post.ip)|dec_to_dot }}');return false">{{ strings.MPBAN }}</a>]&nbsp;
+			[<a href="{{ get_script_name() }}?task=editpostwindow&amp;board={{ board.name }}&amp;num={{ post.num }}&amp;admineditmode=1" target="_blank" onclick="popUpPost('{{ get_script_name() }}?task=editpostwindow&amp;board={{ board.name }}&amp;num={{ post.num }}&amp;admineditmode=1'); return false">Edit</a>]
+			{% if post.image %}
+				<br />
+				<span class="filesize">{{ strings.PICNAME }}<a target="_blank" href="{{ (post.image)|expand_image_url }}">{{ (post.image)|basename }}</a>
+				-(<em>{{ post.size }} B, {{ post.width }}x{{ post.height }}</em>)</span>
+				<span class="thumbnailmsg">{{ strings.THUMB }}</span><br />
+
+				{% if post.thumbnail %}
+					<a target="_blank" href="{{ (post.image)|expand_image_url }}">
+					<img src="{{ (post.thumbnail)|expand_url }}" width="{{ post.tn_width }}" height="{{ post.tn_height }}" alt="{{ post.size }}" class="thumb" id="img{{ (post.image)|basename }}" /></a>
+				{% endif %}
+				{% if not post.thumbnail %}
+					{% if board.options.DELETED_THUMBNAIL %}
+						<a target="_blank" href="{{ (board.options.DELETED_IMAGE)|expand_image_url }}">
+						<img src="{{ (board.options.DELETED_THUMBNAIL)|expand_url }}" width="{{ post.tn_width }}" height="{{ post.tn_height }}" alt="" class="thumb" /></a>
+					{% endif %}
+					{% if not (board.options.DELETED_THUMBNAIL) %}
+						<div class="nothumb"><a target="_blank" href="{{ (post.image)|expand_image_url }}">{{ strings.NOTHUMB }}</a></div>
+					{% endif %}
+				{% endif %}
+			{% endif %}
+
+			<blockquote>
+			{% if omit %}{{ post.comment|redirect_reply_links(min_res) }}{% else %}{{ post.comment }}{% endif %}
+			{% if post.abbrev %}<div class="abbrev">{% filter reverse_format(strings.ABBRTEXT) %}{{ get_script_name() }}?task=mpanel&amp;board={{ board.name }}&amp;page=t{{ post.parent }}#{{ post.num }}{% endfilter %}</div>{% endif %}
+			{% if post.lastedit %}<p style="font-size: small; font-style: italic">Last edited{% if post.admin_post == 'yes' %} by moderator{% endif %} {{ post.lastedit }}. (IP: {{ (post.lastedit_ip)|dec_to_dot }})</p>{% endif %}
+			</blockquote>
+
+			</td></tr></tbody></table>
+		{% endif %}
+		
+	{% endfor %}
+	</div>
+	<br clear="left" /><hr />
+{% endfor %}
+
+<div class="delbuttons" style="float:right">
+<input type="submit" name="task" value="{{ strings.MPDELETE }}" />
+<input type="submit" name="task" value="{{ strings.MPARCHIVE }}" />
+[<label><input type="checkbox" name="fileonly" value="on" />{{ strings.MPONLYPIC }}</label>]
+<input type="reset" value="{{ strings.MPRESET }}" />
+</div>
+</form>
+
+{% if not thread %}
+	<table border="1" style="float:left"><tbody><tr><td>
+
+	{% if prevpage != 'none' %}<form method="get" action="{{ get_script_name() }}"><input type="hidden" name="task" value="mpanel" /><input type="hidden" name="board" value="{{ board.name }}" /><input type="hidden" name="page" value="{{ prevpage }}" /><input value="{{ strings.PREV }}" type="submit" /></form>{% endif %}
+	{% if prevpage == 'none' %}{{ strings.FIRSTPG }}{% endif %}
+
+	</td><td>
+
+	{% for page in pages %}
+		{% if not page.current %}[<a href="{{ page.filename }}">{{ page.page }}</a>]{% endif %}
+		{% if page.current %}[{{ page.page }}]{% endif %}
+	{% endfor %}
+
+	</td><td>
+
+	{% if nextpage != 'none' %}<form method="get" action="{{ get_script_name() }}"><input type="hidden" name="task" value="mpanel" /><input type="hidden" name="board" value="{{ board.name }}" /><input type="hidden" name="page" value="{{ nextpage }}" /><input value="{{ strings.NEXT }}" type="submit" /></form>{% endif %}
+	{% if nextpage == 'none' %}{{ strings.LASTPG }}{% endif %}
+
+	</td></tr></tbody></table>
+{% endif %}
+
+<br clear="all" />
+
+<hr />
+
+<div class="dellist"><h3>Nuke Spam by IP</h3></div>
+
+<div class="postarea">
+<form action="{{ get_script_name() }}" method="post">
+<input type="hidden" name="task" value="deleteall_confirm" />
+<input type="hidden" name="board" value="{{ board.name }}" />
+<table><tbody>
+<tr><td class="postblock">{{ strings.BANIPLABEL }}</td><td><input type="text" name="ip" size="24" /></td></tr>
+<tr><td class="postblock">{{ strings.BANMASKLABEL }}</td><td><input type="text" name="mask" size="24" value="255.255.255.255" /> 
+<label> [ <input type="checkbox" name="global" value="1" /> {% if type == "mod" %}All controlled boards{% endif %}{% if type != "mod" %}Global{% endif %} ]</label>
+<input type="submit" value="{{ strings.MPDELETEIP }}" /></td></tr>
+</tbody></table></form>
+</div>
+
+<br clear="all" />
+
+{% include 'normal_foot_include.html' %}

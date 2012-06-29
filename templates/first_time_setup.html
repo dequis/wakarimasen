@@ -1,0 +1,12 @@
+{% include 'normal_head_include.html' %}
+<div align="center">
+<h2>First Time Setup</h2>
+<form action="{{ get_script_name() }}" method="post">
+<input type="hidden" name="board" value="{{ board.name }}" />
+<input type="hidden" name="task" value="entersetup" />
+<p>Staff accounts have not yet been set up.</p>
+{{ strings.ADMINPASS }} 
+<input type="password" name="berra" size="8" value="" /> 
+<input type="submit" value="{{ strings.MANASUB }}" />
+</form></div>
+{% include 'normal_foot_include.html' %}

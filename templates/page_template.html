@@ -1,0 +1,282 @@
+{% include 'normal_head_include.html' %}
+
+{% if lockedthread != 'yes' %}
+{% if thread %}
+	[<a href="{{ (board.options.HTML_SELF)|expand_url }}">{{ strings.RETURN }}</a>]
+	{% if not omit %}
+		<div class="theader">{{ strings.POSTING }}</div>
+	{% endif %}
+	{% if omit %}
+		<div class="theader">Posting Mode: Reply (Abbreviated Thread View)</div>
+	{% endif %}
+{% endif %}
+
+<div class="globalannounce">{% include 'announcements_global.html' %}</div>
+<div class="announcements">{% include 'announcements.html' %}</div>
+
+{% if board.options.ENABLE_OEKAKI %}
+	{% if thread %}<hr />{% endif %}
+	<div align="center">
+	<form action="{{ get_script_name() }}" method="get">
+	<input type="hidden" name="task" value="paint" />
+	<input type="hidden" name="board" value="{{ board.name }}" />
+	{% if thread %}<input type="hidden" name="oek_parent" value="{{ thread }}" />{% endif %}
+	
+	{{ strings.OEKPAINT }}
+	<select name="oek_painter">
+	
+	{% for painters in strings.OEKPAINTERS %}
+		{% if painter == board.options.OEKAKI_DEFAULT_PAINTER %}
+		<option value="{{ painter }}" selected="selected">{{ name }}</option>
+		{% endif %}
+		{% if painter != board.options.OEKAKI_DEFAULT_PAINTER %}
+		<option value="{{ painter }}">{{ name }}</option>
+		{% endif %}
+	{% endfor %}
+	</select>
+	
+	{{ strings.OEKX }}<input type="text" name="oek_x" size="3" value="{{ board.options.OEKAKI_DEFAULT_X }}" />
+	{{ strings.OEKY }}<input type="text" name="oek_y" size="3" value="{{ board.options.OEKAKI_DEFAULT_Y }}" />
+	{% if thread %}<input type="hidden" name="dummy" value="{{ dummy }}" />{% endif %}
+	
+	{% if board.options.OEKAKI_ENABLE_MODIFY and thread %}
+		{{ strings.OEKSOURCE }}
+		<select name="oek_src">
+		<option value="">{{ strings.OEKNEW }}</option>
+	
+		{% for currentthread in threads %}
+			{% for post in currentthread.posts %}
+				{% if post.image %}
+					<option value="{{ post.image }}">{{ (strings.OEKMODIFY)|format(post.num) }}</option>
+				{% endif %}
+			{% endfor %}
+		{% endfor %}
+		</select>
+	{% endif %}
+	
+	<input type="submit" value="{{ strings.OEKSUBMIT }}" />
+	</form>
+	</div><hr />
+{% endif %}
+
+{% if postform %}
+	<div class="postarea">
+	<form id="postform" action="{{ get_script_name() }}" method="post" enctype="multipart/form-data">
+	<input type="hidden" name="board" value="{{ board.name }}" />
+	<input type="hidden" name="task" value="post" />
+	{% if thread %}<input type="hidden" name="parent" value="{{ thread }}" />{% endif %}
+	{% if not image_inp and not thread and board.options.ALLOW_TEXTONLY %}
+		<input type="hidden" name="nofile" value="1" />
+	{% endif %}
+	{% if board.options.FORCED_ANON %}<input type="hidden" name="name" />{% endif %}
+	{% if board.options.SPAM_TRAP %}<div class="trap">{{ strings.SPAMTRAP }}<input type="text" name="name" size="28" /><input type="text" name="link" size="28" /></div>{% endif %}
+
+	<table><tbody>
+	{% if not (board.options.FORCED_ANON) %}<tr><td class="postblock">{{ strings.NAME }}</td><td><input type="text" name="field1" size="28" /></td></tr>{% endif %}
+	<tr><td class="postblock">{{ strings.EMAIL }}</td><td><input type="text" name="email" size="28" /></td></tr>
+	<tr><td class="postblock">{{ strings.SUBJECT }}</td><td><input type="text" name="subject" size="35" />
+	<input type="submit" value="{{ strings.SUBMIT }}" /></td></tr>
+	<tr><td class="postblock">{{ strings.COMMENT }}</td><td><textarea name="comment" cols="48" rows="4"></textarea></td></tr>
+
+	{% if image_inp %}
+		<tr><td class="postblock">{{ strings.UPLOADFILE }}</td><td><input type="file" name="file" size="35" />
+		{% if textonly_inp %}[<label><input type="checkbox" name="nofile" value="on" />{{ strings.NOFILE }} ]</label>{% endif %}
+		</td></tr>
+	{% endif %}
+
+	{% if board.options.ENABLE_CAPTCHA %}
+		<tr><td class="postblock">{{ strings.CAPTCHA }}</td><td><input type="text" name="captcha" size="10" />
+		<img alt="" src="{{ (board.options.CAPTCHA_SCRIPT)|expand_url }}?key={{ (thread)|get_captcha_key }}&amp;dummy={{ dummy }}" />
+		</td></tr>
+	{% endif %}
+
+	<tr><td class="postblock">{{ strings.DELPASS }}</td><td><input type="password" name="password" size="8" /> {{ strings.DELEXPL }}</td></tr>
+	<tr><td colspan="2">
+	<div class="rules">{% include 'rules.html' %}</div></td></tr>
+	</tbody></table></form></div>
+	<script type="text/javascript">set_inputs("postform",false)</script>
+
+{% endif %}
+{% endif %}
+
+{% if lockedthread == 'yes' %}
+	[<a href="{{ (board.options.HTML_SELF)|expand_url }}">{{ strings.RETURN }}</a>]
+	<p style="font-weight:bold;font-size:1.2em">{{ strings.LOCKEDANNOUNCE }}</p>
+{% endif %}
+
+<hr />
+
+{% if not thread %}
+	<script type="text/javascript">
+		var hiddenThreads=get_cookie(thread_cookie);
+	</script>
+{% endif %}
+
+<form id="delform" action="{{ get_script_name() }}" method="post">
+
+{% for currentthread in threads %}
+	{% for post in currentthread.posts %}
+		{% if not post.parent %}
+			<div id="t{{ post.num }}_info" style="float:left"></div>
+			{% if not thread %}<span id="t{{ post.num }}_display" style="float:right"><a href="javascript:threadHide('t{{ post.num }}')" id="togglet{{ post.num }}">Hide Thread (&minus;)</a><ins><noscript><br/>(Javascript Required.)</noscript></ins></span>{% endif %}
+			<div id="t{{ post.num }}">
+			{% if post.image %}
+				<span class="filesize">{{ strings.PICNAME }}<a target="_blank" href="{{ (post.image)|expand_image_url }}">{{ (post.image)|basename }}</a>
+				-(<em>{% if (post.size <= 10240) %}{{ post.size }} B{% endif %}{% if (post.size > 10240 and post.size < 1048576) %}{{ (post.size / 1024)|round(1) }} KiB{% endif %}{% if (post.size >= 1048576) %}{{ (post.size / 1048576)|round(1) }} MiB{% endif %}, {{ post.width }}x{{ post.height }}</em>)</span>
+				<span class="thumbnailmsg">{{ strings.THUMB }}</span><br />
+
+				{% if post.thumbnail %}
+					<a target="_blank" href="{{ (post.image)|expand_image_url }}" >
+					<img src="{{ (post.thumbnail)|expand_url }}" width="{{ post.tn_width }}" height="{{ post.tn_height }}" alt="{{ post.size }}" class="thumb" /></a>
+				{% endif %}
+				{% if not post.thumbnail %}
+					{% if board.options.DELETED_THUMBNAIL %}
+						<a target="_blank" href="{{ (board.options.DELETED_IMAGE)|expand_image_url }}">
+						<img src="{{ (board.options.DELETED_THUMBNAIL)|expand_url }}" width="{{ post.tn_width }}" height="{{ post.tn_height }}" alt="" class="thumb" /></a>
+					{% endif %}
+					{% if not (board.options.DELETED_THUMBNAIL) %}
+						<div class="nothumb"><a target="_blank" href="{{ (post.image)|expand_image_url }}">{{ strings.NOTHUMB }}</a></div>
+					{% endif %}
+				{% endif %}
+			{% endif %}
+
+			<a name="{{ post.num }}"></a>
+			<label><input type="checkbox" name="num" value="{{ post.num }}" />
+			<span class="filetitle">{{ post.subject }}</span>
+			{% if post.email %}<span class="postername"><a href="{{ post.email }}">{{ post.name }}</a></span>{% if post.trip %}<span class="postertrip"><a href="{{ post.email }}">{{ post.trip }}</a></span>{% endif %}{% endif %}
+			{% if not post.email %}<span class="postername">{{ post.name }}</span>{% if post.trip %}<span class="postertrip">{{ post.trip }}</span>{% endif %}{% endif %}
+			{% if post.stickied %} <img src="{{ ('/include/boards/sticky.gif')|expand_url }}" alt="{{ strings.STICKIEDALT }}" title="{{ strings.STICKIED }}" /> {% endif %}
+			{% if post.locked == 'yes' %} <img src="{{ ('/include/boards/locked.gif')|expand_url }}" alt="{{ strings.LOCKEDALT }}" title="{{ strings.LOCKED }}" /> {% endif %}
+			{{ post.date }}</label>
+			<span class="reflink">
+			{% if not thread %}<span><a href="{{ (post.num)|get_reply_link(0) }}#{{ post.num }}">No.</a><a href="{{ (post.num)|get_reply_link(0) }}#i{{ post.num }}">{{ post.num }}</a></span>{% endif %}
+			{% if thread %}<span><a href="#{{ post.num }}">No.</a><a href="javascript:insert('&gt;&gt;{{ post.num }}')">{{ post.num }}</a></span>{% endif %}
+			</span>&nbsp;
+			<span class="deletelink" id="deletelink{{ post.num }}">
+				[<a href="{{ get_script_name() }}?task=delpostwindow&amp;num={{ post.num }}&amp;board={{ board.name }}" target="_blank" onclick="passfield('{{ post.num }}',false); return false">Delete</a>]
+				<span id="delpostcontent{{ post.num }}" style="display:inline"></span>
+			</span>&nbsp;
+			[<a href="{{ get_script_name() }}?task=edit&amp;board={{ board.name }}&amp;num={{ post.num }}{% if post.admin_post == 'yes' %}&amp;admin_post=1{% endif %}" target="_blank" onclick="popUpPost('{{ get_script_name() }}?task=edit&amp;board={{ board.name }}&amp;num={{ post.num }}{% if post.admin_post == 'yes' %}&amp;admin_post=1{% endif %}'); return false">Edit</a>]&nbsp;
+			{% if not thread %}
+			{% if post.locked != 'yes' %}[<a href="{{ (post.num)|get_reply_link(0) }}">{{ strings.REPLY }}</a>{% if config.ENABLE_ABBREVIATED_THREAD_PAGES and currentthread.omit and currentthread.omit + board.options.REPLIES_PER_THREAD > config.POSTS_IN_ABBREVIATED_THREAD_PAGES %}/<a href="{{ (post.num)|get_reply_link(0, 1) }}">Last {{ config.POSTS_IN_ABBREVIATED_THREAD_PAGES }}</a>{% endif %}]{% endif %}
+			{% if post.locked == 'yes' %}[<a href="{{ (post.num)|get_reply_link(0) }}">{{ strings.VIEW }}</a>]{% endif %}
+			{% endif %}
+
+			<blockquote>
+			{% if omit %}{{ post.comment|redirect_reply_links(min_res) }}{% else %}{{ post.comment }}{% endif %}
+			{% if post.abbrev %}<div class="abbrev">{{ (strings.ABBRTEXT)|format((config.ENABLE_ABBREVIATED_THREAD_PAGES and currentthread.omit and currentthread.omit + board.options.REPLIES_PER_THREAD > config.POSTS_IN_ABBREVIATED_THREAD_PAGES) and (post.num)|get_reply_link(post.parent, 1) or (post.num)|get_reply_link(post.parent)) }}</div>{% endif %}
+			{% if post.lastedit %}<p style="font-size: small; font-style: italic">{{ strings.LASTEDITED }}{% if post.admin_post == 'yes' %} {{ strings.BYMOD }}{% endif %} {{ post.lastedit }}.</p>{% endif %}
+			</blockquote>
+
+			{% if not thread and currentthread.omit %}
+				<span class="omittedposts">
+				{% if currentthread.omitimages and not post.locked %}{{ (strings.ABBRIMG)|format(currentthread.omit, currentthread.omitimages) }}{% endif %}
+				{% if currentthread.omitimages and post.locked %}{{ (strings.ABBRIMG_LOCK)|format(currentthread.omit, currentthread.omitimages) }}{% endif %}
+				{% if not currentthread.omitimages and not post.locked %}{{ (strings.ABBR)|format(currentthread.omit) }}{% endif %}
+				{% if not currentthread.omitimages and post.locked %}{{ (strings.ABBR_LOCK)|format(currentthread.omit) }}{% endif %}
+				</span>
+			{% endif %}
+			{% if thread and omit %}
+				<span class="omittedposts">
+					This page shows only the latest {{ config.POSTS_IN_ABBREVIATED_THREAD_PAGES }} replies to this thread.
+					For the other {{ omit }}, refer to <a href="{{ (thread)|get_reply_link(0) }}">the full thread page</a>.
+				</span>
+			{% endif %}
+			{% if not thread %}
+				<script type="text/javascript">
+					if (hiddenThreads.indexOf('t{{ post.num }},') != -1)
+					{
+						toggleHidden('t{{ post.num }}');	
+					}
+				</script>
+			{% endif %}
+		{% endif %}
+		{% if post.parent %}
+			<table><tbody><tr><td class="doubledash">&gt;&gt;</td>
+			<td class="reply" id="reply{{ post.num }}">
+
+			<a name="{{ post.num }}"></a>
+			<label><input type="checkbox" name="num" value="{{ post.num }}" />
+			<span class="replytitle">{{ post.subject }}</span>
+			{% if post.email %}<span class="commentpostername"><a href="{{ post.email }}">{{ post.name }}</a></span>{% if post.trip %}<span class="postertrip"><a href="{{ post.email }}">{{ post.trip }}</a></span>{% endif %}{% endif %}
+			{% if not post.email %}<span class="commentpostername">{{ post.name }}</span>{% if post.trip %}<span class="postertrip">{{ post.trip }}</span>{% endif %}{% endif %}
+			{{ post.date }}</label>
+			<span class="reflink">
+			{% if not thread %}<span><a href="{{ (post.parent)|get_reply_link(0) }}#{{ post.num }}">No.</a><a href="{{ (post.parent)|get_reply_link(0) }}#i{{ post.num }}">{{ post.num }}</a></span>{% endif %}
+			{% if thread %}<span><a href="#{{ post.num }}">No.</a><a href="javascript:insert('&gt;&gt;{{ post.num }}')">{{ post.num }}</a></span>{% endif %}
+			</span>&nbsp;
+			<span class="deletelink" id="deletelink{{ post.num }}">
+				[<a href="{{ get_script_name() }}?task=delpostwindow&amp;num={{ post.num }}&amp;board={{ board.name }}" target="_blank" onclick="passfield('{{ post.num }}', false); return false">Delete</a>]
+				<span id="delpostcontent{{ post.num }}" style="display:inline"></span>
+			</span>&nbsp;
+			[<a href="{{ get_script_name() }}?task=edit&amp;board={{ board.name }}&amp;num={{ post.num }}{% if post.admin_post == 'yes' %}&amp;admin_post=1{% endif %}" target="_blank" onclick="popUpPost('{{ get_script_name() }}?task=edit&amp;board={{ board.name }}&amp;num={{ post.num }}{% if post.admin_post == 'yes' %}&amp;admin_post=1{% endif %}'); return false">Edit</a>]
+
+			{% if post.image %}
+				<br />
+				<span class="filesize">{{ strings.PICNAME }}<a target="_blank" href="{{ (post.image)|expand_image_url }}">{{ (post.image)|basename }}</a>
+				-(<em>{% if (post.size <= 10240) %}{{ post.size }} B{% endif %}{% if (post.size > 10240 and post.size < 1048576) %}{{ (post.size / 1024)|round(1) }} KiB{% endif %}{% if (post.size >= 1048576) %}{{ (post.size / 1048576)|round(1) }} MiB{% endif %}, {{ post.width }}x{{ post.height }}</em>)</span>
+				<span class="thumbnailmsg">{{ strings.THUMB }}</span><br />
+
+				{% if post.thumbnail %}
+					<a target="_blank" href="{{ (post.image)|expand_image_url }}">
+					<img src="{{ (post.thumbnail)|expand_url }}" width="{{ post.tn_width }}" height="{{ post.tn_height }}" alt="{{ post.size }}" class="thumb" id="img{{ (post.image)|basename }}" /></a>
+				{% endif %}
+				{% if not post.thumbnail %}
+					{% if board.options.DELETED_THUMBNAIL %}
+						<a target="_blank" href="{{ (board.options.DELETED_IMAGE)|expand_image_url }}">
+						<img src="{{ (board.options.DELETED_THUMBNAIL)|expand_url }}" width="{{ post.tn_width }}" height="{{ post.tn_height }}" alt="" class="thumb" /></a>
+					{% endif %}
+					{% if not (board.options.DELETED_THUMBNAIL) %}
+						<div class="nothumb"><a target="_blank" href="{{ (post.image)|expand_image_url }}">{{ strings.NOTHUMB }}</a></div>
+					{% endif %}
+				{% endif %}
+			{% endif %}
+
+			<blockquote>
+			{% if omit %}{{ post.comment|redirect_reply_links(min_res) }}{% else %}{{ post.comment }}{% endif %}
+			{% if post.abbrev %}<div class="abbrev">{{ (strings.ABBRTEXT)|format(((config.ENABLE_ABBREVIATED_THREAD_PAGES and currentthread.omit and currentthread.omit + board.options.REPLIES_PER_THREAD > config.POSTS_IN_ABBREVIATED_THREAD_PAGES) and (post.num)|get_reply_link(post.parent, 1) or (post.num)|get_reply_link(post.parent))) }}</div>{% endif %}
+			{% if post.lastedit %}<p style="font-size: small; font-style: italic">Last edited{% if post.admin_post == 'yes' %} by moderator{% endif %} {{ post.lastedit }}.</p>{% endif %}
+			</blockquote>
+
+			</td></tr></tbody></table>
+		{% endif %}
+	{% endfor %}
+	</div>
+	<br clear="left" /><hr />
+{% endfor %}
+
+<table class="userdelete"><tbody><tr><td>
+<input type="hidden" name="board" value="{{ board.name }}" />
+{{ strings.REPDEL }}[<label><input type="checkbox" name="fileonly" value="on" />{{ strings.DELPICONLY }}</label>] 
+{{ strings.DELKEY }}<input type="password" name="password" size="8" /> 
+<input value="{{ strings.DELETE }}" name="task" type="submit" />
+</td></tr>
+<tr><td>Report Post(s) to Staff <input value="Report" name="task" type="submit" /></td></tr>
+</tbody></table>
+</form>
+<script type="text/javascript">set_delpass("delform")</script>
+
+{% if not thread %}
+	<table border="1"><tbody><tr><td>
+
+	{% if prevpage %}<form method="get" action="{{ prevpage }}"><input value="{{ strings.PREV }}" type="submit" /></form>{% endif %}
+	{% if not prevpage %}{{ strings.FIRSTPG }}{% endif %}
+
+	</td><td>
+
+	{% for page in pages %}
+		{% if not page.current %}[<a href="{{ page.filename }}">{{ page.page }}</a>]{% endif %}
+		{% if page.current %}[{{ page.page }}]{% endif %}
+	{% endfor %}
+
+	</td><td>
+
+	{% if nextpage %}<form method="get" action="{{ nextpage }}"><input value="{{ strings.NEXT }}" type="submit" /></form>{% endif %}
+	{% if not nextpage %}{{ strings.LASTPG }}{% endif %}
+
+	</td></tr></tbody></table>
+{% endif %}
+
+<br clear="all" />
+
+{% include 'normal_foot_include.html' %}

@@ -1,0 +1,42 @@
+{% include 'mini_head_include.html' %}
+
+<h1 style="text-align:center;font-size:1em">Now Editing Post No.{{ num }}</h1>
+<div class="postarea">
+<form id="postform" action="{{ get_script_name() }}" method="post" enctype="multipart/form-data">
+<input type="hidden" name="task" value="oekakiedit" />
+<input type="hidden" name="board" value="{{ board.name }}" />
+<input type="hidden" name="oek_ip" value="{{ oek_ip }}" />
+<input type="hidden" name="srcinfo" value="{{ srcinfo }}" />
+<input type="hidden" name="num" value="{{ num }}" />
+<table><tbody>
+<tr><td class="postblock">{{ strings.NAME }}</td><td><input type="text" name="field1" size="28" value="{{ name }}" /></td></tr>
+<tr><td class="postblock">{{ strings.EMAIL }}</td><td><input type="text" name="email" size="28" value="{{ email }}" /></td></tr>
+<tr><td class="postblock">{{ strings.SUBJECT }}</td><td><input type="text" name="subject" size="35" value="{{ subject }}" />
+<input type="submit" value="{{ strings.SUBMIT }}" /></td></tr>
+<tr><td class="postblock">{{ strings.COMMENT }}</td><td><textarea name="comment" cols="48" rows="4">{{ comment }}</textarea></td></tr>
+
+{% if image_inp %}
+	<tr><td class="postblock">{{ strings.UPLOADFILE }}</td><td><input type="file" name="file" size="35" />
+	{% if textonly_inp %}[<label><input type="checkbox" name="nofile" value="on" />{{ strings.NOFILE }}</label>{% endif %}
+	</td></tr>
+{% endif %}
+
+{% if enable_captcha and not admin %}
+	<tr><td class="postblock">{{ strings.CAPTCHA }}</td><td><input type="text" name="captcha" size="10" />
+	<img alt="" src="{{ (captcha_script)|expand_url }}?key={% if oek_parent %}res{{ oek_parent }}{% endif %}{% if not oek_parent %}mainpage{% endif %}&amp;dummy={{ num }}" />
+	</td></tr>
+{% endif %}
+
+<input type="hidden" name="password" value="{{ password }}" />
+</tbody></table></form></div>
+
+<hr />
+
+<div align="center">
+<img src="{{ (tmpname)|expand_url }}" />
+{{ decodedinfo }}
+</div>
+
+<hr />
+
+{% include 'normal_foot_include.html' %}

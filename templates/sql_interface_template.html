@@ -1,0 +1,21 @@
+{% include 'manager_head_include.html' %}
+
+<div class="dellist">{{ strings.MANASQLINT }}</div>
+
+<div align="center">
+<form action="{{ get_script_name() }}?board={{ board.name }}" method="post">
+<input type="hidden" name="task" value="sql" />
+
+<textarea name="sql" rows="10" cols="60"></textarea>
+
+<div class="delbuttons">{{ strings.SQLNUKE }}
+<input type="password" name="nuke" value="{{ nuke }}" />
+<input type="submit" value="{{ strings.SQLEXECUTE }}" />
+</div>
+
+</form>
+</div>
+
+<pre><code>{{ results }}</code></pre>
+
+{% include 'normal_foot_include.html' %}

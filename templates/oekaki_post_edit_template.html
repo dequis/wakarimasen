@@ -1,0 +1,69 @@
+{% include 'mini_head_include.html' %} 
+{% for post in loop %}
+	<h1 style="text-align:center;font-size:1em">Now Editing Post No.{{ post.num }}</h1>
+	
+	{% if admin %}<div align="center"><em>{{ strings.NOTAGS }}</em></div>{% endif %}
+	
+	<div class="postarea">
+	
+	{% if not admin %}
+		<form action="{{ ('paint.pl')|expand_url }}" method="get">
+		<hr />
+		{{ strings.OEKPAINT }}
+		<select name="oek_painter">
+		
+		{% for painters in strings.OEKPAINTERS %}
+			{% if painter == board.options.OEKAKI_DEFAULT_PAINTER %}
+			<option value="{{ painter }}" selected="selected">{{ post.name }}</option>
+			{% endif %}
+			{% if painter != board.options.OEKAKI_DEFAULT_PAINTER %}
+			<option value="{{ painter }}">{{ post.name }}</option>
+			{% endif %}
+		{% endfor %}
+		</select>
+		{{ strings.OEKX }}<input type="text" name="oek_x" size="3" value="{{ post.width }}" />
+		{{ strings.OEKY }}<input type="text" name="oek_y" size="3" value="{{ post.height }}" />
+		<input type="hidden" name="oek_src" value="{{ post.image }}" />
+		<input type="hidden" name="num" value="{{ post.num }}" />
+		<input type="hidden" name="oek_parent" value="{{ post.parent }}" />
+		<input type="submit" value="Oekaki Edit" name="oek_editing" />
+		<input type="hidden" name="password" value="{{ post.password }}" />
+		<input type="hidden" name="num" value="{{ post.num }}" />
+		<hr />
+		</form>
+	{% endif %}
+	
+	<form id="postform" action="{{ get_script_name() }}" method="post" enctype="multipart/form-data">
+	
+	<input type="hidden" name="num" value="{{ post.num }}" />
+	<input type="hidden" name="password" value="{{ post.password }}" />
+	<input type="hidden" name="task" value="editpost" />
+	{% if admin %}
+	<input type="hidden" name="no_captcha" value="1" />
+	<input type="hidden" name="no_format" value="1" />{% endif %}
+	{% if post.parent %}<input type="hidden" name="parent" value="{{ post.parent }}" />{% endif %}
+	{% if board.options.FORCED_ANON %}<input type="hidden" name="name" />{% endif %}
+	{% if board.options.SPAM_TRAP %}<div class="trap">{{ strings.SPAMTRAP }}<input type="text" name="name" size="28" /><input type="text" name="link" size="28" /></div>{% endif %}
+	
+	<table><tbody>
+	{% if not (board.options.FORCED_ANON) %}<tr><td class="postblock">{{ strings.NAME }}</td><td><input type="text" name="field1" value="{{ post.name }}" size="28" />{% if post.trip %} # {{ post.trip }}<br />(Enter new tripcode above to change.)<br />[<label><input type="checkbox" value="1" name="killtrip" /> Remove Tripcode?</label>]{% endif %}</td></tr>{% endif %}
+	<tr><td class="postblock">{{ strings.EMAIL }}</td><td><input type="text" name="email" size="28" value="{{ post.email }}" /></td></tr>
+	<tr><td class="postblock">{{ strings.SUBJECT }}</td><td><input type="text" name="subject" size="35" value="{{ post.subject }}" />
+	<input type="submit" value="{{ strings.SUBMIT }}" /></td></tr>
+	<tr><td class="postblock">{{ strings.COMMENT }}</td><td>
+	<textarea name="comment" cols="48" rows="4">{% if admin %}{{ (post.comment)|clean_string }}{% endif %}{% if not admin %}{{ (post.comment)|tag_killa }}{% endif %}</textarea></td></tr>
+	
+	{% if board.options.ALLOW_IMAGE_REPLIES or not post.parent %}
+		<tr><td class="postblock">{{ strings.NEWFILE }}</td><td><input type="file" name="file" size="35" />
+		<br />(Keep this field blank to leave the file unchanged.)
+		</td></tr>
+	{% endif %}
+	
+	{% if board.options.ENABLE_OEKAKI and not admin %}
+		<tr><td class="postblock">{{ strings.CAPTCHA }}</td><td><input type="text" name="captcha" size="10" />
+		<img alt="" src="{{ (board.options.OEKAKI_SCRIPT)|expand_url }}?key={{ (post.parent)|get_captcha_key }}&amp;dummy={{ post.num }}" />
+		</td></tr>
+	{% endif %}
+	</tbody></table></form></div>
+{% endfor %}
+{% include 'mini_foot_include.html' %}

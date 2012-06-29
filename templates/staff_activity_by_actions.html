@@ -1,0 +1,29 @@
+{% include 'manager_head_include.html' %}
+	<div class="dellist"><h2>Staff Activity</h2></div>
+	{% include 'staff_activity_head.html' %}
+	<p align="center" style="margin-top:0.2em"><a href="{{ get_script_name() }}?task=stafflog&amp;board={{ board.name }}&amp;perpage={{ perpage }}">Show All</a></p>
+	<div class="dellist"><h3 align="center">Viewing Action: {{ action_name }}</h3></div>
+	{% include 'pagination_section.html' %}
+	<table align="center" style="white-space: nowrap">
+	<tbody>
+		<tr class="managehead">
+			<th><a href="{{ get_script_name() }}?task=stafflog&amp;board={{ board.name }}&amp;page={{ page }}&amp;perpage={{ perpage }}&amp;sortby=username&amp;order={% if order.startswith("asc") or sortby != 'username' %}desc{% endif %}{% if not order.startswith("asc") and sortby == 'username' %}asc{% endif %}">User{% if sortby == 'username' %} {% if order.startswith("asc") %}&dtrif;{% endif %}{% if not order.startswith("asc") %}&utrif;{% endif %}{% endif %}</a></th>
+			<th><a href="{{ get_script_name() }}?task=stafflog&amp;board={{ board.name }}&amp;page={{ page }}&amp;perpage={{ perpage }}&amp;sortby=account&amp;order={% if order.startswith("asc") or sortby != 'account' %}desc{% endif %}{% if not order.startswith("asc") and sortby == 'account' %}asc{% endif %}">Class{% if sortby == 'account' %} {% if order.startswith("asc") %}&dtrif;{% endif %}{% if not order.startswith("asc") %}&utrif;{% endif %}{% endif %}</a></th>
+			<th>{{ content_name }}</th>
+			<th><a href="{{ get_script_name() }}?task=stafflog&amp;board={{ board.name }}&amp;view={{ view }}&amp;page={{ page }}&amp;perpage={{ perpage }}&amp;sortby=date&amp;order={% if order.startswith("asc") or sortby != 'date' %}desc{% endif %}{% if not order.startswith("asc") and sortby == 'date' %}asc{% endif %}">Date{% if sortby == 'date' %} {% if order.startswith("asc") %}&dtrif;{% endif %}{% if not order.startswith("asc") %}&utrif;{% endif %}{% endif %}</a></th>
+			<th>IP Address</th>
+		</tr>
+	{% for entry in entries %}
+		<tr class="row{{ entry.rowtype }}">
+			<td>{% if entry.disabled %}<span style="color:#555555">{% endif %}<strong>{{ entry.username }}</strong>{% if entry.disabled %}</span>{% endif %}</td>
+			<td>{% if entry.account == 'admin' %}Administrator{% endif %}
+			{% if entry.account == 'mod' %}Moderator{% endif %}
+			{% if entry.account == 'globmod' %}Global Moderator{% endif %}</td>
+			<td>{{ entry.info }}</td>
+			<td>{{ entry.date }}</td>
+			<td>{{ (entry.ip)|dec_to_dot }}</td>
+		</tr>
+	{% endfor %}
+	</tbody>
+	</table>
+{% include 'normal_foot_include.html' %}

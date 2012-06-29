@@ -1,0 +1,27 @@
+{% include 'normal_head_include.html' %}
+
+<span style="float:left">[<a href="{{ (board.options.HTML_SELF)|expand_url(1) }}">{{ strings.MANARET }}</a>]</span>
+{% if admin %}
+<div style="float:right;font-size:85%;padding-left:2em">
+	<span style="float:left">[<a href="{{ get_script_name() }}?task=mpanel&amp;board={{ board.name }}">{{ strings.MANAPANEL }}</a>] </span>
+	<span style="float:left;padding-left:0.2em">[<a href="{{ get_script_name() }}?task=reports&amp;board={{ board.name }}">Reports</a>] </span>
+	<span style="float:left;padding-left:0.2em">[<a href="{{ get_script_name() }}?task=postbackups&amp;board={{ board.name }}">Trash Bin</a>] </span>
+	<span style="float:left;padding-left:0.2em">[<a href="{{ get_script_name() }}?task=bans&amp;board={{ board.name }}">{{ strings.MANABANS }}</a>] </span>
+	<span style="float:left;padding-left:0.2em">[<a href="{{ get_script_name() }}?task=proxy&amp;board={{ board.name }}">{{ strings.MANAPROXY }}</a>] </span>
+	{% if type == 'admin' %}
+		<span style="float:left;padding-left:0.2em">[<a href="{{ get_script_name() }}?task=spam&amp;board={{ board.name }}">{{ strings.MANASPAM }}</a>] </span>
+		<span style="float:left;padding-left:0.2em">[<a href="{{ get_script_name() }}?task=sqldump&amp;board={{ board.name }}">{{ strings.MANASQLDUMP }}</a>] </span>
+		<span style="float:left;padding-left:0.2em">[<a href="{{ get_script_name() }}?task=sql&amp;board={{ board.name }}">{{ strings.MANASQLINT }}</a>] </span>
+	{% endif %}
+	<span style="float:left;padding-left:0.2em">[<a href="{{ get_script_name() }}?task=rebuild&amp;board={{ board.name }}">{{ strings.MANAREBUILD }}</a>] </span>
+	{% if type == 'admin' %}
+		<span style="float:left;padding-left:0.2em">[<a href="{{ get_script_name() }}?task=staff&amp;board={{ board.name }}">Staff Management</a>] </span>
+		<span style="float:left;padding-left:0.2em">[<a href="{{ get_script_name() }}?task=stafflog&amp;board={{ board.name }}">Staff Activity</a>] </span>
+		<span style="float:left;padding-left:0.2em">[<a href="{{ get_script_name() }}?task=security&amp;board={{ board.name }}">Script Security</a>] </span>
+	{% endif %}
+</div>
+{% endif %}
+<div class="passvalid" style="clear:both"><strong>{{ strings.MANAMODE }}</strong></div>
+{% if admin %}<div style="margin-top:0;float:left;font-size:120%;font-weight:bold">&rarr; </div><div style="margin-top:0;margin-left:0.2em;float:left">Logged in as <span class="postername">{{ username }}</span> ({% if type == 'admin' %}Administrator{% endif %}{% if type == 'mod' %}Moderator{% endif %}{% if type == 'globmod' %}Global Moderator{% endif %}). [<a href="{{ get_script_name() }}?task=edituserwindow&amp;username={{ username }}&amp;board={{ board.name }}">Options</a>] [<a href="{{ get_script_name() }}?task=logout&amp;board={{ board.name }}">{{ strings.MANALOGOUT }}</a>] <form action="{{ get_script_name() }}" id="boardselect" method="get" style="display:block"><input type="hidden" name="task" value="admin" /><label>Switch to board: <select name="board">{% for board in boards_select %}<option value="{{ board.board_entry }}">{{ board.board_entry }}</option>{% endfor %}</select></label> <input type="submit" name="switchboard" value="Go" /></form></div>
+{% if type != 'mod' %}<div style="margin-top:0;float:right"><strong>Global Options:</strong> [<a href="{{ get_script_name() }}?task=rebuildglobal&amp;board={{ board.name }}">Rebuild Cache</a>]{% if type == 'admin' %}&nbsp;[<a href="{{ get_script_name() }}?task=restart&amp;board={{ board.name }}">Restart Script</a>]{% endif %}</div>{% endif %}{% endif %}
+<br clear="all"/>

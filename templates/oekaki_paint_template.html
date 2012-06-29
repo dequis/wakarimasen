@@ -1,0 +1,39 @@
+
+<html>
+<head>
+<style type="text/css">
+body { background: #9999BB; font-family: sans-serif; }
+input,textarea { background-color:#CFCFFF; font-size: small; }
+table.nospace { border-collapse:collapse; }
+table.nospace tr td { margin:0px; } 
+.menu { background-color:#CFCFFF; border: 1px solid #666666; padding: 2px; margin-bottom: 2px; }
+</style>
+</head><body>
+
+<script type="text/javascript" src="palette_selfy.js"></script>
+<table class="nospace" width="100%" height="100%"><tbody><tr>
+<td width="100%">
+<applet code="c.ShiPainter.class" name="paintbbs" archive="spainter_all.jar" width="100%" height="100%">
+<param name="image_width" value="{{ oek_x }}" />
+<param name="image_height" value="{{ oek_y }}" />
+{% if oek_src and not oek_pch %}<param name="image_canvas" value="{{ oek_src }}" />{% endif %}
+{% if oek_pch %}<param name="pch_file" value="{{ oek_pch }}" />{% endif %}
+<param name="dir_resource" value="./" />
+<param name="tt.zip" value="tt_def.zip" />
+<param name="res.zip" value="res.zip" />
+<param name="tools" value="{{ mode }}" />
+<param name="layer_count" value="3" />
+<param name="thumbnail_type" value="animation" />
+<param name="url_save" value="{{ (tmp_dir + 'getpic.pl')|expand_url }}" />
+<param name="url_exit" value="{{ get_script_name() }}?task=finishpaint&amp;board={{ board.name }}&amp;oek_parent={{ oek_parent }}&amp;oek_ip={{ ip }}&amp;{% if oek_editing %}oek_editing=1&amp;password={{ password }}&amp;num={{ num }}&amp;{% endif %}dummy={{ dummy }}&amp;srcinfo={{ time }},{{ oek_painter }},{{ oek_src }}" />
+<param name="send_header" value="{{ ip }}" />
+</applet>
+</td>
+{% if selfy %}
+	<td valign="top">
+	<script>palette_selfy();</script>
+	</td>
+{% endif %}
+</tr></tbody></table>
+</body>
+</html>

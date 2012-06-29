@@ -1,0 +1,12 @@
+{% include 'manager_head_include.html' %}
+<div class="dellist"><h2>Report Resolved</h2></div>
+{% if error_occurred %}
+	<p>There were errors.</p>
+	<ul>
+	{% for error in errors %}
+		<li>{{ error.error }}</li>
+	{% endfor %}
+	</ul>
+{% endif %}
+{% if referer %}<p align="center" style="font-size:2em"><a href="{{ (referer)|escape }}">Return</a></p>{% endif %}
+{% include 'normal_foot_include.html' %}

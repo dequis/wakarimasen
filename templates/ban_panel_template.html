@@ -1,0 +1,115 @@
+{% include 'manager_head_include.html' %}
+
+<div class="dellist"><h2>{{ strings.MANABANS }}</h2></div>
+
+<div class="postarea">
+<table><tbody><tr><td valign="middle">
+
+<form action="{{ get_script_name() }}" method="post">
+<input type="hidden" name="task" value="addip" />
+<input type="hidden" name="type" value="ipban" />
+<input type="hidden" name="board" value="{{ board.name }}" />
+<table><tbody>
+<tr><td class="postblock">{{ strings.BANIPLABEL }}</td><td><input type="text" name="ip" size="24" value="{{ (ip)|dec_to_dot }}" /></td></tr>
+<tr><td class="postblock">{{ strings.BANMASKLABEL }}</td><td><input type="text" name="mask" size="24" /></td></tr>
+<tr><td class="postblock">{{ strings.BANEXPIRE }}</td><td><input type="text" name="expiration" size="16" /><br/>
+<select name="expirepresets" onchange="this.form.expiration.value = this.form.expirepresets.options[this.form.expirepresets.selectedIndex].value;">
+<option value="" selected="selected">Presets</option>
+<option value="300">5 minutes</option>
+<option value="900">15 minutes</option>
+<option value="1800">30 minutes</option>
+<option value="3600">1 hour</option>
+<option value="7200">2 hours</option>
+<option value="43200">12 hours</option>
+<option value="86400">1 day</option>
+<option value="172800">2 days</option>
+<option value="604800">1 week</option>
+<option value="1209600">2 weeks</option>
+<option value="2419200">~1 month</option>
+<option value="4838400">~2 months</option>
+<option value="15768000">6 months</option>
+<option value="31536000">1 year</option>
+<option value="0">Eternity</option>
+</select> (Javascript)
+</td></tr>
+<tr><td class="postblock">{{ strings.BANCOMMENTLABEL }}</td><td><input type="text" name="comment" size="24" /></td></tr>
+<tr><td class="postblock">{{ strings.TOTALBAN }}</td><td><input type="checkbox" name="total" value="yes" style="float:left; clear:none" /> <input type="submit" value="{{ strings.BANIP }}" style="float: right; clear: none"/></td></tr>
+</tbody></table></form>
+
+</td><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td><td valign="middle">
+
+<form action="{{ get_script_name() }}" method="post">
+<input type="hidden" name="task" value="addip" />
+<input type="hidden" name="type" value="whitelist" />
+<input type="hidden" name="board" value="{{ board.name }}" />
+<table><tbody>
+<tr><td class="postblock">{{ strings.BANIPLABEL }}</td><td><input type="text" name="ip" size="24" /></td></tr>
+<tr><td class="postblock">{{ strings.BANMASKLABEL }}</td><td><input type="text" name="mask" size="24" /></td></tr>
+<tr><td class="postblock">{{ strings.BANCOMMENTLABEL }}</td><td><input type="text" name="comment" size="16" />
+<input type="submit" value="{{ strings.BANWHITELIST }}" /></td></tr>
+</tbody></table></form>
+
+</td><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td></tr><tr><td valign="bottom">
+
+<form action="{{ get_script_name() }}" method="post">
+<input type="hidden" name="task" value="addstring" />
+<input type="hidden" name="type" value="wordban" />
+<input type="hidden" name="board" value="{{ board.name }}" />
+<table><tbody>
+<tr><td class="postblock">{{ strings.BANWORDLABEL }}</td><td><input type="text" name="string" size="24" /></td></tr>
+<tr><td class="postblock">{{ strings.BANCOMMENTLABEL }}</td><td><input type="text" name="comment" size="16" />
+<input type="submit" value="{{ strings.BANWORD }}" /></td></tr>
+</tbody></table></form>
+
+</td><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td><td valign="bottom">
+
+<form action="{{ get_script_name() }}" method="post">
+<input type="hidden" name="task" value="addstring" />
+<input type="hidden" name="type" value="trust" />
+<input type="hidden" name="board" value="{{ board.name }}" />
+<table><tbody>
+<tr><td class="postblock">{{ strings.BANTRUSTTRIP }}</td><td><input type="text" name="string" size="24" /></td></tr>
+<tr><td class="postblock">{{ strings.BANCOMMENTLABEL }}</td><td><input type="text" name="comment" size="16" />
+<input type="submit" value="{{ strings.BANTRUST }}" /></td></tr>
+</tbody></table></form>
+
+</td></tr></tbody></table>
+</div><br />
+
+<table align="center"><tbody>
+<tr class="managehead">{{ strings.BANTABLE }}</tr>
+
+{% for ban in bans %}
+	{% if ban.divider %}<tr class="managehead"><th colspan="7"></th></tr>{% endif %}
+
+	<tr class="row{{ ban.rowtype }}">
+
+	{% if ban.type == 'ipban' %}
+		<td>IP</td>
+		<td>{{ (ban.ival1)|dec_to_dot }}/{{ (ban.ival2)|dec_to_dot }}</td>
+	{% endif %}
+	{% if ban.type == 'wordban' %}
+		<td>Word</td>
+		<td>{{ (ban.sval1)|clean_string }}</td>
+	{% endif %}
+	{% if ban.type == 'trust' %}
+		<td>NoCap</td>
+		<td>{{ ban.sval1 }}</td>
+	{% endif %}
+	{% if ban.type == 'whitelist' %}
+		<td>Whitelist</td>
+		<td>{{ (ban.ival1)|dec_to_dot }}/{{ (ban.ival2)|dec_to_dot }}</td>
+	{% endif %}
+
+	<td>{{ (ban.comment)|clean_string }}</td>
+	<td>{{ ban.expirehuman }}</td>
+	<td style="text-align: center">{% if ban.type == 'ipban' %}{{ ban.browsingban }}{% endif %}{% if ban.type != 'ipban' %}--{% endif %}</td>
+	<td>{{ ban.username }}</td>
+	<td>[<a href="{{ get_script_name() }}?board={{ board.name }}&amp;task=removeban&amp;num={{ ban.num }}">{{ strings.BANREMOVE }}</a>] 
+	[<a href="{{ get_script_name() }}?board={{ board.name }}&amp;task=baneditwindow&amp;num={{ ban.num }}" target="_blank" onclick="popUp('{{ get_script_name() }}?board={{ board.name }}&amp;task=baneditwindow&amp;num={{ ban.num }}'); return false">{{ strings.BANEDIT }}</a>]</td>
+	</tr>
+{% endfor %}
+
+</tbody></table><br />
+
+{% include 'normal_foot_include.html' %}

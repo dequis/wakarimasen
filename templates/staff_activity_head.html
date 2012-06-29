@@ -1,0 +1,78 @@
+
+	<table align="center">
+		<tbody>
+			<tr>
+				<td style="padding:0.3em 1em 0.3em 0.3em">
+					<form action="{{ get_script_name() }}" method="get">
+						<input type="hidden" name="task" value="stafflog" />
+						<input type="hidden" name="view" value="user" />
+						<input type="hidden" name="board" value="{{ board.name }}" />
+						<input type="hidden" name="perpage" value="{{ perpage }}" />
+						View Staff: 
+						<select name="usertoview">
+							<option value="" selected="selected">Select</option>
+							{% for account in staff %}<option value="{{ account.username }}">{{ account.username }}</option>{% endfor %}
+						</select>
+						<input type="submit" value="View" />
+					</form>
+				</td>
+				<td style="padding:0.3em">
+					<form action="{{ get_script_name() }}" method="get">
+						<input type="hidden" name="task" value="stafflog" />
+						<input type="hidden" name="board" value="{{ board.name }}" />
+						<input type="hidden" name="view" value="action" />
+						<input type="hidden" name="perpage" value="{{ perpage }}" />
+						View Action: 
+						<select name="actiontoview">
+							<option value="">Select</option>
+							<option value="admin_edit">Administrative Edits</option>
+							<option value="admin_post">Manager Posts</option>
+							<option value="admin_delete">Administrative Deletions</option>
+							<option value="ipban">IP Bans</option>
+							<option value="ipban_edit">IP Ban Edits</option>
+							<option value="ipban_remove">IP Ban Removals</option>
+							<option value="wordban">Word Bans</option>
+							<option value="wordban_edit">Word Ban Edits</option>
+							<option value="wordban_remove">Word Ban Removals</option>
+							<option value="whitelist">IP Whitelist</option>
+							<option value="whitelist_edit">IP Whitelist Edits</option>
+							<option value="whitelist_remove">IP Whitelist Removals</option>
+							<option value="trust">Captcha Exemptions</option>
+							<option value="trust_edit">Revised Captcha Exemptions</option>
+							<option value="trust_remove">Removed Captcha Exemptions</option>
+							<option value="thread_sticky">Thread Stickies</option>
+							<option value="thread_unsticky">Thread Unstickies</option>
+							<option value="thread_lock">Thread Locks</option>
+							<option value="thread_unlock">Thread Unlocks</option>
+							<option value="report_resolve">Report Resolutions</option>
+						</select>
+						<input type="submit" value="View" />
+					</form>
+				</td>
+			</tr>
+			<tr>
+				<td style="padding:0.3em 1em 0.3em 0.3em">
+					<form action="{{ get_script_name() }}" method="get">
+						<input type="hidden" name="task" value="stafflog" />
+						<input type="hidden" name="board" value="{{ board.name }}" />
+						<input type="hidden" name="view" value="ip" />
+						<input type="hidden" name="perpage" value="{{ perpage }}" />
+						View Affected IP Address: 
+						<input type="text" name="iptoview" value="" size="15" />
+						<input type="submit" value="View" />
+					</form>
+				</td>
+				<td style="padding:0.3em">
+					<form action="{{ get_script_name() }}" method="get">
+						<input type="hidden" name="task" value="stafflog" />
+						<input type="hidden" name="board" value="{{ board.name }}" />
+						<input type="hidden" name="view" value="post" />
+						<input type="hidden" name="perpage" value="{{ perpage }}" />
+						View Affected Post: 
+						<input type="text" name="posttoview" value="" size="15" />
+						<input type="submit" value="View" />
+					</form>
+				</td>
+			</tr>
+		</tbody>
+	</table>

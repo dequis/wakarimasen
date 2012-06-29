@@ -1,0 +1,53 @@
+{% include 'normal_head_include.html' %}
+
+[<a href="{{ (board.options.HTML_SELF)|expand_url }}">{{ strings.RETURN }}</a>]
+{% if oek_parent %}<div class="theader">{{ strings.POSTING }}</div>{% endif %}
+
+<div class="postarea">
+<form id="postform" action="{{ get_script_name() }}" method="post" enctype="multipart/form-data">
+<input type="hidden" name="task" value="oekakipost" />
+<input type="hidden" name="board" value="{{ board.name }}" />
+<input type="hidden" name="oek_ip" value="{{ oek_ip }}" />
+<input type="hidden" name="srcinfo" value="{{ srcinfo }}" />
+<table><tbody>
+{% if not (board.options.FORCED_ANON) %}<tr><td class="postblock">{{ strings.NAME }}</td><td><input type="text" name="field1" value="{{ name }}" size="28" />{% if trip %} {{ trip }}<br />(Enter new tripcode above to change.)<br />[<label><input type="checkbox" value="1" name="killtrip" /> Remove Tripcode?</label>]{% endif %}</td></tr>{% endif %}
+<tr><td class="postblock">{{ strings.EMAIL }}</td><td><input type="text" name="email" size="28" /></td></tr>
+<tr><td class="postblock">{{ strings.SUBJECT }}</td><td><input type="text" name="subject" size="35" />
+<input type="submit" value="{{ strings.SUBMIT }}" /></td></tr>
+<tr><td class="postblock">{{ strings.COMMENT }}</td><td><textarea name="comment" cols="48" rows="4"></textarea></td></tr>
+
+{% if image_inp %}
+	<tr><td class="postblock">{{ strings.UPLOADFILE }}</td><td><input type="file" name="file" size="35" />
+	{% if textonly_inp %}[<label><input type="checkbox" name="nofile" value="on" />{{ strings.NOFILE }}</label>{% endif %}
+	</td></tr>
+{% endif %}
+
+{% if board.options.ENABLE_CAPTCHA %}
+	<tr><td class="postblock">{{ strings.CAPTCHA }}</td><td><input type="text" name="captcha" size="10" />
+	<img alt="" src="{{ (board.options.ENABLE_CAPTCHA)|expand_url }}?key={% if oek_parent %}res{{ oek_parent }}{% endif %}{% if not oek_parent %}mainpage{% endif %}&amp;dummy={{ dummy }}" />
+	</td></tr>
+{% endif %}
+
+<tr><td class="postblock">{{ strings.DELPASS }}</td><td><input type="password" name="password" size="8" /> {{ strings.DELEXPL }}</td></tr>
+
+{% if oek_parent %}
+	<input type="hidden" name="parent" value="{{ oek_parent }}" />
+	<tr><td class="postblock">{{ strings.OEKIMGREPLY }}</td>
+	<td>{{ (strings.OEKREPEXPL)|format((board.options.RES_DIR + oek_parent + config.PAGE_EXT)|expand_url, oek_parent) }}</td></tr>
+{% endif %}
+
+<tr><td colspan="2">
+<div class="rules">{% include 'rules.html' %}</div></td></tr>
+</tbody></table></form></div>
+<script type="text/javascript">set_inputs("postform",false)</script>
+
+<hr />
+
+<div align="center">
+<img src="{{ (tmpname)|expand_url }}" />
+{{ decodedinfo }}
+</div>
+
+<hr />
+
+{% include 'normal_foot_include.html' %}

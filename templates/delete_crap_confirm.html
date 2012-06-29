@@ -1,0 +1,13 @@
+{% include 'manager_head_include.html' %}
+	<div class="dellist"><h2>Delete All Posts Confirmation</h2></div>
+
+	<p align="center">Are you sure you want to delete all <strong>{{ post_count }}</strong> posts by IP {{ ip }}?</p>
+	<form id="confirm" action="{{ get_script_name() }}" method="post">
+		<input type="hidden" name="board" value="{{ board.name }}" />
+		<input type="hidden" name="task" value="deleteall" />
+		<input type="hidden" name="ip" value="{{ ip }}" />
+		<input type="hidden" name="mask" value="{{ mask }}" />
+		<input type="hidden" name="global" value="{{ global }}" />
+		<p align="center"><input type="submit" value="Yes" /></p>
+	</form>
+{% include 'normal_foot_include.html' %}

@@ -1,0 +1,30 @@
+{% include 'manager_head_include.html' %}
+
+<div align="center">
+<div class="dellist"><h2>{{ strings.MANASPAM }}</h2></div>
+<p>{{ strings.SPAMEXPL }}</p>
+
+<form action="{{ get_script_name() }}" method="post">
+
+<input type="hidden" name="task" value="updatespam" />
+<input type="hidden" name="board" value="{{ board.name }}" />
+
+<div class="buttons">
+<input type="submit" value="{{ strings.SPAMSUBMIT }}" />
+<input type="button" value="{{ strings.SPAMCLEAR }}" onclick="document.forms[0].spam.value=''" />
+<input type="reset" value="{{ strings.SPAMRESET }}" />
+</div>
+
+<textarea name="spam" rows="{{ spamlines }}" cols="79">{{ spam }}</textarea>
+
+<div class="buttons">
+<input type="submit" value="{{ strings.SPAMSUBMIT }}" />
+<input type="button" value="{{ strings.SPAMCLEAR }}" onclick="document.forms[0].spam.value=''" />
+<input type="reset" value="{{ strings.SPAMRESET }}" />
+</div>
+
+</form>
+
+</div>
+
+{% include 'normal_foot_include.html' %}

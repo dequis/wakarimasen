@@ -1,0 +1,37 @@
+{% include 'manager_head_include.html' %}
+	<div class="dellist"><h2>Script Security</h2></div>
+
+	<table align="center">
+		<tbody>
+			<tr>
+				<th>ID</th>
+				<th>IP Address</th>
+				<th>Task</th>
+				<th>Board</th>
+				<th>Post</th>
+				<th>Expiration</th>
+				<th>Failure?</th>
+			</tr>
+			{% for entry in entries %}
+				<tr>
+					<td>{{ entry.id }}</td>
+					<td>{{ entry.host }}</td>
+					<td>{{ entry.task }}</td>
+					<td>{{ entry.boardname }}</td>
+					<td>{% if entry.post %}{{ entry.post }}{% endif %}{% if not entry.post %}N/A{% endif %}</td>
+					<td>{{ entry.expiration }}</td>
+					<td>{% if entry.passfail %}Yes{% endif %}{% if not entry.passfail %}No{% endif %}</td>
+				</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+
+	<div align="center">
+		<h3>Unban Host From Script Access</h3>	
+		<form action="{{ get_script_name() }}" method="get">
+			<input type="hidden" name="task" value="unbanhost" />
+			<input type="hidden" name="board" value="{{ board.name }}" />
+			<label>IP Address: <input type="text" name="ip" /></label> <input type="submit" value="Forgive" />
+		</form>	
+	</div>
+{% include 'normal_foot_include.html' %}

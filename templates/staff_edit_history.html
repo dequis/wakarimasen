@@ -1,0 +1,8 @@
+{% include 'mini_head_include.html' %}
+	<h1 style="font-size: 1em; text-align: center; font-weight: bold">Staff Editing History for Post {{ num }}</h1>
+	<ul>
+		{% for edit in edits %}
+			<li><span class="postername">{{ edit.username }}</span> on <strong>{{ edit.date }}</strong>.</li> 
+		{% endfor %}
+	</ul>
+{% include 'mini_foot_include.html' %}

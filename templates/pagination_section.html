@@ -1,0 +1,26 @@
+
+	<div align="center">
+		There were <strong>{{ rowcount }}</strong> entries found. Showing {{ perpage }} per page.
+		<br />
+		<span>
+			{% if page != 1 and number_of_pages %}<a href="{{ rooturl }}&amp;page=1&amp;perpage={{ perpage }}">{% endif %}
+			&lt;&lt;{% if page != 1 and number_of_pages %}</a>{% endif %} 
+		</span>
+		<span style="padding-left:1em">
+			{% if page != 1 and number_of_pages %}<a href="{{ rooturl }}&amp;page={{ page - 1 }}&amp;perpage={{ perpage }}">{% endif %}
+			&lt;{% if page != 1 and number_of_pages %}</a>{% endif %}
+		</span>
+		<span style="padding-left:2em;padding-right:2em">Page {{ page }} of {{ number_of_pages }}</span> 
+		<span style="padding-right:1em">
+			{% if page != number_of_pages %}<a href="{{ rooturl }}&amp;page={{ page + 1 }}&amp;perpage={{ perpage }}">{% endif %}
+			&gt;{% if page != number_of_pages %}</a>{% endif %} 
+		</span>
+		{% if page != number_of_pages %}<a href="{{ rooturl }}&amp;page={{ number_of_pages }}&amp;perpage={{ perpage }}">{% endif %}
+		&gt;&gt;{% if page != number_of_pages %}</a>{% endif %} 
+	</div>
+	<br />
+	<div align="center">
+		<form action="{{ get_script_name() }}" method="get" style="display:inline;padding-right:5em">{% for input in inputs %}<input type="hidden" name="{{ input.name }}" value="{{ input.value }}" />{% endfor %}Show <select name="perpage"><option value="25">25</option><option value="50">50</option><option value="100">100</option><option value="200">200</option></select> per page. <input type="submit" value="Change" /></form>
+		<form action="{{ get_script_name() }}" method="get" style="display:inline">{% for input in inputs %}<input type="hidden" name="{{ input.name }}" value="{{ input.value }}" />{% endfor %}Jump to page: <input type="text" name="page" value="" size="2" /> <input type="submit" value="Jump" /><input type="hidden" name="task" value="stafflog" /></form>
+	</div>
+	<br />

@@ -1,0 +1,22 @@
+{% include 'manager_head_include.html' %}
+	<div class="dellist"><h2>{% if user_to_edit != username %}Editing Details for User {{ user_to_edit }}{% endif %}{% if user_to_edit == username %}Editing Profile{% endif %}</h2></div>
+	<form id="user_editing" action="{{ get_script_name() }}" method="post">
+		<input type="hidden" name="task" value="edituser" />
+		<input type="hidden" name="usernametoedit" value="{{ user_to_edit }}" />
+		<input type="hidden" name="board" value="{{ board.name }}" />
+		{% if user_to_edit != username %}<p align="center"><em>The management password is required only for promoting staff members to the Administrator class or editing an existing Administrator account.</em></p>{% endif %}
+		<table align="center">
+			<tbody>
+				<tr><td class="postblock">New Password</td><td><input type="password" name="newpassword" size="10" value="" /></td></tr>
+				{% if user_to_edit == username %}
+					<tr><td class="postblock">Confirm Original Password</td><td><input type="password" name="originalpassword" size="10" value="" /> <input type="submit" value="Submit" /></td></tr>
+				{% endif %}
+				{% if user_to_edit != username %}
+					<tr><td class="postblock">New Account Type</td><td><select name="newclass"><option value="mod" {% if account == 'mod' %}selected="selected"{% endif %}>Moderator</option><option value="globmod" {% if account == 'admin' %}selected="selected"{% endif %}>Global Moderator</option><option value="admin" {% if account == 'admin' %}selected="selected"{% endif %}>Administrator</option></select></td></tr>
+					<tr><td class="postblock">Jurisdiction</td><td>{% for board in boards %}<label><input name="reign" type="checkbox" value="{{ board.board_entry }}" {% if board.underpower %}checked="checked"{% endif %} /> {{ board.board_entry }}</label><br />{% endfor %}</td></tr>
+					<tr><td class="postblock">Management Password</td><td><input type="password" name="mpass" size="10" value="" /> <input type="submit" value="Submit" /></td></tr>
+				{% endif %}
+			</tbody>
+		</table>
+	</form>
+{% include 'normal_foot_include.html' %}

@@ -1,0 +1,179 @@
+{% include 'manager_head_include.html' %}
+<div class="dellist"><h2>Trash Bin</h2></div>
+{% if not config.POST_BACKUP %}<p align="center"><em>Wakaba is not set to backup deletions/edits at this time.</em></p>{% endif %}
+{% if config.POST_BACKUP %}
+	<p align="center"><em>Wakaba is currently set to purge all posts older than {{ config.POST_BACKUP_EXPIRE / 24 / 3600 }} day(s) old.</em></p>
+	<hr />
+
+	{% if not thread %}
+		<table border="1" style="float:left"><tbody><tr><td>
+
+		{% if prevpage != 'none' %}<form method="get" action="{{ get_script_name() }}"><input type="hidden" name="task" value="postbackups" /><input type="hidden" name="board" value="{{ board.name }}" /><input type="hidden" name="page" value="{{ prevpage }}" /><input value="{{ strings.PREV }}" type="submit" /></form>{% endif %}
+		{% if prevpage == 'none' %}{{ strings.FIRSTPG }}{% endif %}
+
+		</td><td>
+
+		{% for page in pages %}
+			{% if not page.current %}[<a href="{{ page.filename }}">{{ page.page }}</a>]{% endif %}
+			{% if page.current %}[{{ page.page }}]{% endif %}
+		{% endfor %}
+
+		</td><td>
+
+		{% if nextpage != 'none' %}<form method="get" action="{{ get_script_name() }}"><input type="hidden" name="task" value="postbackups" /><input type="hidden" name="board" value="{{ board.name }}" /><input type="hidden" name="page" value="{{ nextpage }}" /><input value="{{ strings.NEXT }}" type="submit" /></form>{% endif %}
+		{% if nextpage == 'none' %}{{ strings.LASTPG }}{% endif %}
+
+		</td></tr></tbody></table>
+	{% endif %}
+	{% if thread %}
+		<span style="float:left">[<a href="{{ get_script_name() }}?task=postbackups&amp;board={{ board.name }}">Return to Panel</a>]</span>
+	{% endif %}
+
+	<form action="{{ get_script_name() }}" method="post" id="delform">
+	<input type="hidden" name="board" value="{{ board.name }}" />
+	<input type="hidden" name="admindelete" value="1" />
+	<input type="hidden" name="task" value="restorebackups" />
+
+	<div class="delbuttons" style="float:right">
+	<input type="submit" name="handle" value="Restore" />
+	<input type="submit" name="handle" value="{{ strings.MPDELETE }}" />
+	<input type="reset" value="{{ strings.MPRESET }}" />
+	</div>
+
+	<br clear="all" />
+	<hr />
+
+	{% for currentthread in threads %}
+		{% for post in currentthread.posts %}
+			{% if not post.parent or standalone %}
+				{% if post.image %}
+					<span class="filesize">{{ strings.PICNAME }}<a target="_blank" href="{{ (post.image)|expand_image_url }}">{{ (post.image)|basename }}</a>
+					-(<em>{{ post.size }} B, {{ post.width }}x{{ post.height }}</em>)</span>
+					<span class="thumbnailmsg">{{ strings.THUMB }}</span><br />
+
+					{% if post.thumbnail %}
+						<a target="_blank" href="{{ (post.image)|expand_image_url }}" >
+						<img src="{{ (post.thumbnail)|expand_url }}" width="{{ post.tn_width }}" height="{{ post.tn_height }}" alt="{{ post.size }}" class="thumb" id="img{{ (post.image)|basename }}" /></a>
+					{% endif %}
+					{% if not post.thumbnail %}
+						{% if board.options.DELETED_THUMBNAIL %}
+							<a target="_blank" href="{{ (board.options.DELETED_IMAGE)|expand_image_url }}">
+							<img src="{{ (board.options.DELETED_THUMBNAIL)|expand_url }}" width="{{ post.tn_width }}" height="{{ post.tn_height }}" alt="" class="thumb" /></a>
+						{% endif %}
+						{% if not (board.options.DELETED_THUMBNAIL) %}
+							<div class="nothumb"><a target="_blank" href="{{ (post.image)|expand_image_url }}">{{ strings.NOTHUMB }}</a></div>
+						{% endif %}
+					{% endif %}
+				{% endif %}
+
+				<a name="{{ post.postnum }}"></a>
+				<label><input type="checkbox" name="num" value="{{ post.postnum }}" />
+				<span class="filetitle">{{ post.subject }}</span>
+				{% if post.email %}<span class="postername"><a href="{{ post.email }}">{{ post.name }}</a></span>{% if post.trip %}<span class="postertrip"><a href="{{ post.email }}">{{ post.trip }}</a></span>{% endif %}{% endif %}
+				{% if not post.email %}<span class="postername">{{ post.name }}</span>{% if post.trip %}<span class="postertrip">{{ post.trip }}</span>{% endif %}{% endif %} 
+				<span class="ipaddr">(IP: {{ (post.ip)|dec_to_dot }}{% if post.admin_post == 'yes' %}; {% if not post.lastedit %}<strong>Moderator Post</strong>{% endif %}{% if post.lastedit %}<strong>Moderator Edit</strong>{% endif %}{% endif %})</span> 
+				{% if not post.parent %}
+					{% if post.stickied %} <img src="{{ ('/include/boards/sticky.gif')|expand_url }}" alt="{{ strings.STICKIEDALT }}" title="{{ strings.STICKIED }}" /> {% endif %}
+					{% if post.locked == 'yes' %} <img src="{{ ('/include/boards/locked.gif')|expand_url }}" alt="{{ strings.LOCKEDALT }}" title="{{ strings.LOCKED }}" /> {% endif %}
+				{% endif %}
+				{{ post.date }}</label>
+				<span class="reflink">
+					No.{{ post.postnum }}
+				</span>&nbsp;
+				{% if standalone %}<span><em>(Orphaned From Parent: <a href="{{ (post.parent)|get_reply_link }}">{{ post.parent }}</a> )</em></span>{% endif %}
+				{% if not thread %}
+					[<a href="{{ get_script_name() }}?task=postbackups&amp;board={{ board.name }}&amp;page=t{{ post.postnum }}">View</a>]
+				{% endif %}
+				<br />
+				<blockquote>
+				{% if omit %}{{ post.comment|redirect_reply_links(min_res) }}{% else %}{{ post.comment }}{% endif %}
+				{% if post.abbrev %}<div class="abbrev">{% filter reverse_format(strings.ABBRTEXT) %}{{ get_script_name() }}?task=postbackups&amp;board={{ board.name }}&amp;page=t{{ post.postnum }}{% endfilter %}</div>{% endif %}
+				{% if post.lastedit %}<p style="font-size: small; font-style: italic">{{ strings.LASTEDITED }}{% if post.admin_post == 'yes' %} {{ strings.BYMOD }}{% endif %} {{ post.lastedit }}. (IP: {{ (post.lastedit_ip)|dec_to_dot }})</p>{% endif %}
+				</blockquote>
+
+				{% if currentthread.omit %}
+					<span class="omittedposts">
+					{% if currentthread.omitimages %}{{ (strings.ABBRIMG)|format(currentthread.omit, currentthread.omitimages) }}{% endif %}
+					{% if not currentthread.omitimages %}{{ (strings.ABBR)|format(currentthread.omit) }}{% endif %}
+					</span>
+				{% endif %}
+			{% endif %}
+			{% if post.parent and not standalone %}
+				<table><tbody><tr><td class="doubledash">&gt;&gt;</td>
+				<td class="reply" id="reply{{ post.postnum }}">
+
+				<a name="{{ post.postnum }}"></a>
+				<label><input type="checkbox" name="num" value="{{ post.postnum }}" />
+				<span class="replytitle">{{ post.subject }}</span>
+				{% if post.email %}<span class="commentpostername"><a href="{{ post.email }}">{{ post.name }}</a></span>{% if post.trip %}<span class="postertrip"><a href="{{ post.email }}">{{ post.trip }}</a></span>{% endif %}{% endif %}
+				{% if not post.email %}<span class="commentpostername">{{ post.name }}</span>{% if post.trip %}<span class="postertrip">{{ post.trip }}</span>{% endif %}{% endif %} 
+				<span class="ipaddr">(IP: {{ (post.ip)|dec_to_dot }}{% if post.admin_post == 'yes' %}; {% if not post.lastedit %}<strong>Moderator Post</strong>{% endif %}{% if post.lastedit %}<strong>Moderator Edit</strong>{% endif %}{% endif %})</span> 
+				{{ post.date }}</label>
+				<span class="reflink">
+					No.{{ post.postnum }}
+				</span>&nbsp;
+				{% if post.image %}
+					<br />
+					<span class="filesize">{{ strings.PICNAME }}<a target="_blank" href="{{ (post.image)|expand_image_url }}">{{ (post.image)|basename }}</a>
+					-(<em>{{ post.size }} B, {{ post.width }}x{{ post.height }}</em>)</span>
+					<span class="thumbnailmsg">{{ strings.THUMB }}</span><br />
+
+					{% if post.thumbnail %}
+						<a target="_blank" href="{{ (post.image)|expand_image_url }}">
+						<img src="{{ (post.thumbnail)|expand_url }}" width="{{ post.tn_width }}" height="{{ post.tn_height }}" alt="{{ post.size }}" class="thumb" id="img{{ (post.image)|basename }}" /></a>
+					{% endif %}
+					{% if not post.thumbnail %}
+						{% if board.options.DELETED_THUMBNAIL %}
+							<a target="_blank" href="{{ (board.options.DELETED_IMAGE)|expand_image_url }}">
+							<img src="{{ (board.options.DELETED_THUMBNAIL)|expand_url }}" width="{{ post.tn_width }}" height="{{ post.tn_height }}" alt="" class="thumb" /></a>
+						{% endif %}
+						{% if not (board.options.DELETED_THUMBNAIL) %}
+							<div class="nothumb"><a target="_blank" href="{{ (post.image)|expand_image_url }}">{{ strings.NOTHUMB }}</a></div>
+						{% endif %}
+					{% endif %}
+				{% endif %}
+
+				<blockquote>
+				{% if omit %}{{ post.comment|redirect_reply_links(min_res) }}{% else %}{{ post.comment }}{% endif %}
+				{% if post.abbrev %}<div class="abbrev">{% filter reverse_format(strings.ABBRTEXT) %}{{ get_script_name() }}?task=postbackups&amp;board={{ board.name }}&amp;page=t{{ post.parent }}#{{ post.postnum }}{% endfilter %}</div>{% endif %}
+				{% if post.lastedit %}<p style="font-size: small; font-style: italic">Last edited{% if post.admin_post == 'yes' %} by moderator{% endif %} {{ post.lastedit }}. (IP: {{ (post.lastedit_ip)|dec_to_dot }})</p>{% endif %}
+				</blockquote>
+
+				</td></tr></tbody></table>
+			{% endif %}
+		
+		{% endfor %}
+		<br clear="left" /><hr />
+	{% endfor %}
+
+	<div class="delbuttons" style="float:right">
+	<input type="submit" name="handle" value="Restore" />
+	<input type="submit" name="handle" value="{{ strings.MPDELETE }}" />
+	<input type="reset" value="{{ strings.MPRESET }}" />
+	</div>
+	</form>
+
+	{% if not thread %}
+		<table border="1" style="float:left"><tbody><tr><td>
+
+		{% if prevpage != 'none' %}<form method="get" action="{{ get_script_name() }}"><input type="hidden" name="task" value="postbackups" /><input type="hidden" name="board" value="{{ board.name }}" /><input type="hidden" name="page" value="{{ prevpage }}" /><input value="{{ strings.PREV }}" type="submit" /></form>{% endif %}
+		{% if prevpage == 'none' %}{{ strings.FIRSTPG }}{% endif %}
+
+		</td><td>
+
+		{% for page in pages %}
+			{% if not page.current %}[<a href="{{ page.filename }}">{{ page.page }}</a>]{% endif %}
+			{% if page.current %}[{{ page.page }}]{% endif %}
+		{% endfor %}
+
+		</td><td>
+
+		{% if nextpage != 'none' %}<form method="get" action="{{ get_script_name() }}"><input type="hidden" name="task" value="postbackups" /><input type="hidden" name="board" value="{{ board.name }}" /><input type="hidden" name="page" value="{{ nextpage }}" /><input value="{{ strings.NEXT }}" type="submit" /></form>{% endif %}
+		{% if nextpage == 'none' %}{{ strings.LASTPG }}{% endif %}
+
+		</td></tr></tbody></table>
+	{% endif %}
+
+	<br clear="all" />
+{% endif %}
+{% include 'normal_foot_include.html' %}

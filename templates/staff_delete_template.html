@@ -1,0 +1,11 @@
+{% include 'manager_head_include.html' %}
+	<div class="dellist"><h2>User Deletion Confirmation</h2></div>
+	<p align="center">Are you sure you want to delete user <strong>{{ user_to_delete }}</strong>?</p>
+	<form id="confirm" action="{{ get_script_name() }}" method="post">
+		<input type="hidden" name="board" value="{{ board.name }}" />
+		<input type="hidden" name="task" value="deleteuser" />
+		<input type="hidden" name="username" value="{{ user_to_delete }}" />
+		{% if account == "admin" %}<p align="center">Manager password required. <input type="password" name="mpass" value="" /></p>{% endif %}
+		<p align="center"><input type="submit" value="Yes" /></p>
+	</form>
+{% include 'normal_foot_include.html' %}

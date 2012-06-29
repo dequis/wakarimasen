@@ -1,0 +1,49 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
+<link rel="stylesheet" type="text/css" href="/site.css" />
+<title>{{ strings.BADHOST }} - Cirnochan</title>
+</head>
+<body class="content">
+    <div class="top">
+        <div class="wrapper">
+            <h1>
+                <img border="0" src="desubanner.png" width="800" height="128" alt="The mother fucking banner goes here" />
+	    </h1>
+            <div class="bodywrapper">
+                <div class="subheader">
+                    Back to the Internet desu~
+		</div>
+                <div id="bannotice" class="contentbody">
+		    <div class="item">
+                        <div class="itemheader">
+			    <h3>{{ strings.BADHOST }}</h3>
+			</div>
+			<div class="itemcontent">
+			    <p style="text-align:center"><img src="{{ ('/include/boards/ban_images/randimg.php')|expand_url }}" alt="Ban Image" /></p>
+			    <p><em>{{ strings.BAN_WHY }}</em></p>
+	                    <p>{{ strings.BAN_REASON }}: <strong>{{ comment }}</strong></p>
+	                    <p>{{ strings.CURRENT_IP }} <strong>{{ numip }}</strong></p>
+			    <p>{% if expiration %}{{ strings.BAN_WILL_EXPIRE }} <strong>{{ expiration }}</strong>.{% endif %}
+			    	{% if not expiration %}{{ strings.BAN_WILL_NOT_EXPIRE }}{% endif %}</p>
+			</div>
+		    </div>
+		    <div class="item">
+		        <div class="itemheader">
+			    <h3>{{ strings.BAN_APPEAL_HEADER }}</h3>
+			</div>
+			<div class="itemcontent">
+			    <p>{{ appeal }}</p>
+			    <!-- Temporary Notice -->
+			    <p><em>(Due to changing its software base from Kareha to our global Wakaba script, you will have to post from another computer. Sorry. This will be addressed soon. &mdash;(K.) Anonymous)</em></p>
+			 </div>
+                     </div>
+                     <div class="footertext">Template Updated: 19 July 2008</div>
+		 </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

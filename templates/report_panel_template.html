@@ -1,0 +1,43 @@
+{% include 'manager_head_include.html' %}
+<div class="dellist"><h2>{% if not resolved_posts_only %}Reported Posts{% endif %}{% if resolved_posts_only %}Resolved Reports{% endif %}</h2></div>
+{% include 'pagination_section.html' %}
+{% if not resolved_posts_only and type == 'admin' %}<div class="dellist"><a href="{{ get_script_name() }}?task=resolvedreports&amp;board={{ board.name }}">View Resolved</a></div><br />{% endif %}
+<form action="{{ get_script_name() }}" method="post" id="reportedposts">
+<input type="hidden" name="task" value="resolve" />
+<input type="hidden" name="board" value="{{ board.name }}" />
+<table align="center"><tbody>
+<tr class="managehead"><th>Post</th><th>Board</th><th>Date</th><th>Comment</th><th>Posting IP</th><th>Reporting IP</th>{% if type == 'admin' and resolved_posts_only %}<th>Involved Moderator</th>{% endif %}</tr>
+{% for report in reports %}
+	<tr class="row{{ rowtype }}">
+	<td>
+		<table>
+		<tbody>
+		<tr>
+		<td>
+		<label><input type="checkbox" name="num" value="{{ report.board_name }}-{{ report.postnum }}" /><big><b>{{ report.postnum }}</b></big>&nbsp;&nbsp;</label>
+		</td>
+		<td>
+		<big><strong><a href="{{ get_script_name() }}?task=searchposts&amp;board={{ report.board_name }}&amp;idview=1&amp;id={{ report.postnum }}&amp;caller=field" target="_blank" onclick="popUpPost('{{ get_script_name() }}?task=searchposts&amp;board={{ report.board_name }}&amp;idview=1&amp;id={{ report.postnum }}&amp;caller=field');return false">View post</a></strong></big><br />
+		[<a href="{{ get_script_name() }}?task=editpostwindow&amp;board={{ report.board_name }}&amp;num={{ report.postnum }}&amp;admineditmode=1" target="_blank" onclick="popUpPost('{{ get_script_name() }}?task=editpostwindow&amp;board={{ report.board_name }}&amp;admineditmode=1&amp;num={{ num }}'); return false">Edit</a>]
+		</td>
+		</tr>
+		</tbody>
+		</table>
+	</td>
+
+	<td><strong>{{ report.board_name }}</strong></td>
+	<td>{{ report.date }}</td>
+	<td>{{ report.comment }}</td>
+	<td>{{ (report.offender)|dec_to_dot }} [<a href="{{ get_script_name() }}?task=banpopup&amp;board={{ board.name }}&amp;ip={{ (report.offender)|dec_to_dot }}" onclick="popUpPost('{{ get_script_name() }}?task=banpopup&amp;board={{ board.name }}&amp;ip={{ (report.offender)|dec_to_dot }}');return false">{{ strings.MPBAN }}</a>]</td>
+	<td>{{ (report.reporter)|dec_to_dot }} [<a href="{{ get_script_name() }}?task=banpopup&amp;board={{ board.name }}&amp;ip={{ (report.reporter)|dec_to_dot }}" onclick="popUpPost('{{ get_script_name() }}?task=banpopup&amp;board={{ board.name }}&amp;ip={{ (report.reporter)|dec_to_dot }}');return false">{{ strings.MPBAN }}</a>]</td>
+	{% if type == 'admin' and resolved_posts_only %}<td>{{ username }}</td>{% endif %}
+	</tr>
+{% endfor %}
+</tbody></table>
+<br />
+<div class="delbuttons">
+<input type="hidden" name="caller" value="board" />
+<input type="submit" name="delete" value="Delete and Mark Resolved" /> <input type="submit" value="Mark Resolved (Do not Delete)" />
+</div>
+</form>
+{% include 'normal_foot_include.html' %}

@@ -1,0 +1,31 @@
+{% include 'manager_head_include.html' %}
+	<div class="dellist"><h2>Staff Activity</h2></div>
+	{% include 'staff_activity_head.html' %}
+	<!-- Admin w/ management pass may clean up -->
+	<div class="dellist"><h3>Viewing Full Log</h3></div>
+	{% include 'pagination_section.html' %}
+	<table align="center" style="white-space: nowrap">
+	<tbody>
+		<tr class="managehead">
+			<th><a href="{{ get_script_name() }}?task=stafflog&amp;board={{ board.name }}&amp;page={{ page }}&amp;perpage={{ perpage }}&amp;sortby=username&amp;order={% if order.startswith("asc") or sortby != 'username' %}desc{% endif %}{% if not order.startswith("asc") and sortby == 'username' %}asc{% endif %}">User{% if sortby == 'username' %} {% if order.startswith("asc") %}&#9660;{% endif %}{% if not order.startswith("asc") %}&#9650;{% endif %}{% endif %}</a></th>
+			<th><a href="{{ get_script_name() }}?task=stafflog&amp;board={{ board.name }}&amp;page={{ page }}&amp;perpage={{ perpage }}&amp;sortby=account&amp;order={% if order.startswith("asc") or sortby != 'account' %}desc{% endif %}{% if not order.startswith("asc") and sortby == 'account' %}asc{% endif %}">Class{% if sortby == 'account' %} {% if order.startswith("asc") %}&#9660;{% endif %}{% if not order.startswith("asc") %}&#9650;{% endif %}{% endif %}</a></th>
+			<th><a href="{{ get_script_name() }}?task=stafflog&amp;board={{ board.name }}&amp;page={{ page }}&amp;perpage={{ perpage }}&amp;sortby=action&amp;order={% if order.startswith("asc") or sortby != 'action' %}desc{% endif %}{% if not order.startswith("asc") and sortby == 'action' %}asc{% endif %}">Action{% if sortby == 'action' %} {% if order.startswith("asc") %}&#9660;{% endif %}{% if not order.startswith("asc") %}&#9650;{% endif %}{% endif %}</a></th>
+			<th>Information</th>
+			<th><a href="{{ get_script_name() }}?task=stafflog&amp;board={{ board.name }}&amp;page={{ page }}&amp;perpage={{ perpage }}&amp;sortby=date&amp;order={% if order.startswith("asc") or sortby != 'date' %}desc{% endif %}{% if not order.startswith("asc") and sortby == 'date' %}asc{% endif %}">Date{% if sortby == 'date' %} {% if order.startswith("asc") %}&#9660;{% endif %}{% if not order.startswith("asc") %}&#9650;{% endif %}{% endif %}</a></th>
+			<th><a href="{{ get_script_name() }}?task=stafflog&amp;board={{ board.name }}">IP Address</a></th>
+		</tr>
+	{% for entry in entries %}
+		<tr class="row{{ entry.rowtype }}">
+			<td>{% if entry.disabled %}<span style="color:#555555">{% endif %}<strong>{{ entry.username }}</strong>{% if entry.disabled %}</span>{% endif %}</td>
+			<td>{% if entry.account == 'admin' %}Administrator{% endif %}
+			{% if entry.account == 'mod' %}Moderator{% endif %}
+			{% if entry.account == 'globmod' %}Global Moderator{% endif %}</td>
+			<td>{{ (entry.action)|get_action_name }}</td>
+			<td>{{ (entry.action)|get_action_name(2) }}: {{ entry.info }}</td>
+			<td>{{ entry.date }}</td>
+			<td>{{ (entry.ip)|dec_to_dot }}</td>
+		</tr>
+	{% endfor %}
+	</tbody>
+	</table>
+{% include 'normal_foot_include.html' %}

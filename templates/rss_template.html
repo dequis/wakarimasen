@@ -1,0 +1,33 @@
+
+<?xml version="1.0"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <channel>
+    <atom:link href="{{ ("board.rss")|expand_url(1) }}" rel="self" type="application/rss+xml" />
+    <title>{{ board.options.TITLE }}: Latest Posts</title>
+    <link>{{ ("")|expand_url(1) }}</link>
+    <description>The latest threads and replies in {{ board.options.TITLE }} at {{ environ['SERVER_NAME'] }}, updated in realtime.</description>
+    <pubDate>{{ pub_date }}</pubDate>
+    <lastBuildDate>{{ pub_date }}</lastBuildDate>
+    <generator>Wakaba + desuchan</generator>
+    {% if config.RSS_WEBMASTER %}<webMaster>{{ config.RSS_WEBMASTER }}</webMaster>{% endif %}
+    <docs>http://validator.w3.org/feed/docs/rss2.html</docs>
+    {% for post in items %}
+      <item>
+        <title>
+          Post #{{ post.num }}{% if not post.parent %} (New Topic){% endif %}{% if post.subject %}: {{ post.subject }}{% endif %}
+        </title>
+        {% if post.email and post.email.count("@") %}<author>{{ post.email }}{% if post.name or post.trip %} ({{ post.name }}{{ post.trip }}){% endif %}{% if not post.name and not post.trip %} ({{ board.options.S_ANONAME }}){% endif %}</author>{% endif %}
+        {% if not post.email or not post.email.count("@") %}<dc:creator>{% if post.name or post.trip %}{{ post.name }}{{ post.trip }}{% endif %}{% if not post.name and not post.trip %}{{ board.options.S_ANONAME }}{% endif %}</dc:creator>{% endif %}
+        {% if post.comment %}
+          <description><![CDATA[{% if omit %}{{ post.comment|redirect_reply_links(min_res) }}{% else %}{{ post.comment }}{% endif %}]]></description>
+        {% endif %}
+        {% if post.image %}
+          <enclosure url="{{ (post.image)|expand_url(1) }}" length="{{ post.size }}" type="{{ post.mime_type }}" />
+        {% endif %}
+        <pubDate>{{ (post.timestamp)|make_date("http") }}</pubDate>
+        <link>{{ (post.num)|get_reply_link(post.parent, 0, 1) }}</link>
+	<guid>{{ (post.num)|get_reply_link(post.parent, 0, 1) }}</guid>
+      </item>
+    {% endfor %}
+  </channel>
+</rss>

@@ -1,0 +1,46 @@
+{% include 'manager_head_include.html' %}
+	<div class="dellist"><h2>Staff Management</h2></div>
+	
+	<table align="center" style="white-space: nowrap">
+	<tbody>
+		<tr class="managehead">
+			<th>User</th>
+			<th>Class</th>
+			<th width="30%">Boards Moderated</th>
+			<th>Latest Activity</th>
+			<th>Options</th>
+		</tr>
+	{% for user in users %}
+		<tr class="row{{ rowtype }}">
+			<td><strong>{{ user.username }}</strong></td>
+			<td>{% if user.account == 'admin' %}Administrator{% endif %}
+			{% if user.account == 'mod' %}Moderator{% endif %}
+			{% if user.account == 'globmod' %}Global Moderator{% endif %}</td>
+			<td>{% if user.account != 'mod' %}<em>All</em>{% endif %}{% if user.account == 'mod' %}{{ user.reign }}{% endif %}</td>
+			<td>{% if action %}{{ (action)|get_action_name }} on {{ actiondate }} [<a href="{{ get_script_name() }}?task=stafflog&amp;board={{ board.name }}&amp;view=user&amp;usertoview={{ user.username }}">View All</a>]{% endif %}{% if not action %}<em>None</em>{% endif %}</td>
+			<td>[<a href="{{ get_script_name() }}?task=edituserwindow&amp;board={{ board.name }}&amp;username={{ user.username }}">Edit</a>] [{% if user.disabled %}<a href="{{ get_script_name() }}?task=enableuserwindow&amp;board={{ board.name }}&amp;username={{ user.username }}">Enable</a>{% endif %}{% if not user.disabled %}<a href="{{ get_script_name() }}?task=disableuserwindow&amp;board={{ board.name }}&amp;username={{ user.username }}">Disable</a>{% endif %}] [<a href="{{ get_script_name() }}?task=deleteuserwindow&amp;board={{ board.name }}&amp;username={{ user.username }}">Remove</a>]</td>
+		</tr>
+	{% endfor %}
+	</tbody>
+	</table>
+	
+	<br />
+	
+	<div class="dellist"><h3>Create User</h3></div>
+	
+	<form action="{{ get_script_name() }}" method="post">
+	<input type="hidden" name="task" value="createuser" />
+	<input type="hidden" name="board" value="{{ board.name }}" />
+	<p align="center"><em>The management password is necessary only for creating administrator accounts.<br />Global moderators oversee all boards.</em></p>
+	<table align="center">
+	<tbody>
+		<tr><td class="postblock">Username</td><td><input type="text" name="usertocreate" size="16" value="" /><br /><em>Usernames must be 4-30 characters, A-Za-z0-9^._, and spaces</em></td></tr>
+		<tr><td class="postblock">Password</td><td><input type="password" name="passtocreate" size="16" value="" /><br /><em>Passwords must be 8-30 characters, A-Za-z0-9^._</em></td></tr>
+		<tr><td class="postblock">Account Type</td><td><select name="account" onchange="if (this.form.account.value=='mod'){document.getElementById('boardselect').style.display='';} else {document.getElementById('boardselect').style.display='none';} if (this.form.account.value=='admin') {document.getElementById('managepass').style.display='';} else {document.getElementById('managepass').style.display='none';}"><option value="mod">Moderator</option><option value="globmod" selected="selected">Global Moderator</option><option value="admin">Administrator</option></select> <input type="submit" value="Create User" /></td></tr>
+		<tr id="boardselect"><td class="postblock">Controlled Boards</td>
+			<td>{% for board in boards %}<label><input type="checkbox" name="reign" value="{{ board.board_entry }}" /> {{ board.board_entry }}</label><br />{% endfor %}</td></tr>
+		<tr id="managepass"><td class="postblock">Management Password</td><td><input type="password" name="mpass" size="10" value="" /></td></tr>
+	</tbody>
+	</table>
+	</form>
+{% include 'normal_foot_include.html' %}

@@ -8,49 +8,18 @@ if you know how to fix stuff when it breaks.
 - Requirements: python2.6, werkzeug, sqlalchemy, jinja2
 Fastcgi is highly recommended, but cgi is supported.
 
-It can be made compatible with python2.5 by adding this line at the
-beginning of template.py:
-
-  from __future__ import with_statement
-
-- Wakarimasen is meant to be installed from an existing wakaba+desuchan
-installation. If you don't have one, clone this:
-
-  git clone http://git.kiace.com.ar/desuchan.git
-
-- First generate config files
-
-  ./config.sed /path/to/wakaba/config.pl > config.py
-  ./config_defaults.sed /path/to/wakaba/config_defaults.pl > config_defaults.py
-
-- Now generate templates based on the built-in futaba_style.pl.
-If you have your own version, use the -f/--filename parameter.
-
-  python futaba_to_jinja.py
--or-
-  python futaba_to_jinja.py -f /path/to/wakaba/futaba_style.pl
-
 - Copy/create a few extra files needed for templates and other stuff:
 
   mkdir -p templates/include/boards/
   cp /path/to/wakaba/include/* templates/include/boards/
-  touch templates/announcements_global.html
-  touch templates/announcements.html
-  touch templates/rules.html
   mkdir -p include/common/css
   cp /path/to/wakaba/board/css/* include/common/css
   touch spam.txt
 
-- Review the generated config.py. If you used desuchan.git for the base config,
-you'll have to set at least the first three entries to different values. The
-format for SQL_ENGINE is:
+- Copy config.py.example to config.py. Edit it and set ADMIN_PASS, SECRET and
+  SQL_ENGINE.  The format for SQL_ENGINE is the following:
 
   SQL_ENGINE = 'mysql://USERNAME:PASSWORD@HOSTNAME/DATABASE'
-
-I also recommend changing the following (uncomment when needed)
-
-  USE_XHTML = 0
-  PAGE_EXT = '.html'
 
 - Now make sure the shebang line in wakarimasen.py points to the right
 python interpreter. If you use suexec for cgi, it must be chmod 755, too.
@@ -61,23 +30,13 @@ Visit
 You should get a board not found WakaError. That means cgi is working.
 Adding fastcgi support is explained later.
 
-- Skip this step if you already have boards. To create a new board called
-/temp/, do the following (assuming the desuchan git is in the current dir)
+- To create a new board called /temp/, copy the base_board directory:
 
-  mkdir temp
-  mkdir temp/res
-  ./board_config.sed desuchan/board_config.pl > temp/board_config.py
+  cp -r base_board temp
 
-Now edit the new board_config.py, important settings are NUKE_PASS, TITLE
-and SQL_TABLE. Keep in mind most of those options are not supported for now
-(captcha, load balancing, proxy, etc). If you've disabled XHTML:
-
-  config['USE_XHTML'] = 0
-  config['HTML_SELF'] = 'wakaba.html'
-
-Also disable captchas (not working yet):
-
- config['ENABLE_CAPTCHA'] = 0
+Edit temp/board_config.py. Important settings are NUKE_PASS, TITLE and
+SQL_TABLE. Keep in mind most of those options are not supported for now
+(captcha, load balancing, proxy, etc).
 
 - Go to http://example.com/wakarimasen.py?board=temp - This should rebuild the
 cache and redirect you to your board. If you see the directory listing, add
