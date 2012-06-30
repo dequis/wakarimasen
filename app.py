@@ -710,6 +710,12 @@ def check_setup(environ, start_response):
         issues.append("No write access to DOCUMENT_ROOT+BOARD_DIR (%s)" %
             full_board_dir)
 
+    include_dir = os.path.join(environ['DOCUMENT_ROOT'],
+        config.BOARD_DIR, "include")
+    if not os.access(include_dir, os.F_OK | os.R_OK):
+        issues.append("No read access to includes dir (%s). Wrong BOARD_DIR?" %
+            include_dir)
+
     script_name_dir = os.path.join(environ['DOCUMENT_ROOT'],
         os.path.dirname(environ['SCRIPT_NAME']).lstrip("/"))
     if not os.access(script_name_dir, os.W_OK):

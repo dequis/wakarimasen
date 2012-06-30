@@ -197,15 +197,12 @@ class Template(object):
                 .replace('.css', '') \
                 .replace('_', ' ').title()
 
-            if title == self.board.options['DEFAULT_STYLE']:
-                default = 1
-            else:
-                default = 0
+            default = (title == self.board.options['DEFAULT_STYLE'].title())
+
+            url = file.replace(self.environ['DOCUMENT_ROOT'].rstrip("/"), '')
 
             yield {
-                'filename': os.path.abspath(\
-                            file.replace(self.environ['DOCUMENT_ROOT'], ''))\
-                            .encode('utf-8'),
+                'filename': url,
                 'title': title,
                 'default': default,
             }

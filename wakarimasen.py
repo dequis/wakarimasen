@@ -37,10 +37,15 @@ def application(environ, start_response):
         environ['waka.board'] = NoBoard()
         return app.check_setup(environ, start_response)
 
+    environ['waka.board'] = NoBoard()
     try:
-        if not boardname:
+        if boardname:
+            environ['waka.board'] = Board(boardname)
+        elif task not in ('entersetup', 'setup', 'loginpanel'):
             raise WakaError("No board parameter set")
-        environ['waka.board'] = Board(boardname)
+        elif task == 'loginpanel':
+            raise WakaError("No board parameter set. "
+                "If you haven't created boards yet, do it now.")
     except WakaError, e:
         return app.fffffff(environ, start_response, e)
 
