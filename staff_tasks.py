@@ -8,61 +8,11 @@ import config
 from util import WakaError
 
 # Dictionary of what action keywords mean. It's like a real dictionary!
-ACTION_TRANSLATION  = {
-    'ipban' : {'name' : 'IP Ban', 'content' : 'Affected IP Address'},
-    'ipban_edit'
-        : {'name' : 'IP Ban Revision', 'content' : 'Revised Data'},
-    'ipban_remove'
-        : {'name' : 'IP Ban Removal',
-           'content' : 'Unbanned IP Address'},
-    'wordban' : {'name' : 'Word Ban', 'content' : 'Banned Phrase'},
-    'wordban_edit' : {'name' : 'Word Ban Revision',
-                     'content' : 'Revised Data'},
-    'wordban_remove' : {'name' : 'Word Ban Removal',
-                       'content' : 'Unbanned Phrase'},
-    'whitelist' : {'name' : 'IP Whitelist',
-                  'content' : 'Whitelisted IP Address'},
-    'whitelist_edit' : {'name' : 'IP Whitelist Revision',
-                       'content' : 'Revised Data'},
-    'whitelist_remove' : {'name' : 'IP Whitelist Removal',
-                                  'content' : 'Removed IP Address'},
-    'trust' : {'name' : 'Captcha Exemption',
-              'content' : 'Exempted Tripcode'},
-    'trust_edit' : {'name' : 'Revised Captcha Exemption',
-                   'content' : 'Revised Data'},
-    'trust_remove' : {'name' : 'Removed Captcha Exemption',
-                     'content' : 'Removed Tripcode'},
-    'admin_post' : {'name' : 'Manager Post', 'content' : 'Post'},
-    'admin_edit' : {'name' : 'Administrative Edit',
-                   'content' : 'Post'},
-    'admin_delete' : {'name' : 'Administrative Deletion',
-                     'content' : 'Post'},
-    'thread_sticky' : {'name' : 'Thread Sticky',
-                      'content' : 'Thread Parent'},
-    'thread_unsticky' : {'name' : 'Thread Unsticky',
-                        'content': 'Thread Parent'},
-    'thread_lock' : {'name' : 'Thread Lock',
-                    'content' : 'Thread Parent'},
-    'thread_unlock' : {'name' : 'Thread Unlock',
-                      'content' : 'Thread Parent'},
-    'report_resolve' : {'name' : 'Report Resolution',
-                       'content' : 'Resolved Post'},
-    'backup_restore' : {'name' : 'Restoration From Trash Bin',
-                       'content' : 'Restored Post'},
-    'backup_remove' : {'name' : 'Deletion From Trash Bin',
-                      'content' : 'Deleted Post'},
-    'thread_move' : {'name' : 'Thread Move',
-                    'content' : 'Source and Destination'},
-    'script_ban_forgive' : {'name' : 'Script Access Restoration',
-                           'content' : 'IP Address'},
-    'delete_by_ip': {'name': 'Delete By IP (Board-Wide)',
-                    'content': 'IP Address'},
-    'delete_by_ip_global': {'name': 'Delete By IP (Global or Reign-Wide)',
-                            'content': 'IP Address'},
-    'rebuild': {'name': 'Board Rebuild',
-                'content': 'Board Name'},
-    'rebuild_global': {'name': 'Global Rebuild', 'content': 'Referer'},
-}
+# {name: {'name': title, 'content': content}}
+ACTION_TRANSLATION  = {}
+
+# {name: function}
+ACTION_MAP = {}
 
 def get_action_name(action_to_view, debug=0):
     try:
@@ -78,62 +28,129 @@ def get_action_name(action_to_view, debug=0):
     else:
         return content
 
-def make_admin_post(task_data, **kwargs):
+def staff_action(action_name='', title='', content=''):
+    def decorator(f):
+        real_name = action_name or f.__name__
+        real_title = title or real_name.title().replace("_", "")
+
+        ACTION_TRANSLATION[real_name] = {'name': real_title,
+            'content': content}
+        ACTION_MAP[real_name] = f
+        return f
+    return decorator
+
+
+@staff_action(title='Manager Post', content='Post')
+def admin_post(task_data, **kwargs):
     return task_data.board.post_stuff(admin_task_data=task_data, **kwargs)
 
-def edit_admin_post(task_data, **kwargs):
+@staff_action(title='Administrative Edit', content='Post')
+def admin_edit(task_data, **kwargs):
     return task_data.board.edit_stuff(admin_task_data=task_data, **kwargs)
 
-def delete_admin_post(task_data, **kwargs):
+@staff_action(title='Administrative Deletion', content='Post')
+def admin_delete(task_data, **kwargs):
     return task_data.board.delete_stuff(admin_task_data=task_data, **kwargs)
 
-def delete_backup_post(task_data, **kwargs):
+@staff_action(title='Deletion From Trash Bin', content='Deleted Post')
+def backup_remove(task_data, **kwargs):
     return task_data.board.remove_backup_stuff(admin_task_data=task_data,
                                                **kwargs)
 
-def lock_thread(task_data, num):
+@staff_action(content='Thread Parent')
+def thread_lock(task_data, num):
     return task_data.board.toggle_thread_state(task_data, num, 'locked')
 
-def unlock_thread(task_data, num):
+@staff_action(content='Thread Parent')
+def thread_unlock(task_data, num):
     return task_data.board.toggle_thread_state(task_data, num, 'locked',
                                                enable_state=False)
 
-def sticky_thread(task_data, num):
+@staff_action(content='Thread Parent')
+def thread_sticky(task_data, num):
     return task_data.board.toggle_thread_state(task_data, num, 'sticky')
 
-def unsticky_thread(task_data, num):
+@staff_action(content='Thread Parent')
+def thread_unsticky(task_data, num):
     return task_data.board.toggle_thread_state(task_data, num, 'sticky',
                                                enable_state=False)
 
-def delete_by_board_ip(task_data, **kwargs):
+@staff_action(title='Delete By IP (Board-Wide)', content='IP Address')
+def delete_by_ip(task_data, **kwargs):
     return task_data.board.delete_by_ip(task_data=task_data, **kwargs)
 
-def rebuild_board(task_data):
+@staff_action(title='Board Rebuild', content='Board Name')
+def rebuild(task_data):
     return task_data.board.rebuild_cache_proxy(task_data)
 
+
+# Interboard entries
+# (these 'decorate' functions not in this module)
+
+staff_action('admin_entry')(interboard.add_admin_entry)
+staff_action('remove_admin_entry')(interboard.remove_admin_entry)
+staff_action('edit_admin_entry')(interboard.edit_admin_entry)
+staff_action('update_spam')(interboard.update_spam_file)
+
+staff_action('report_resolve', title='Report Resolution',
+    content='Resolved Post')(interboard.mark_resolved)
+
+staff_action('thread_move',
+    content='Source and Destination')(interboard.move_thread)
+
+staff_action('delete_by_ip_global', title='Delete By IP (Global or Reign-Wide)',
+    content='IP Address')(interboard.delete_by_ip)
+
+staff_action('rebuild_global', title='Global Rebuild',
+    content='Referer')(interboard.global_cache_rebuild_proxy)
+
+
+# Unimplemented
+
+staff_action('script_ban_forgive', title='Script Access Restoration',
+    content='IP Address')(None)
+
+staff_action('ipban_edit', title='IP Ban Revision',
+    content='Revised Data')(None)
+
+staff_action('whitelist', title='IP Whitelist',
+    content='Whitelisted IP Address')(None)
+
+staff_action('trust_edit', title='Revised Captcha Exemption',
+    content='Revised Data')(None)
+
+staff_action('trust_remove', title='Removed Captcha Exemption',
+    content='Removed Tripcode')(None)
+
+staff_action('backup_restore', title='Restoration From Trash Bin',
+    content='Restored Post')(None)
+
+staff_action('ipban', title='IP Ban',
+     content='Affected IP Address')(None)
+
+staff_action('ipban_remove', title='IP Ban Removal',
+    content='Unbanned IP Address')(None)
+
+staff_action('trust', title='Captcha Exemption',
+    content='Exempted Tripcode')(None)
+
+staff_action('wordban', title='Word Ban',
+    content='Banned Phrase')(None)
+
+staff_action('whitelist_remove', title='IP Whitelist Removal',
+    content='Removed IP Address')(None)
+
+staff_action('wordban_remove', title='Word Ban Removal',
+    content='Unbanned Phrase')(None)
+
+staff_action('wordban_edit', title='Word Ban Revision',
+    content='Revised Data')(None)
+
+staff_action('whitelist_edit', title='IP Whitelist Revision',
+    content='Revised Data')(None)
+
+
 class StaffAction(object):
-    ACTION_MAP = {
-        'admin_entry' : interboard.add_admin_entry,
-        'remove_admin_entry': interboard.remove_admin_entry,
-        'edit_admin_entry': interboard.edit_admin_entry,
-        'admin_post' : make_admin_post,
-        'admin_edit' : edit_admin_post,
-        'admin_delete' : delete_admin_post,
-        'thread_sticky' : sticky_thread,
-        'thread_unsticky' : unsticky_thread,
-        'thread_lock' : lock_thread,
-        'thread_unlock' : unlock_thread,
-        'report_resolve' : interboard.mark_resolved,
-        'backup_remove' : delete_backup_post,
-        'thread_move' : interboard.move_thread,
-        'delete_by_ip_global': interboard.delete_by_ip,
-        'delete_by_ip': delete_by_board_ip,
-        'rebuild': rebuild_board,
-        'rebuild_global': interboard.global_cache_rebuild_proxy,
-        'update_spam': interboard.update_spam_file,
-        # Unimplemented :B
-        'script_ban_forgive' : None,
-    }
 
     def __init__(self, admin, action, **kwargs):
         self.action = action
@@ -152,11 +169,8 @@ class StaffAction(object):
     def execute(self):
         res = None
         try:
-            if self.board:
-                res = self.ACTION_MAP[self.action](self, **self.kwargs)
-            else:
-                res = self.ACTION_MAP[self.action](self, **self.kwargs)
-
+            # XXX there was an apparently pointless "if board" here
+            res = ACTION_MAP[self.action](self, **self.kwargs)
             return res
         finally:
             # Execute after exceptions in the case of bulk deletions, etc.
