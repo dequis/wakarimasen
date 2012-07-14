@@ -213,6 +213,8 @@ WM_REPLACEMENTS = [
     (re.compile(r'\*\*([^\s].*?)\*\*'), r'<strong>\1</strong>'),
     (re.compile(r'\*([^\s].*?)\*'), r'<em>\1</em>'),
     (re.compile(r'`([^\n]*?)`'), r'<code>\1</code>'),
+    (re.compile(r'\[spoiler\]'), r'<span class="spoiler">'),
+    (re.compile(r'\[/spoiler\]'), r'</span><!--/spoiler-->'),
 ]
 
 WM_CODEBLOCK = [re.compile(r'^(    |\t)'), '<pre><code>', '', '\n',
@@ -308,6 +310,8 @@ TK_REPLACEMENTS = [
     (re.compile('</p>'), '\n\n'),
     (re.compile('<code>([^\n]*?)</code>'), r'`\1`'),
     (re.compile('</blockquote>'), '\n\n'),
+    (re.compile('<span class="spoiler">'), '[spoiler]'),
+    (re.compile('</span><!--/spoiler-->'), '[/spoiler]'),
 ]
 
 TK_CODEBLOCK = re.compile('<\s*?code>(.*?)</\s*?code>', re.S)
