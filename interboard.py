@@ -441,9 +441,8 @@ def trim_activity():
     sql = table.delete().where(table.c.timestamp <= mintime)
     session.execute(sql)
 
-def update_spam_file(admin, spam):
-    user = staff.check_password(admin)
-    if user.account == staff.MODERATOR:
+def update_spam_file(task_data, spam):
+    if task_data.user.account == staff.MODERATOR:
         raise WakaError(strings.INUSUFFICENTPRIVLEDGES)
 
     # Dump all contents to first spam file.
