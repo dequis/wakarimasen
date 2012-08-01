@@ -880,7 +880,7 @@ class Board(object):
         return reported_posts
 
     def delete_by_ip(self, task_data, ip, mask='255.255.255.255'):
-        if not task_data.content:
+        if not task_data.contents:
             task_data.contents.append(ip + ' (' + mask + ')' + ' @ ' \
                                       + self.name)
 

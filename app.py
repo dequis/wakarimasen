@@ -1,6 +1,5 @@
 import model
 import staff_interface
-import interboard
 import urllib
 
 from template import Template
@@ -478,12 +477,13 @@ def task_addipfrompopup(environ, start_response):
 
     try:
         if delete_all:
-            interboard.delete_by_ip(kwargs['admin'], kwargs['ip'])
+            StaffAction(kwargs['admin'], 'delete_by_ip',
+                        ip=kwargs['ip'], board=board).execute()
         elif delete:
-            board = environ['waka.board']
-            board.delete_stuff([delete], '', False, False, admindelete=True,
-                               admin=kwargs['admin'], from_window=True,
-                               caller='internal')
+            StaffAction(kwargs['admin'], 'admin_delete', board=board,
+                        posts=[delete], from_window=True, password='',
+                        file_only=False, archiving=False, caller='internal')\
+                .execute()
     except WakaError:
         pass
 
