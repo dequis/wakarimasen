@@ -545,12 +545,13 @@ class StaffInterface(Template):
         elif config.POST_BACKUP:
             max_res = board.options['IMAGES_PER_PAGE']
 
+            sqlcond = and_(or_(table.c.parent == 0,
+                and_(table.c.parent > 0, not_(exists([table.c.num],
+                    table.c.parent == table.c.postnum)))),
+                table.c.board_name == board.name)
+
             # Acquire the number of full threads *and* orphaned posts.
-            sql = select([func.count()], or_(table.c.parent == 0,
-                      and_(table.c.parent > 0,
-                           not_(exists([table.c.num],
-                                       table.c.parent == table.c.postnum)))),
-                      table)\
+            sql = select([func.count()], sqlcond, table)\
                   .order_by(table.c.timestampofarchival.desc(),
                               table.c.postnum.asc())
 
@@ -567,10 +568,7 @@ class StaffInterface(Template):
             if self.page > last_page and last_page > 0:
                 self.page = last_page
 
-            sql = table.select().where(or_(table.c.parent == 0,
-                      and_(table.c.parent > 0,
-                           not_(exists([table.c.num],
-                                       table.c.parent == table.c.postnum)))))\
+            sql = table.select().where(sqlcond)\
                   .order_by(table.c.timestampofarchival.desc(),
                               table.c.num.asc())\
                   .limit(board.options['IMAGES_PER_PAGE'])\
