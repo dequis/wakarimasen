@@ -48,7 +48,7 @@
 {% endfor %}
 -
 [<a href="{{ (config.HOME)|expand_url }}" target="_top">{{ strings.HOME }}</a>]
-[<a href="{{ ("board.rss")|expand_url(1) }}" title="Local RSS Feed for This Board"><img src="{{ ("../rss.png")|expand_url }}" style="border:0" alt="RSS" /> Live Feed</a>]
+[<a href="{{ board.expand_url("board.rss", 1) }}" title="Local RSS Feed for This Board"><img src="{{ board.expand_url("../rss.png") }}" style="border:0" alt="RSS" /> Live Feed</a>]
 [<a href="{{ get_secure_script_name() }}?task=loginpanel&amp;board={{ board.name }}">{{ strings.ADMIN }}</a>]
 </div>
 
