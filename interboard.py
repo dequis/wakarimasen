@@ -418,6 +418,7 @@ def delete_by_ip(task_data, ip, mask='255.255.255.255'):
 
     for board_name in reign:
         board_obj = board.Board(board_name)
+        local.environ['waka.board'] = board_obj
         # TODO: Fork this.
         board_obj.delete_by_ip(task_data, ip, mask=mask)
 
