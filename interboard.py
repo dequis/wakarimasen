@@ -79,7 +79,7 @@ def global_cache_rebuild():
 def global_cache_rebuild_proxy(task_data):
     if task_data.user.account != staff.ADMIN:
         raise WakaError(strings.INUSUFFICENTPRIVLEDGES)
-    Popen(['python', 'wakarimasen.py', 'rebuild_global_cache',
+    Popen([sys.executable, sys.argv[0], 'rebuild_global_cache',
            local.environ['DOCUMENT_ROOT'],
            local.environ['SCRIPT_NAME'],
            local.environ['SERVER_NAME']])
@@ -418,6 +418,7 @@ def delete_by_ip(task_data, ip, mask='255.255.255.255'):
 
     for board_name in reign:
         board_obj = board.Board(board_name)
+        local.environ['waka.board'] = board_obj
         # TODO: Fork this.
         board_obj.delete_by_ip(task_data, ip, mask=mask)
 

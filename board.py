@@ -1726,8 +1726,41 @@ def get_page_count(threads, per_page):
     return (len(threads) + per_page - 1) / per_page
 
 def abbreviate_html(html, max_lines, approx_len):
-    # TODO: implement abbreviate_html
-    return
+    lines = chars = 0
+    stack = []
+
+    if not max_lines:
+        return
+
+    for match in re.finditer("(?:([^<]+)|<(/?)(\w+).*?(/?)>)", html):
+        text, closing, tag, implicit = match.groups()
+        tag = tag.lower() if tag else ''
+
+        if text:
+            chars += len(text)
+        else:
+            if not closing and not implicit:
+                stack.append(tag)
+            if closing:
+                stack.pop()
+
+            if (closing or implicit) and (tag in ('p', 'blockquote',
+                'pre', 'li', 'ol', 'ul', 'br')):
+                lines += (chars / approx_len) + 1
+                if tag in ('p', 'blockquote'):
+                    lines += 1
+                chars = 0
+
+            if lines > max_lines:
+                # check if there's anything left other than end-tags
+                if re.match("^(?:\s*</\w+>)*\s*$", html[match.end():]):
+                    return
+
+                abbrev =  html[:match.end()]
+                while stack:
+                    tag = stack.pop()
+                    abbrev += "</%s>" % tag
+                return abbrev
 
 class BoardNotFound(WakaError):
     def __init__(self, message='Board not found'):
