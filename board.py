@@ -481,6 +481,7 @@ class Board(object):
             post_ip = original_row['ip']
             size = original_row['size']
             lasthit = original_row['lasthit']
+            sticky = original_row['stickied']
             if not killtrip:
                 trip = original_row['trip']
 
