@@ -143,7 +143,9 @@ def add_admin_entry(task_data, option, comment, ip='', mask='255.255.255.255',
     sql = table.insert().values(type=option, comment=comment, ival1=int(ival1),
                                 ival2=int(ival2), sval1=sval1, total=total,
                                 expiration=expiration)
-    session.execute(sql)
+    result = session.execute(sql)
+
+    task_data.admin_id = result.last_inserted_ids()[0]
 
     # Add specific action name to task data.
     task_data.action = option
