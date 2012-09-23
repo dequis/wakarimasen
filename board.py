@@ -1742,7 +1742,10 @@ def abbreviate_html(html, max_lines, approx_len):
             if not closing and not implicit:
                 stack.append(tag)
             if closing:
-                stack.pop()
+                try:
+                    stack.pop()
+                except IndexError:
+                    pass
 
             if (closing or implicit) and (tag in ('p', 'blockquote',
                 'pre', 'li', 'ol', 'ul', 'br')):
