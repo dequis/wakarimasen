@@ -1,0 +1,108 @@
+<script type="text/javascript">
+	function show_list(item) { item.getElementsByTagName('ul')[0].className='show'; }
+	function hide_list(item) { item.getElementsByTagName('ul')[0].className='hide'; }
+	function show_futaba_style(booleanval)
+	{
+		if (booleanval)
+		{
+			document.getElementById('page_header').style.display = 'none';
+			document.getElementById('futaba_style_header').style.display = 'block';
+			set_cookie('show_futaba_style','yes',365);
+		}
+		else
+		{
+			document.getElementById('futaba_style_header').style.display = 'none';
+			document.getElementById('page_header').style.display = 'block';
+			set_cookie('show_futaba_style','no',365);
+		}
+	}
+</script>
+
+<div class="page_header" id="page_header" style="display:block">
+<span id="menu_title"><strong><a href="/">Desuchan</a></strong></span>
+<ul>
+	<li onmouseover="show_list(this)" onmouseout="hide_list(this)">
+	<a href="#">Rozen Maiden</a>
+		<ul>
+			<li><a href="/bananas/">/bananas/ - Kirakishou</a></li>
+			<li><a href="/boku/">/boku/ - Boku</a></li>
+			<li><a href="/dawa/">/dawa/ - Shinku</a></li>
+			<li><a href="/desu/">/desu/ - Desu</a></li>
+			<li><a href="/jum/">/jum/ - Humans</a></li>
+			<li><a href="/kashira/">/kashira/ - Kanada</a></li>
+			<li><a href="/md/">/md/ - Manga/Doujinshi</a></li>
+			<li><a href="/otousama/">/otousama/ - Barasuishou</a></li>
+			<li><a href="/ro/">/ro/ - Rozen Maiden</a></li>
+			<li><a href="/unyuu/">/unyuu/ - Nano</a></li>
+			<li><a href="/yakult/">/yakult/ - Alice</a></li>
+		</ul>
+	</li>
+	<li onmouseover="show_list(this)" onmouseout="hide_list(this)">
+	<a href="#">Japan</a>
+		<ul>
+			<li><a href="/a/">/a/ - Anime/Manga</a></li>
+			<li><a href="/c/">/c/ - Anime/MoeBlob</a></li>
+			<li><a href="/h/">/h/ - Hentai</a></li>
+			<li><a href="/loli/">/loli/ - Lolicon</a></li>
+			<li><a href="/moonspeak/">/moonspeak/ - Moonspeak</a></li>
+			<li><a href="/nagato/">/nagato/ - Nagato Yuki</a></li>
+			<li><a href="/nij/">/nij/ - Nijura Spinoffs</a></li>
+			<li><a href="/nipa/">/nipa/ - Higurashi no Naku Koro Ni</a></li>
+			<li><a href="/touhou/">/touhou/ - Touhou Project</a></li>		
+			<li><a href="/tr/">/tr/ - Traps</a></li>
+			<li><a href="/vn/">/vn/ - Visual Novels and Eroge</a></li>
+			<li><a href="/yan/">/yan/ - Yandere/Yangire</a></li>
+		</ul>
+	</li>
+	<li onmouseover="show_list(this)" onmouseout="hide_list(this)">
+	<a href="#">Hobbies</a>
+		<ul>
+			<li><a href="/do/">/do/ - Dolls</a></li>
+			<li><a href="/fi/">/fi/ - Figurines</a></li>
+			<li><a href="/lit/">/lit/ - Literature &amp; Write Fags</a></li>
+			<li><a href="/o/">/o/ - Oekaki &amp; Art</a></li>
+			<li><a href="/pro/">/pro/ - Projects</a></li>
+			<li><a href="/tech/">/tech/ - Technology</a></li>
+			<li><a href="/v/">/v/ - Video Games</a></li>
+			<li><a href="/vic/">/vic/ - Victorian Fashion/Gothic Lolita</a></li>
+		</ul>
+	</li>
+	<li onmouseover="show_list(this)" onmouseout="hide_list(this)">
+	<a href="#">Off-Topic</a>
+		<ul>
+			<li><a href="/arrrrr/">/arrrrr/ - Delicious Musak, you must listen</a></li>
+			<li><a href="/gar/">/gar/ - GAR</a></li>
+			<li><a href="/gif/">/gif/ - Animation</a></li>
+			<li><a href="/media/">/media/ - Audio and Video</a></li>
+			<li><a href="/ot/">/ot/ - Off-Topic</a></li>
+			<li><a href="/r/">/r/ - Request</a></li>
+			<li><a href="/w/">/w/ - Wallpapers</a></li>
+		</ul>
+	</li>
+	<li onmouseover="show_list(this)" onmouseout="hide_list(this)">
+	<a href="#">Meta</a>
+		<ul>
+			<li><a href="/donate.html">/donate/ - Jew golds</a></li>
+			<li><a href="/mod/">/mod/ - Mod Central</a></li>
+			<li><a href="/sandbox/">/sandbox/ - Let the games begin</a></li>
+			<li><a href="/sugg/">/sugg/ - Suggestions &amp; Help</a></li>
+		</ul>
+	</li>
+	</ul>
+	<a href="javascript:show_futaba_style(true)" style="float:right">Use Classic Menu</a>
+	<script type="text/javascript">	if (get_cookie('show_futaba_style') == 'yes') { document.getElementById('page_header').style.display = 'none'; }</script><br />
+</div>
+<div id="futaba_style_header" style="display:none">
+	<p style="margin-top:0; margin-bottom:0">
+		<span style="float:left">[ <a href="/bananas/" title="Kirakishou">/bananas/</a> / <a href="/boku/" title="Boku">/boku/</a> / <a href="/dawa/" title="Shinku">/dawa/</a> / <a href="/desu/" title="Desu">/desu/</a> / <a href="/jum/" title="Humans">/jum/</a> / <a href="/kashira/" title="Kanada">/kashira/</a> / <a href="/md/" title="Manga/Doujinshi">/md/</a> / <a href="/otousama/" title="Barasuishou">/otousama/</a> / <a href="/ro/" title="Rozen Maiden">/ro/</a> / <a href="/unyuu/" title="Nano">/unyuu/</a> / <a href="/yakult/" title="Alice">/yakult/</a> ]</span>
+		<span style="float:left">[ <a href="/a/" title="Anime/Manga">/a/</a> / <a href="/c/" title="Anime/MoeBlob">/c/</a> / <a href="/h/" title="Hentai">/h/</a> / <a href="/loli/" title="Lolicon">/loli/</a> / <a href="/moonspeak/" title="Moonspeak">/moonspeak/</a> / <a href="/nagato/" title="Nagato Yuki">/nagato/</a> / <a href="/nij/" title="Nijura Spinoffs">/nij/</a> / <a href="/nipa/" title="Higurashi no Naku Koro Ni">/nipa/</a> / <a href="/touhou/" title="Touhou Project">/touhou/</a> / <a href="/tr/" title="Traps">/tr/</a> / <a href="/vn/" title="Visual Novels and Eroge">/vn/</a> / <a href="/yan/" title="Yandere/Yangire">/yan/</a> ]</span>
+		<span style="float:left">[ <a href="/do/" title="Dolls">/do/</a> / <a href="/fi/" title="Figurines">/fi/</a> / <a href="/lit/" title="Literature &amp; Write Fags">/lit/</a> / <a href="/o/" title="Oekaki &amp; Art">/o/</a> / <a href="/pro/" title="Projects">/pro/</a> / <a href="/tech/" title="Technology">/tech/</a> / <a href="/v/" title="Video Games">/v/</a> / <a href="/vic/" title="Victorian Fashion/Gothic Lolita">/vic/</a> ]</span>
+		<span style="float:left">[ <a href="/arrrrr/" title="Delicious Musak, you must listen">/arrrrr/</a> / <a href="/gar/" title="GAR">/gar/</a> / <a href="/gif/" title="Animation">/gif/</a> / <a href="/media/" title="Audio and Video">/media/</a> / <a href="/ot/" title="Off-Topic">/ot/</a> / <a href="/r/" title="Request">/r/</a> / <a href="/w/" title="Wallpapers">/w/</a> ]</span>
+		<span style="float:left">[ <a href="/donate.html" title="Jew golds">/donate/</a> / <a href="/mod/" title="We be bannin">/mod/</a> / <a href="/sandbox/" title="Let the games begin">/sandbox/</a> / <a href="/sugg/" title="Suggestions &amp; Help">/sugg/</a> ]</span>
+	</p>
+	<a href="javascript:show_futaba_style(false)" style="float:right">Use New Menu</a>
+	<script type="text/javascript">	if (get_cookie('show_futaba_style') == 'yes') { document.getElementById('futaba_style_header').style.display = 'block'; }</script><br />
+</div>
+<!-- End Menu-->
+<script src="/include/common/eng_end6.js" type="text/javascript"></script>
+<!-- vim: set ts=2 sw=2: -->
