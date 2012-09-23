@@ -1,0 +1,8 @@
+# Domains
+freeflatscreens.com
+freehandbags.com
+freeipods.com
+freeipodshuffle.com
+
+# Please, I need US$1.00 to buy an album called SIX4.
+/[iI].need.\w{2,3}\$\d+?\.\d{2}.to.buy.an.album.*[pP]aypal/is
