@@ -13,7 +13,7 @@ try:
 except ImportError:
     config = None
 
-TEMPLATES_DIR = 'templates'
+TEMPLATES_DIR = 'new_templates'
 HTDOCS_HARDCODED_PATH = '/home/desuchan/public_html/desuchan.net/htdocs/'
 
 FUTABA_STYLE_DEBUG = 0
