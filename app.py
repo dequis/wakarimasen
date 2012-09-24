@@ -649,7 +649,7 @@ def task_move(environ, start_response):
 def task_searchposts(environ, start_response):
     request = environ['werkzeug.request']
 
-    params = {'form':    ['ipsearch', 'id', 'ip', 'caller'],
+    params = {'form':    ['search', 'caller', 'text'],
               'cookies': ['wakaadmin']}
     
     kwargs = kwargs_from_params(request, params)
