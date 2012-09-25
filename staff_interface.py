@@ -384,9 +384,9 @@ class StaffInterface(Template):
                 row['expirehuman'] = 'Never'
 
             if row['total'] == 'yes':
-                row['browsingban'] = 'Yes'
-            else:
                 row['browsingban'] = 'No'
+            else:
+                row['browsingban'] = 'Yes'
 
         Template.__init__(self, 'ban_panel_template', bans=bans, ip=ip)
 
