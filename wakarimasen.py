@@ -94,6 +94,12 @@ def main():
         (local.environ['DOCUMENT_ROOT'], local.environ['SCRIPT_NAME'],\
             local.environ['SERVER_NAME']) = sys.argv[2:5]
         interboard.global_cache_rebuild()
+    elif sys.argv[1] == 'delete_by_ip':
+        ip = sys.argv[2]
+        boards = sys.argv[3].split(',')
+        (local.environ['DOCUMENT_ROOT'], local.environ['SCRIPT_NAME'],\
+            local.environ['SERVER_NAME']) = sys.argv[4:7]
+        interboard.process_global_delete_by_ip(ip, boards)
     else:
         werkzeug.run_simple('', 8000,
             util.wrap_static(application, __file__,

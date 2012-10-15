@@ -62,30 +62,58 @@ def remove_board_from_index(board_name):
 
     session.execute(sql)
 
-# Global rebuilding
+# Board looping (andwich pattern).
 
-def global_cache_rebuild():
-    boards = [x['board_entry'] for x in get_all_boards()]
+def loop_thru_boards(board_obj_task, exc_msg, *args, **kwargs):
+    try:
+        boards = kwargs.pop('boards')
+    except KeyError:
+        boards = None
+
+    if not boards:
+        boards = [x['board_entry'] for x in get_all_boards()]
+
     for board_str in boards:
         try:
             board_obj = board.Board(board_str)
             local.environ['waka.board'] = board_obj
+            getattr(board_obj, board_obj_task)(*args, **kwargs)
             board_obj.rebuild_cache()
         except:
-            sys.stderr.write('Error in global cache rebuild in '\
-                             + board_str + '\n')
-            traceback.print_exc(file=sys.stderr)
+            if exc_msg:
+                sys.stderr.write(exc_msg % board_str + '\n')
+                traceback.print_exc(file=sys.stderr)
+
+# Global rebuilding
+
+def global_cache_rebuild():
+    loop_thru_boards('rebuild_cache', 'Error in global cache rebuild in %s')
 
 def global_cache_rebuild_proxy(task_data):
     if task_data.user.account != staff.ADMIN:
         raise WakaError(strings.INUSUFFICENTPRIVLEDGES)
-    Popen(['python', 'wakarimasen.py', 'rebuild_global_cache',
-           local.environ['DOCUMENT_ROOT'],
-           local.environ['SCRIPT_NAME'],
-           local.environ['SERVER_NAME']])
+
+    Popen(
+        ['python', 'wakarimasen.py', 'rebuild_global_cache',
+        local.environ['DOCUMENT_ROOT'],
+        local.environ['SCRIPT_NAME'],
+        local.environ['SERVER_NAME']]
+    )
+
     referer = local.environ['HTTP_REFERER']
     task_data.contents.append(referer)
     return util.make_http_forward(referer, config.ALTERNATE_REDIRECT)
+
+# Global post management.
+
+def process_global_delete_by_ip(ip, boards):
+    loop_thru_boards(
+        'delete_by_ip',
+        'Error in deleting posts from %s in %%s' % ip,
+        task_data = None,
+        ip = ip,
+        boards = boards
+    )
 
 # Bans and Whitelists
 
@@ -416,10 +444,17 @@ def delete_by_ip(task_data, ip, mask='255.255.255.255'):
     else:
         reign = [x['board_entry'] for x in get_all_boards()]
 
-    for board_name in reign:
-        board_obj = board.Board(board_name)
-        # TODO: Fork this.
-        board_obj.delete_by_ip(task_data, ip, mask=mask)
+    Popen(
+        ['python', 'wakarimasen.py', 'delete_by_ip',
+        ip,
+        ','.join(reign),
+        local.environ['DOCUMENT_ROOT'],
+        local.environ['SCRIPT_NAME'],
+        local.environ['SERVER_NAME']]
+    )
+
+    referer = local.environ['HTTP_REFERER']
+    return util.make_http_forward(referer, config.ALTERNATE_REDIRECT)
 
 def trim_reported_posts(date=0):
     mintime = 0
