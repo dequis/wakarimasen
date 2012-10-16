@@ -384,9 +384,9 @@ class StaffInterface(Template):
                 row['expirehuman'] = 'Never'
 
             if row['total'] == 'yes':
-                row['browsingban'] = 'Yes'
-            else:
                 row['browsingban'] = 'No'
+            else:
+                row['browsingban'] = 'Yes'
 
         Template.__init__(self, 'ban_panel_template', bans=bans, ip=ip)
 
@@ -655,8 +655,7 @@ class StaffInterface(Template):
         Template.__init__(self, 'backup_panel_template', **template_kwargs)
 
 
-    def make_admin_post_search_panel(self, ipsearch, id=None, ip=None,
-                                     caller='internal'):
+    def make_admin_post_search_panel(self, search, text, caller='internal'):
         board = self.board
         session = model.Session()
         table = board.table
@@ -665,45 +664,55 @@ class StaffInterface(Template):
 
         popup = caller != 'board'
 
-        if ipsearch:
+        if search.find('IP Address') != -1:
             try:
-                sql = table.select().where(table.c.ip == misc.dot_to_dec(ip))
+                sql = table.select()\
+                           .where(table.c.ip == misc.dot_to_dec(text))
             except ValueError:
                 raise WakaError('Please enter a valid IP.')
+            search_type = 'IP'
+        elif search.find('Text String') != -1:
+            sql = table.select().where(table.c.comment.like('%'+text+'%'))
+            search_type = 'text string'
+        elif search.find('Author') != -1:
+            sql = table.select().where(table.c.name == text)
+            search_type = 'author'
+        else:
+            sql = table.select().where(table.c.num == id)
+            search_type = 'ID'
+
+        if search_type != 'ID':
             page = model.Page(sql, self.page, self.perpage)
             rowcount = page.total_entries
             total_pages = page.total_pages
             posts = page.rows
             if not posts:
-                raise WakaError("No posts found for IP %s" % (ip))
+                raise WakaError("No posts found for %s %s" % (search_type, text))
         else:
             rowcount = total_pages = 1
-            sql = table.select().where(table.c.num == id)
             row = session.execute(sql).fetchone()
             if not row:
                 raise WakaError("Post not found. (It may have just been"
                                 " deleted.")
             posts = [row]
 
+
         inputs = [
             {'name': 'board', 'value': board.name},
             {'name' : 'task', 'value' : 'searchposts'},
-            {'name' : 'num', 'value' : id},
-            {'name' : 'ip', 'value' : ip},
-            {'name' : 'ipsearch', 'value' : ('1' if ipsearch else '')},
+            {'name' : 'text', 'value' : text},
             {'name': 'caller', 'value': caller},
-            {'name' : 'search', 'value': ('ip' if ipsearch else 'id')}
+            {'name' : 'search', 'value': search}
         ]
 
         Template.__init__(self, 'post_search', num=id,
-                          posts=posts, search=('ip' if ipsearch else 'id'),
-                          inputs=inputs,
-                          number_of_pages=total_pages,
+                          posts=posts, search=search, text=text,
+                          inputs=inputs, number_of_pages=total_pages,
                           rooturl=misc.get_secure_script_name()\
                             +'?task=searchposts&amp;board='+board.name\
-                            + '&amp;caller='+caller+'&amp;ipsearch='\
-                            + ('1' if ipsearch else '') + '&amp;ip='\
-                            + ip, rowcount=rowcount, popup=popup)
+                            + '&amp;caller='+caller+'&amp;search='\
+                            + search + '&amp;text='\
+                            + text, rowcount=rowcount, popup=popup)
 
     def make_sql_interface_panel(self, sql='', nuke=''):
         if self.user.account != staff.ADMIN:

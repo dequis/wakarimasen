@@ -58,19 +58,13 @@
 <input type="hidden" name="board" value="{{ board.name }}" />
 <table><tbody>
 <tr>
-	<td><input type="text" name="id" size="24" /></td>
-	<td><input type="submit" name="idsearch" value="Search Posts by ID" /></td>
+	<td colspan="4" style="text-align:center"><input type="text" name="text" size="24" /></td>
 </tr>
-</tbody></table>
-</form>
-<form action="{{ get_script_name() }}" method="get">
-<input type="hidden" name="task" value="searchposts" />
-<input type="hidden" name="caller" value="board" />
-<input type="hidden" name="board" value="{{ board.name }}" />
-<table><tbody>
 <tr>
-	<td><input type="text" name="ip" size="24" /></td>
-	<td><input type="submit" name="ipsearch" value="Search Posts by IP Address" /></td>
+	<td><input type="submit" name="search" value="Search Posts by ID" /></td>
+	<td><input type="submit" name="search" value="Search Posts by IP Address" /></td>
+	<td><input type="submit" name="search" value="Search Posts by Text String" /></td>
+	<td><input type="submit" name="search" value="Search Posts by Author" /></td>
 </tr>
 </tbody></table>
 </form>

@@ -165,6 +165,7 @@ class StaffAction(object):
         self.date = misc.make_date(self.timestamp, style=config.DATE_STYLE)
         self.contents = []
         self.action = action
+        self.admin_id = None
 
     def execute(self):
         res = None
@@ -188,5 +189,6 @@ class StaffAction(object):
                                         action=self.action,
                                         info=content,
                                         date=self.date,
-                                        timestamp=self.timestamp)
+                                        timestamp=self.timestamp,
+                                        admin_id=self.admin_id)
             session.execute(sql)

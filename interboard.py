@@ -92,14 +92,12 @@ def global_cache_rebuild():
 def global_cache_rebuild_proxy(task_data):
     if task_data.user.account != staff.ADMIN:
         raise WakaError(strings.INUSUFFICENTPRIVLEDGES)
-
     Popen(
-        ['python', 'wakarimasen.py', 'rebuild_global_cache',
+        [sys.executable, sys.argv[0], 'rebuild_global_cache',
         local.environ['DOCUMENT_ROOT'],
         local.environ['SCRIPT_NAME'],
         local.environ['SERVER_NAME']]
     )
-
     referer = local.environ['HTTP_REFERER']
     task_data.contents.append(referer)
     return util.make_http_forward(referer, config.ALTERNATE_REDIRECT)
@@ -171,7 +169,9 @@ def add_admin_entry(task_data, option, comment, ip='', mask='255.255.255.255',
     sql = table.insert().values(type=option, comment=comment, ival1=int(ival1),
                                 ival2=int(ival2), sval1=sval1, total=total,
                                 expiration=expiration)
-    session.execute(sql)
+    result = session.execute(sql)
+
+    task_data.admin_id = result.last_inserted_ids()[0]
 
     # Add specific action name to task data.
     task_data.action = option

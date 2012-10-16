@@ -1,9 +1,15 @@
 {% if popup %}{% include 'mini_head_include.html' %}{% endif %}{% if not popup %}{% include 'manager_head_include.html' %}{% endif %}
-{% if search == 'ip' %}
-	<div class="dellist"><h2>Searching By IP {{ addr }}</h2></div>
-	{% include 'pagination_section.html' %}
+{% if search == 'Search Posts by IP Address' %}
+    <div class="dellist"><h2>Searching By IP Address {{ text }}</h2></div>
+    {% include 'pagination_section.html' %}
+{% elif search == 'Search Posts by Text String' %}
+    <div class="dellist"><h2>Searching By Text "{{ text }}"</h2></div>
+    {% include 'pagination_section.html' %}
+{% elif search == 'Search Posts by Author' %}
+    <div class="dellist"><h2>Searching By Poster Name "{{ text }}"</h2></div>
+    {% include 'pagination_section.html' %}
+{% elif search == 'Search Posts by ID' %}{% if popup %}<h1 style="text-align:center;font-size:1em">{% endif %}{% if not popup %}<div class="dellist"><h2>{% endif %}Showing Post No.{{ num }}{% if popup %}</h1>{% endif %}{% if not popup %}</h2></div>{% endif %}
 {% endif %}
-{% if search != 'ip' %}{% if popup %}<h1 style="text-align:center;font-size:1em">{% endif %}{% if not popup %}<div class="dellist"><h2>{% endif %}Showing Post No.{{ num }}{% if popup %}</h1>{% endif %}{% if not popup %}</h2></div>{% endif %}{% endif %}
 {% if not popup %}<hr />{% endif %}
 <form action="{{ get_script_name() }}" id="delform">
 <input type="hidden" name="board" value="{{ board.name }}" />
