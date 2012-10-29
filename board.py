@@ -499,7 +499,7 @@ class Board(object):
             elif not admin_post_mode:
                 sticky = 0
 
-            if sticky_check['locked'] and not admin_post_mode:
+            if sticky_check['locked'] == 'yes' and not admin_post_mode:
                 raise WakaError(strings.THREADLOCKEDERROR)
 
         username = accounttype = ''
