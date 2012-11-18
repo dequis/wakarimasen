@@ -599,7 +599,7 @@ class Board(object):
         name, temp = misc.process_tripcode(name, self.options['TRIPKEY'])
         trip = trip or temp
 
-        if not whitelisted:
+        if not whitelisted and not admin_post_mode:
             # check for bans
             interboard.ban_check(numip, c_name, subject, comment)
 
