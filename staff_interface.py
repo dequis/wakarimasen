@@ -23,7 +23,6 @@ HOME_PANEL = 'mpanel'
 BAN_PANEL = 'banspanel'
 SPAM_PANEL = 'spampanel'
 REPORTS_PANEL = 'reportspanel'
-RESOLVED_REPORTS_PANEL = 'resolvedreportspanel'
 STAFF_PANEL = 'staffpanel'
 TRASH_PANEL = 'trashpanel'
 POST_SEARCH_PANEL = 'postsearchpanel'
@@ -412,17 +411,10 @@ class StaffInterface(Template):
                                                        spamlines=spamlines)
 
     @interface_for(REPORTS_PANEL)
-    def make_admin_report_panel(self, sortby_type='date', sortby_dir='desc'):
-        self._resolved_reports_panel_generic(sortby_type, sortby_dir)
+    def make_admin_report_panel(self, sortby='date', order='desc'):
+        sortby_type = sortby
+        sortby_dir = order
 
-    @interface_for(RESOLVED_REPORTS_PANEL)
-    def make_resolved_reports_panel(self, sortby_type='date',
-                                    sortby_dir='desc'):
-        self._resolved_reports_panel_generic(sortby_type, sortby_dir,
-                                             resolved_only=True)
-
-    def _resolved_reports_panel_generic(self, sortby_type, sortby_dir,
-                                        resolved_only=False):
         session = model.Session()
         table = model.report
         sql = table.select()
@@ -430,9 +422,6 @@ class StaffInterface(Template):
         # Enforce limited moderation reign.
         if self.user.account == staff.MODERATOR:
             sql = sql.where(table.c.board.in_(self.user.reign))
-
-        if resolved_only:
-            sql = sql.where(table.c.resolved == 1)
 
         # Determine order.
         if sortby_type in ('board', 'postnum', 'date'):
@@ -459,7 +448,6 @@ class StaffInterface(Template):
                 % (misc.get_secure_script_name(), sortby_type, sortby_dir)
 
         Template.__init__(self, 'report_panel_template',
-                          resolved_posts_only=resolved_only,
                           reports=res.rows,
                           sortby=sortby_type,
                           order=sortby_dir,

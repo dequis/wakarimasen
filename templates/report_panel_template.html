@@ -1,12 +1,11 @@
 {% include 'manager_head_include.html' %}
-<div class="dellist"><h2>{% if not resolved_posts_only %}Reported Posts{% endif %}{% if resolved_posts_only %}Resolved Reports{% endif %}</h2></div>
+<div class="dellist"><h2>Reported Posts</h2></div>
 {% include 'pagination_section.html' %}
-{% if not resolved_posts_only and type == 'admin' %}<div class="dellist"><a href="{{ get_script_name() }}?task=resolvedreports&amp;board={{ board.name }}">View Resolved</a></div><br />{% endif %}
 <form action="{{ get_script_name() }}" method="post" id="reportedposts">
 <input type="hidden" name="task" value="resolve" />
 <input type="hidden" name="board" value="{{ board.name }}" />
 <table align="center"><tbody>
-<tr class="managehead"><th>Post</th><th>Board</th><th>Date</th><th>Comment</th><th>Posting IP</th><th>Reporting IP</th>{% if type == 'admin' and resolved_posts_only %}<th>Involved Moderator</th>{% endif %}</tr>
+<tr class="managehead"><th>Post</th><th>Board</th><th>Date</th><th>Comment</th><th>Posting IP</th><th>Reporting IP</th></tr>
 {% for report in reports %}
 	<tr class="row{{ rowtype }}">
 	<td>
@@ -30,7 +29,6 @@
 	<td>{{ report.comment }}</td>
 	<td>{{ (report.offender)|dec_to_dot }} [<a href="{{ get_script_name() }}?task=banpopup&amp;board={{ board.name }}&amp;ip={{ (report.offender)|dec_to_dot }}" onclick="popUpPost('{{ get_script_name() }}?task=banpopup&amp;board={{ board.name }}&amp;ip={{ (report.offender)|dec_to_dot }}');return false">{{ strings.MPBAN }}</a>]</td>
 	<td>{{ (report.reporter)|dec_to_dot }} [<a href="{{ get_script_name() }}?task=banpopup&amp;board={{ board.name }}&amp;ip={{ (report.reporter)|dec_to_dot }}" onclick="popUpPost('{{ get_script_name() }}?task=banpopup&amp;board={{ board.name }}&amp;ip={{ (report.reporter)|dec_to_dot }}');return false">{{ strings.MPBAN }}</a>]</td>
-	{% if type == 'admin' and resolved_posts_only %}<td>{{ username }}</td>{% endif %}
 	</tr>
 {% endfor %}
 </tbody></table>
