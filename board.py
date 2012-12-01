@@ -22,6 +22,11 @@ import strings as strings
 from util import WakaError, local
 from template import Template
 
+try:
+    import board_config_defaults
+except ImportError:
+    board_config_defaults = None
+
 from sqlalchemy.sql import case, or_, and_, select, func, null
 
 class Board(object):
@@ -39,10 +44,14 @@ class Board(object):
             raise BoardNotFound()
         if not os.path.exists(os.path.join(board_path, 'board_config.py')):
             raise BoardNotFound('Board configuration not found.')
-        
+
         module = util.import2('board_config', board_path)
 
-        self.options = module.config
+        if board_config_defaults:
+            self.options = board_config_defaults.config.copy()
+            self.options.update(module.config)
+        else:
+            self.options = module.config
         
         self.table = model.board(self.options['SQL_TABLE'])
 
