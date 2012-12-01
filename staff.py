@@ -35,12 +35,14 @@ class LoginData(object):
         self.cookie = ','.join((self.username, self.crypt))
 
     def make_cookie(self, save_login=False):
-        if save_login:
-            misc.make_cookies(wakaadminsave='1', wakaadmin=self.cookie,
-                              expires=time.time()+SAVED_LOGIN_EXPIRE)
-        else:
-            misc.make_cookies(wakaadminsave='', wakaadmin=self.cookie,
-                              expires=time.time()+UNSAVED_LOGIN_EXPIRE)
+        expires = time.time() + (SAVED_LOGIN_EXPIRE if save_login
+            else UNSAVED_LOGIN_EXPIRE)
+
+        misc.make_cookies(wakaadmin=self.cookie, httponly=1, expires=expires)
+
+        # the following isn't http only
+        wakaadminsave = '1' if save_login else ''
+        misc.make_cookies(wakaadminsave=wakaadminsave, expires=expires)
 
 # Class for representing staff
 class StaffMember(object):
