@@ -85,6 +85,8 @@ class StaffMember(object):
         if len(new) < 8:
             raise WakaError('Passwords should be at least eight characters!')
 
+        new = misc.hide_critical_data(new, config.SECRET)
+
         self._update_db(password=new)
         self._password = new
 
@@ -202,8 +204,7 @@ def edit_staff(username, clear_pass=None, new_class=None, reign=None,
     staff_obj = StaffMember.get(username)
     
     if clear_pass:
-        staff_obj.password = misc.hide_critical_data(clear_pass,
-                                                     config.SECRET)
+        staff_obj.password = clear_pass
 
     if new_class and new_class in CLASSES:
         staff_obj.account = new_class
