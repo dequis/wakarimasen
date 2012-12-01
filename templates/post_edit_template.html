@@ -69,6 +69,11 @@
 		<img alt="" src="{{ (board.options.CAPTCHA_SCRIPT)|expand_url }}?key={{ (post.parent)|get_captcha_key }}&amp;dummy={{ post.num }}" />
 		</td></tr>
 	{% endif %}
+	{% if admin %}
+		<tr><td class="postblock">Admin options</td><td><label><input type="checkbox" name="ninja" value="1" /> Ninja edit (don't show it was edited)</label><br />
+		<button type="button" onclick="document.forms.postform.comment.value += '\n\n<p><span style=\'color: red; font-weight: bold;\'>(USER WAS BANNED FOR THIS POST)</span></p>'; return false;">Add ban text</button>
+		</td></tr>
+	{% endif %}
 	</tbody></table></form></div>
 {% endfor %}
 {% include 'mini_foot_include.html' %}

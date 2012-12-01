@@ -174,7 +174,7 @@ def task_editpost(environ, start_response):
     params = {'form': ['num', 'field1', 'email', 'subject', 'comment',
                        'password', 'nofile', 'captcha', 'no_captcha',
                        'no_format', 'sticky', 'lock', 'adminedit', 'killtrip',
-                       'postfix'],
+                       'postfix', 'ninja'],
               'cookies': ['wakaadmin'],
               'file':    ['file']}
 

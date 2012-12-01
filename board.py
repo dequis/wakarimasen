@@ -441,7 +441,7 @@ class Board(object):
                       password, nofile, captcha, no_captcha,
                       no_format, oekaki_post, srcinfo, pch, sticky, lock,
                       admin_post_mode, post_num=None, killtrip=False,
-                      parent='0', admin_task_data=None):
+                      parent='0', admin_task_data=None, ninja=False):
 
         session = model.Session()
 
@@ -677,7 +677,8 @@ class Board(object):
         if not post_num:
             date = misc.make_date(timestamp, self.options['DATE_STYLE'])
         else:
-            lastedit = misc.make_date(timestamp, self.options['DATE_STYLE'])
+            if not ninja:
+                lastedit = misc.make_date(timestamp, self.options['DATE_STYLE'])
 
         # generate ID code if enabled
         if self.options['DISPLAY_ID']:
@@ -1357,13 +1358,15 @@ class Board(object):
     def edit_stuff(self, post_num, name, email, subject, comment, file,
                    password, nofile, captcha, no_captcha,
                    no_format, oekaki_post, srcinfo, pch, sticky, lock,
-                   admin_edit_mode, killtrip, postfix, admin_task_data=None):
+                   admin_edit_mode, killtrip, postfix, admin_task_data=None,
+                   ninja=False):
 
         self._handle_post(name, email, subject, comment, file,
                           password, nofile, captcha, no_captcha,
                           no_format, oekaki_post, srcinfo, pch, sticky, lock,
                           admin_edit_mode, post_num=post_num,
-                          killtrip=killtrip, admin_task_data=admin_task_data)
+                          killtrip=killtrip, admin_task_data=admin_task_data,
+                          ninja=ninja)
 
         if admin_edit_mode:
             admin_task_data.contents\
