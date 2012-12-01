@@ -1372,7 +1372,7 @@ class Board(object):
         return Template('edit_successful')
 
     def process_file(self, filestorage, timestamp, parent, editing):
-        filetypes = self.options['FILETYPES']
+        filetypes = self.options.get('EXTRA_FILETYPES', [])
 
         # analyze file and check that it's in a supported format
         ext, width, height = misc.analyze_image(filestorage.stream,
@@ -1460,14 +1460,15 @@ class Board(object):
         if not width:  # unsupported file
             if ext in filetypes: # externally defined filetype
                 # Compensate for absolute paths, if given.
-                icon = filetypes[ext]
-                if icon.startswith('/'):
-                    icon = os.path.join(local.environ['DOCUMENT_ROOT'],
-                                        icon.lstrip("/"))
-                else:
-                    icon = os.path.join(self.path, icon)
+                icon = config.ICONS.get(ext, None)
+                if icon:
+                    if icon.startswith('/'):
+                        icon = os.path.join(local.environ['DOCUMENT_ROOT'],
+                                            icon.lstrip("/"))
+                    else:
+                        icon = os.path.join(self.path, icon)
 
-                if os.path.exists(icon):
+                if icon and os.path.exists(icon):
                     tn_ext, tn_width, tn_height = \
                         misc.analyze_image(open(icon, "rb"), icon)
                 else:
@@ -1510,9 +1511,10 @@ class Board(object):
             tn_height = height
             thumbnail = filename
 
-        # externally defined filetype - restore the name
-        if ext in filetypes and (ext not in ('gif', 'jpg', 'png') or
-                                 filetypes[ext] == '.'):
+        # restore the name for extensions in KEEP_NAME_FILETYPES
+        # or, if it doesn't exist, for all the ones in filetypes
+        if ext in self.options.get('KEEP_NAME_FILETYPES', filetypes):
+
             # cut off any directory in the original filename
             newfilename = self.make_path(filestorage.filename.split("/")[-1],
                                          dirc='IMG_DIR', ext=None)
