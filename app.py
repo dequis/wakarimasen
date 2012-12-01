@@ -353,7 +353,7 @@ def task_mpanel(environ, start_response):
 
     params = {'form': ['page'], 'cookies': ['wakaadmin']}
     kwargs = kwargs_from_params(request, params)
-    kwargs['dest'] = staff_interface.BOARD_PANEL
+    kwargs['dest'] = staff_interface.HOME_PANEL
 
     return StaffInterface(**kwargs)
 

@@ -20,7 +20,6 @@ import config
 
 # Destination codes.
 HOME_PANEL = 'mpanel'
-BOARD_PANEL = 'mbpanel'
 BAN_PANEL = 'banspanel'
 SPAM_PANEL = 'spampanel'
 REPORTS_PANEL = 'reportspanel'
@@ -74,7 +73,7 @@ class StaffInterface(Template):
         try:
             self.user = staff.check_password(admin)
         except staff.LoginError:
-            Template.__init__(self, 'admin_login_template', nexttask=dest)
+            Template.__init__(self, 'admin_login_template', login_task=dest)
             return
         if not dest:
             dest = HOME_PANEL
@@ -83,7 +82,7 @@ class StaffInterface(Template):
 
         # TODO: Check if mod is banned.
         if not page:
-            if dest in (HOME_PANEL, BOARD_PANEL, TRASH_PANEL):
+            if dest in (HOME_PANEL, TRASH_PANEL):
                 # Adjust for different pagination scheme. (Blame Wakaba.)
                 page = 0
             else:
@@ -123,7 +122,6 @@ class StaffInterface(Template):
 
     def _init_template(self, dest, **kwargs):
             TEMPLATE_SELECTIONS = {HOME_PANEL : self.make_admin_home_panel,
-                BOARD_PANEL : self.make_admin_board_panel,
                 BAN_PANEL : self.make_admin_ban_panel,
                 REPORTS_PANEL : self.make_admin_report_panel,
                 RESOLVED_REPORTS_PANEL: self.make_resolved_reports_panel,
@@ -151,7 +149,7 @@ class StaffInterface(Template):
 
             TEMPLATE_SELECTIONS[dest](**kwargs)
 
-    def make_admin_board_panel(self):
+    def make_admin_home_panel(self):
         # Update perpage attribute: it is determined here by board options.
         board = self.board
         self.perpage = board.options['IMAGES_PER_PAGE']
@@ -199,8 +197,6 @@ class StaffInterface(Template):
                           threads=threads,
                           reportedposts=reports,
                           **kwargs)
-
-    make_admin_home_panel = make_admin_board_panel
 
     @admin_only
     def make_admin_staff_panel(self):
@@ -857,7 +853,7 @@ def clear_login_cookies():
     misc.make_cookies(wakaadmin='', wakaadminsave='0', expires=0)
 
 def do_login(username=None, password=None, save_login=False,
-             admin=None, board=None, nexttask=BOARD_PANEL):
+             admin=None, board=None, nexttask=HOME_PANEL):
 
     bad_pass = False
     staff_entry = None
@@ -890,7 +886,7 @@ def do_login(username=None, password=None, save_login=False,
         bad_pass = True
 
     if bad_pass:
-        return make_login_panel()
+        return Template('admin_login_template')
     else:
         login = staff_entry.login_data
         login.make_cookie(save_login=save_login)
@@ -941,8 +937,3 @@ def make_first_time_setup_page(admin):
         return Template('account_setup', admin=admin)
     else:
         return make_first_time_setup_gateway()
-        
-def make_login_panel(dest=BOARD_PANEL):
-    dest = HOME_PANEL
-
-    return Template('admin_login_template', login_task=dest)
