@@ -288,34 +288,6 @@ def task_setup(environ, start_response):
 
     return staff_interface.do_first_time_setup(**kwargs)
 
-def task_sql(environ, start_response):
-    request = environ['werkzeug.request']
-
-    params = {'form': ['sql', 'nuke'],
-              'cookies': ['wakaadmin']}
-    kwargs = kwargs_from_params(request, params)
-    kwargs['dest'] = staff_interface.SQL_PANEL
-
-    return StaffInterface(**kwargs)
-
-def task_proxy(environ, start_response):
-    request = environ['werkzeug.request']
-
-    params = {'cookies': ['wakaadmin']}
-    kwargs = kwargs_from_params(request, params)
-    kwargs['dest'] = staff_interface.PROXY_PANEL
-
-    return StaffInterface(**kwargs)
-
-def task_security(environ, start_response):
-    request = environ['werkzeug.request']
-
-    params = {'cookies': ['wakaadmin']}
-    kwargs = kwargs_from_params(request, params)
-    kwargs['dest'] = staff_interface.SECURITY_PANEL
-
-    return StaffInterface(**kwargs)
-
 def task_loginpanel(environ, start_response):
     request = environ['werkzeug.request']
 
@@ -348,91 +320,37 @@ def task_logout(environ, start_response):
 
     return staff_interface.do_logout(admin)
 
-def task_mpanel(environ, start_response):
-    request = environ['werkzeug.request']
+def si_task_factory(dest, *form):
+    '''Factory of task functions for StaffInterface'''
+    def task(environ, start_response):
+        request = environ['werkzeug.request']
+        params = {'form': form, 'cookies': ['wakaadmin']}
+        kwargs = kwargs_from_params(request, params)
+        kwargs['dest'] = getattr(staff_interface, dest)
+        return StaffInterface(**kwargs)
+    return task
 
-    params = {'form': ['page'], 'cookies': ['wakaadmin']}
-    kwargs = kwargs_from_params(request, params)
-    kwargs['dest'] = staff_interface.HOME_PANEL
+task_mpanel = si_task_factory('HOME_PANEL', 'page')
+task_bans = si_task_factory('BAN_PANEL', 'ip')
+task_baneditwindow = si_task_factory('BAN_EDIT_POPUP', 'num')
+task_banpopup = si_task_factory('BAN_POPUP', 'ip', 'delete')
+task_staff = si_task_factory('STAFF_PANEL')
+task_spam = si_task_factory('SPAM_PANEL')
+task_reports = si_task_factory('REPORTS_PANEL',
+    'page', 'perpage', 'sortby','order')
+task_postbackups = si_task_factory('TRASH_PANEL', 'page')
 
-    return StaffInterface(**kwargs)
+task_sql = si_task_factory('SQL_PANEL', 'sql', 'nuke')
+task_proxy = si_task_factory('PROXY_PANEL')
+task_security = si_task_factory('SECURITY_PANEL')
 
-def task_bans(environ, start_response):
-    request = environ['werkzeug.request']
+task_deleteuserwindow = si_task_factory('DEL_STAFF_CONFIRM', 'username')
+task_disableuserwindow = si_task_factory('DISABLE_STAFF_CONFIRM', 'username')
+task_enableuserwindow = si_task_factory('ENABLE_STAFF_CONFIRM', 'username')
+task_edituserwindow = si_task_factory('EDIT_STAFF_CONFIRM', 'username')
 
-    kwargs = {}
-    kwargs['ip'] = request.values.get('ip', '')
-    kwargs['admin'] = get_cookie_from_request(request, 'wakaadmin')
-    kwargs['dest'] = staff_interface.BAN_PANEL
-
-    return StaffInterface(**kwargs)
-
-def task_baneditwindow(environ, start_response):
-    request = environ['werkzeug.request']
-
-    params = {'form':    ['num'],
-              'cookies': ['wakaadmin']}
-    kwargs = kwargs_from_params(request, params)
-    kwargs['dest'] = staff_interface.BAN_EDIT_POPUP
-
-    return StaffInterface(**kwargs)
-
-def task_banpopup(environ, start_response):
-    request = environ['werkzeug.request']
-
-    params = {'form':    ['ip', 'delete'],
-              'cookies': ['wakaadmin']}
-    kwargs = kwargs_from_params(request, params)
-    kwargs['dest'] = staff_interface.BAN_POPUP
-
-    return StaffInterface(**kwargs)
-
-def task_staff(environ, start_response):
-    request = environ['werkzeug.request']
-
-    kwargs = {}
-    try:
-        kwargs['admin'] = get_cookie_from_request(request, 'wakaadmin')
-    except KeyError:
-        kwargs['admin'] = ''
-    kwargs['dest'] = staff_interface.STAFF_PANEL
-
-    return StaffInterface(**kwargs)
-
-def task_spam(environ, start_response):
-    request = environ['werkzeug.request']
-
-    kwargs = {}
-    try:
-        kwargs['admin'] = get_cookie_from_request(request, 'wakaadmin')
-    except KeyError:
-        kwargs['admin'] = ''
-    kwargs['dest'] = staff_interface.SPAM_PANEL
-
-    return StaffInterface(**kwargs)
-
-def task_reports(environ, start_response):
-    request = environ['werkzeug.request']
-
-    params = {'form':    ['page', 'perpage', 'sortby', 'order'],
-              'cookies': ['wakaadmin']}
-
-    kwargs = kwargs_from_params(request, params)
-    kwargs['sortby_type'] = kwargs.pop('sortby')
-    kwargs['sortby_dir'] = kwargs.pop('order')
-    kwargs['dest'] = staff_interface.REPORTS_PANEL
-
-    return StaffInterface(**kwargs)
-
-def task_postbackups(environ, start_response):
-    request = environ['werkzeug.request']
-
-    params = {'form':    ['page'],
-              'cookies': ['wakaadmin']}
-    kwargs = kwargs_from_params(request, params)
-    kwargs['dest'] = staff_interface.TRASH_PANEL
-
-    return StaffInterface(**kwargs)
+task_searchposts = si_task_factory('POST_SEARCH_PANEL',
+    'search', 'caller', 'text')
 
 def task_addip(environ, start_response):
     request = environ['werkzeug.request']
@@ -524,46 +442,6 @@ def task_updatespam(environ, start_response):
 
     return StaffAction(**kwargs).execute()
 
-def task_deleteuserwindow(environ, start_response):
-    request = environ['werkzeug.request']
-
-    params = {'cookies': ['wakaadmin'], 'form': ['username']}
-
-    kwargs = kwargs_from_params(request, params)
-    kwargs['dest'] = staff_interface.DEL_STAFF_CONFIRM
-
-    return StaffInterface(**kwargs)
-
-def task_disableuserwindow(environ, start_response):
-    request = environ['werkzeug.request']
-
-    params = {'cookies': ['wakaadmin'], 'form': ['username']}
-
-    kwargs = kwargs_from_params(request, params)
-    kwargs['dest'] = staff_interface.DISABLE_STAFF_CONFIRM
-
-    return StaffInterface(**kwargs)
-
-def task_enableuserwindow(environ, start_response):
-    request = environ['werkzeug.request']
-
-    params = {'cookies': ['wakaadmin'], 'form': ['username']}
-
-    kwargs = kwargs_from_params(request, params)
-    kwargs['dest'] = staff_interface.ENABLE_STAFF_CONFIRM
-
-    return StaffInterface(**kwargs)
-
-def task_edituserwindow(environ, start_response):
-    request = environ['werkzeug.request']
-
-    params = {'cookies': ['wakaadmin'], 'form': ['username']}
-
-    kwargs = kwargs_from_params(request, params)
-    kwargs['dest'] = staff_interface.EDIT_STAFF_CONFIRM
-
-    return StaffInterface(**kwargs)
-
 def task_createuser(environ, start_response):
     request = environ['werkzeug.request']
 
@@ -632,17 +510,6 @@ def task_move(environ, start_response):
     kwargs['action'] = 'thread_move'
 
     return StaffAction(**kwargs).execute()
-
-def task_searchposts(environ, start_response):
-    request = environ['werkzeug.request']
-
-    params = {'form':    ['search', 'caller', 'text'],
-              'cookies': ['wakaadmin']}
-    
-    kwargs = kwargs_from_params(request, params)
-    kwargs['dest'] = staff_interface.POST_SEARCH_PANEL
-
-    return StaffInterface(**kwargs)
 
 def task_stafflog(environ, start_response):
     request = environ['werkzeug.request']
