@@ -320,7 +320,7 @@ def make_thumbnail(filename, thumbnail, width, height, quality, convert):
         popen_array.extend([magickname, '-background', config.BG_ANIM_COLOR,
                             '-gravity', 'Center',
                             '-fill', config.FG_ANIM_COLOR,
-                            '-size', 'x15',
+                            '-size', '100x15',
                             'label:Animated', '-append', thumbnail])
 
         height += 15
