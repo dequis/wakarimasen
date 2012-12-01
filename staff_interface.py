@@ -657,7 +657,8 @@ class StaffInterface(Template):
             sql = table.select().where(table.c.comment.like('%'+text+'%'))
             search_type = 'text string'
         elif search.find('Author') != -1:
-            sql = table.select().where(table.c.name == text)
+            sql = table.select().where(or_(table.c.name.like('%'+text+'%'),
+                table.c.trip.like('%'+text+'%')))
             search_type = 'author'
         else:
             sql = table.select().where(table.c.num == text)
