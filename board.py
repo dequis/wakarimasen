@@ -22,6 +22,11 @@ import strings as strings
 from util import WakaError, local
 from template import Template
 
+try:
+    import board_config_defaults
+except ImportError:
+    board_config_defaults = None
+
 from sqlalchemy.sql import case, or_, and_, select, func, null
 
 class Board(object):
@@ -39,10 +44,14 @@ class Board(object):
             raise BoardNotFound()
         if not os.path.exists(os.path.join(board_path, 'board_config.py')):
             raise BoardNotFound('Board configuration not found.')
-        
+
         module = util.import2('board_config', board_path)
 
-        self.options = module.config
+        if board_config_defaults:
+            self.options = board_config_defaults.config.copy()
+            self.options.update(module.config)
+        else:
+            self.options = module.config
         
         self.table = model.board(self.options['SQL_TABLE'])
 
@@ -432,7 +441,7 @@ class Board(object):
                       password, nofile, captcha, no_captcha,
                       no_format, oekaki_post, srcinfo, pch, sticky, lock,
                       admin_post_mode, post_num=None, killtrip=False,
-                      parent='0', admin_task_data=None):
+                      parent='0', admin_task_data=None, ninja=False):
 
         session = model.Session()
 
@@ -499,7 +508,7 @@ class Board(object):
             elif not admin_post_mode:
                 sticky = 0
 
-            if sticky_check['locked'] and not admin_post_mode:
+            if sticky_check['locked'] == 'yes' and not admin_post_mode:
                 raise WakaError(strings.THREADLOCKEDERROR)
 
         username = accounttype = ''
@@ -599,7 +608,7 @@ class Board(object):
         name, temp = misc.process_tripcode(name, self.options['TRIPKEY'])
         trip = trip or temp
 
-        if not whitelisted:
+        if not whitelisted and not admin_post_mode:
             # check for bans
             interboard.ban_check(numip, c_name, subject, comment)
 
@@ -668,7 +677,8 @@ class Board(object):
         if not post_num:
             date = misc.make_date(timestamp, self.options['DATE_STYLE'])
         else:
-            lastedit = misc.make_date(timestamp, self.options['DATE_STYLE'])
+            if not ninja:
+                lastedit = misc.make_date(timestamp, self.options['DATE_STYLE'])
 
         # generate ID code if enabled
         if self.options['DISPLAY_ID']:
@@ -881,7 +891,7 @@ class Board(object):
         return reported_posts
 
     def delete_by_ip(self, task_data, ip, mask='255.255.255.255'):
-        if not task_data.contents:
+        if task_data and not task_data.contents:
             task_data.contents.append(ip + ' (' + mask + ')' + ' @ ' \
                                       + self.name)
 
@@ -1348,13 +1358,15 @@ class Board(object):
     def edit_stuff(self, post_num, name, email, subject, comment, file,
                    password, nofile, captcha, no_captcha,
                    no_format, oekaki_post, srcinfo, pch, sticky, lock,
-                   admin_edit_mode, killtrip, postfix, admin_task_data=None):
+                   admin_edit_mode, killtrip, postfix, admin_task_data=None,
+                   ninja=False):
 
         self._handle_post(name, email, subject, comment, file,
                           password, nofile, captcha, no_captcha,
                           no_format, oekaki_post, srcinfo, pch, sticky, lock,
                           admin_edit_mode, post_num=post_num,
-                          killtrip=killtrip, admin_task_data=admin_task_data)
+                          killtrip=killtrip, admin_task_data=admin_task_data,
+                          ninja=ninja)
 
         if admin_edit_mode:
             admin_task_data.contents\
@@ -1363,7 +1375,7 @@ class Board(object):
         return Template('edit_successful')
 
     def process_file(self, filestorage, timestamp, parent, editing):
-        filetypes = self.options['FILETYPES']
+        filetypes = self.options.get('EXTRA_FILETYPES', [])
 
         # analyze file and check that it's in a supported format
         ext, width, height = misc.analyze_image(filestorage.stream,
@@ -1451,14 +1463,15 @@ class Board(object):
         if not width:  # unsupported file
             if ext in filetypes: # externally defined filetype
                 # Compensate for absolute paths, if given.
-                icon = filetypes[ext]
-                if icon.startswith('/'):
-                    icon = os.path.join(local.environ['DOCUMENT_ROOT'],
-                                        icon.lstrip("/"))
-                else:
-                    icon = os.path.join(self.path, icon)
+                icon = config.ICONS.get(ext, None)
+                if icon:
+                    if icon.startswith('/'):
+                        icon = os.path.join(local.environ['DOCUMENT_ROOT'],
+                                            icon.lstrip("/"))
+                    else:
+                        icon = os.path.join(self.path, icon)
 
-                if os.path.exists(icon):
+                if icon and os.path.exists(icon):
                     tn_ext, tn_width, tn_height = \
                         misc.analyze_image(open(icon, "rb"), icon)
                 else:
@@ -1501,9 +1514,10 @@ class Board(object):
             tn_height = height
             thumbnail = filename
 
-        # externally defined filetype - restore the name
-        if ext in filetypes and (ext not in ('gif', 'jpg', 'png') or
-                                 filetypes[ext] == '.'):
+        # restore the name for extensions in KEEP_NAME_FILETYPES
+        # or, if it doesn't exist, for all the ones in filetypes
+        if ext in self.options.get('KEEP_NAME_FILETYPES', filetypes):
+
             # cut off any directory in the original filename
             newfilename = self.make_path(filestorage.filename.split("/")[-1],
                                          dirc='IMG_DIR', ext=None)

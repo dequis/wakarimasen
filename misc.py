@@ -199,6 +199,7 @@ def make_date(timestamp, style='futaba'):
 def make_cookies(**kwargs):
     expires = kwargs.pop('expires', time.time() + 14 * 24 * 3600)
     path = kwargs.pop('path', '/')
+    httponly = kwargs.pop('httponly', False)
 
     expire_date = make_date(expires, "cookie")
 
@@ -209,6 +210,8 @@ def make_cookies(**kwargs):
         cookies[key] = urllib.quote(value.encode('unicode-escape'))
         cookies[key]['expires'] = expire_date
         cookies[key]['path'] = path
+        if httponly:
+            cookies[key]['httponly'] = True
 
 def get_script_name():
     return local.environ['SCRIPT_NAME']
@@ -320,7 +323,7 @@ def make_thumbnail(filename, thumbnail, width, height, quality, convert):
         popen_array.extend([magickname, '-background', config.BG_ANIM_COLOR,
                             '-gravity', 'Center',
                             '-fill', config.FG_ANIM_COLOR,
-                            '-size', 'x15',
+                            '-size', '100x15',
                             'label:Animated', '-append', thumbnail])
 
         height += 15

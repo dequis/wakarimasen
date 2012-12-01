@@ -35,12 +35,14 @@ class LoginData(object):
         self.cookie = ','.join((self.username, self.crypt))
 
     def make_cookie(self, save_login=False):
-        if save_login:
-            misc.make_cookies(wakaadminsave='1', wakaadmin=self.cookie,
-                              expires=time.time()+SAVED_LOGIN_EXPIRE)
-        else:
-            misc.make_cookies(wakaadminsave='', wakaadmin=self.cookie,
-                              expires=time.time()+UNSAVED_LOGIN_EXPIRE)
+        expires = time.time() + (SAVED_LOGIN_EXPIRE if save_login
+            else UNSAVED_LOGIN_EXPIRE)
+
+        misc.make_cookies(wakaadmin=self.cookie, httponly=1, expires=expires)
+
+        # the following isn't http only
+        wakaadminsave = '1' if save_login else ''
+        misc.make_cookies(wakaadminsave=wakaadminsave, expires=expires)
 
 # Class for representing staff
 class StaffMember(object):
@@ -84,6 +86,8 @@ class StaffMember(object):
         table = self._table
         if len(new) < 8:
             raise WakaError('Passwords should be at least eight characters!')
+
+        new = misc.hide_critical_data(new, config.SECRET)
 
         self._update_db(password=new)
         self._password = new
@@ -202,8 +206,7 @@ def edit_staff(username, clear_pass=None, new_class=None, reign=None,
     staff_obj = StaffMember.get(username)
     
     if clear_pass:
-        staff_obj.password = misc.hide_critical_data(clear_pass,
-                                                     config.SECRET)
+        staff_obj.password = clear_pass
 
     if new_class and new_class in CLASSES:
         staff_obj.account = new_class

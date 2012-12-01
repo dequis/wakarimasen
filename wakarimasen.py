@@ -94,12 +94,26 @@ def main():
         (local.environ['DOCUMENT_ROOT'], local.environ['SCRIPT_NAME'],\
             local.environ['SERVER_NAME']) = sys.argv[2:5]
         interboard.global_cache_rebuild()
+    elif sys.argv[1] == 'delete_by_ip':
+        ip = sys.argv[2]
+        boards = sys.argv[3].split(',')
+        (local.environ['DOCUMENT_ROOT'], local.environ['SCRIPT_NAME'],\
+            local.environ['SERVER_NAME']) = sys.argv[4:7]
+        interboard.process_global_delete_by_ip(ip, boards)
     else:
+        from werkzeug.serving import WSGIRequestHandler
+        class WakaRequestHandler(WSGIRequestHandler):
+            def make_environ(self):
+                environ = WSGIRequestHandler.make_environ(self)
+                environ['DOCUMENT_ROOT'] = os.getcwd()
+                return environ
+
         werkzeug.run_simple('', 8000,
             util.wrap_static(application, __file__,
                 index='wakaba.html',
                 not_found_handler=app.not_found),
-            use_reloader=True, use_debugger=config.DEBUG)
+            use_reloader=True, use_debugger=config.DEBUG,
+            request_handler=WakaRequestHandler)
 
 if __name__ == '__main__':
     main()

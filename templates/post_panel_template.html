@@ -195,6 +195,7 @@
 			<a href="{{ get_script_name() }}?task=banpopup&amp;board={{ board.name }}&amp;ip={{ (post.ip)|dec_to_dot }}&amp;delete={{ post.num }}" onclick="popUpPost('{{ get_script_name() }}?task=banpopup&amp;board={{ board.name }}&amp;ip={{ (post.ip)|dec_to_dot }}&amp;delete={{ post.num }}');return false">&amp;</a> 
 			<a href="{{ get_script_name() }}?task=banpopup&amp;board={{ board.name }}&amp;ip={{ (post.ip)|dec_to_dot }}" onclick="popUpPost('{{ get_script_name() }}?task=banpopup&amp;board={{ board.name }}&amp;ip={{ (post.ip)|dec_to_dot }}');return false">{{ strings.MPBAN }}</a>]&nbsp;
 			[<a href="{{ get_script_name() }}?task=editpostwindow&amp;board={{ board.name }}&amp;num={{ post.num }}&amp;admineditmode=1" target="_blank" onclick="popUpPost('{{ get_script_name() }}?task=editpostwindow&amp;board={{ board.name }}&amp;num={{ post.num }}&amp;admineditmode=1'); return false">Edit</a>]&nbsp;
+			[<a href="{{ (post.num)|get_reply_link(0) }}" title="Non-admin version">Original</a>]&nbsp;
 			{% if not thread %}
 				[<a href="{{ get_script_name() }}?task=mpanel&amp;board={{ board.name }}&amp;page=t{{ post.num }}">{{ strings.REPLY }}</a>]
 			{% endif %}

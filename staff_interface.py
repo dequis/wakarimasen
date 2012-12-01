@@ -20,11 +20,9 @@ import config
 
 # Destination codes.
 HOME_PANEL = 'mpanel'
-BOARD_PANEL = 'mbpanel'
 BAN_PANEL = 'banspanel'
 SPAM_PANEL = 'spampanel'
 REPORTS_PANEL = 'reportspanel'
-RESOLVED_REPORTS_PANEL = 'resolvedreportspanel'
 STAFF_PANEL = 'staffpanel'
 TRASH_PANEL = 'trashpanel'
 POST_SEARCH_PANEL = 'postsearchpanel'
@@ -42,6 +40,14 @@ ENABLE_STAFF_CONFIRM = 'enablestaffwindow'
 EDIT_STAFF_CONFIRM = 'editstaffwindow'
 ADD_STAFF_CONFIRM = 'addstaffwindow'
 DELETE_ALL_CONFIRM = 'deleteallwindow'
+
+INTERFACE_MAPPING = {}
+
+def interface_for(dest_code):
+    def decorator(f):
+        INTERFACE_MAPPING[dest_code] = f
+        return f
+    return decorator
 
 def admin_only(f):
     '''StaffInterface templating function decorator: Indicate and enforce
@@ -74,7 +80,7 @@ class StaffInterface(Template):
         try:
             self.user = staff.check_password(admin)
         except staff.LoginError:
-            Template.__init__(self, 'admin_login_template', nexttask=dest)
+            Template.__init__(self, 'admin_login_template', login_task=dest)
             return
         if not dest:
             dest = HOME_PANEL
@@ -83,7 +89,7 @@ class StaffInterface(Template):
 
         # TODO: Check if mod is banned.
         if not page:
-            if dest in (HOME_PANEL, BOARD_PANEL, TRASH_PANEL):
+            if dest in (HOME_PANEL, TRASH_PANEL):
                 # Adjust for different pagination scheme. (Blame Wakaba.)
                 page = 0
             else:
@@ -98,7 +104,10 @@ class StaffInterface(Template):
         self.perpage = int(perpage)
         self.board = local.environ['waka.board']
 
-        self._init_template(dest, **kwargs)
+        if dest not in INTERFACE_MAPPING:
+            dest = HOME_PANEL
+
+        INTERFACE_MAPPING[dest](self, **kwargs)
 
         # Convert user reign list into a list of dictionaries, for
         # templating.
@@ -121,37 +130,8 @@ class StaffInterface(Template):
                                    page=self.page,
                                    perpage=self.perpage)
 
-    def _init_template(self, dest, **kwargs):
-            TEMPLATE_SELECTIONS = {HOME_PANEL : self.make_admin_home_panel,
-                BOARD_PANEL : self.make_admin_board_panel,
-                BAN_PANEL : self.make_admin_ban_panel,
-                REPORTS_PANEL : self.make_admin_report_panel,
-                RESOLVED_REPORTS_PANEL: self.make_resolved_reports_panel,
-                STAFF_PANEL : self.make_admin_staff_panel,
-                SPAM_PANEL : self.make_admin_spam_panel,
-                TRASH_PANEL : self.make_admin_trash_panel,
-                POST_SEARCH_PANEL: self.make_admin_post_search_panel,
-                SQL_PANEL: self.make_sql_interface_panel,
-                PROXY_PANEL: self.make_admin_proxy_panel,
-                SECURITY_PANEL: self.make_admin_script_security_panel,
-                STAFF_ACTIVITY_PANEL: self.make_admin_activity_panel,
-                BAN_POPUP: self.make_ban_popup,
-                BAN_EDIT_POPUP: self.make_ban_edit_popup,
-                DEL_STAFF_CONFIRM : self.make_del_staff_window,
-                DISABLE_STAFF_CONFIRM : self.make_disable_staff_window,
-                ENABLE_STAFF_CONFIRM : self.make_enable_staff_window,
-                EDIT_STAFF_CONFIRM : self.make_edit_staff_window,
-                DELETE_ALL_CONFIRM: self.make_delete_all_window}
-
-            # Initialize underlying parent class instance.
-            if dest not in TEMPLATE_SELECTIONS.keys():
-                dest = HOME_PANEL
-
-            template_function = TEMPLATE_SELECTIONS[dest]
-
-            TEMPLATE_SELECTIONS[dest](**kwargs)
-
-    def make_admin_board_panel(self):
+    @interface_for(HOME_PANEL)
+    def make_admin_home_panel(self):
         # Update perpage attribute: it is determined here by board options.
         board = self.board
         self.perpage = board.options['IMAGES_PER_PAGE']
@@ -200,9 +180,8 @@ class StaffInterface(Template):
                           reportedposts=reports,
                           **kwargs)
 
-    make_admin_home_panel = make_admin_board_panel
-
     @admin_only
+    @interface_for(STAFF_PANEL)
     def make_admin_staff_panel(self):
         session = model.Session()
         table = model.account
@@ -236,6 +215,7 @@ class StaffInterface(Template):
         Template.__init__(self, 'staff_management', users=users)
 
     @admin_only
+    @interface_for(STAFF_ACTIVITY_PANEL)
     def make_admin_activity_panel(self, view='', user_to_view=None,
                                   action_to_view=None, ip_to_view=None,
                                   post_to_view=None, sortby_name='date',
@@ -342,6 +322,7 @@ class StaffInterface(Template):
                           rooturl=rooturl,
                           inputs=inputs)
 
+    @interface_for(BAN_PANEL)
     def make_admin_ban_panel(self, ip=''):
         session = model.Session()
         table = model.admin
@@ -390,6 +371,7 @@ class StaffInterface(Template):
 
         Template.__init__(self, 'ban_panel_template', bans=bans, ip=ip)
 
+    @interface_for(BAN_EDIT_POPUP)
     def make_ban_edit_popup(self, num):
         session = model.Session()
         table = model.admin
@@ -409,10 +391,12 @@ class StaffInterface(Template):
                           min=expiration.minute,
                           sec=expiration.second)
 
+    @interface_for(BAN_POPUP)
     def make_ban_popup(self, ip, delete=''):
         Template.__init__(self, 'ban_window', ip=ip, delete=delete)
 
     @global_only
+    @interface_for(SPAM_PANEL)
     def make_admin_spam_panel(self):
         # TODO: Paginate this, too.
         spam_list = []
@@ -426,16 +410,11 @@ class StaffInterface(Template):
         Template.__init__(self, 'spam_panel_template', spam=spam,
                                                        spamlines=spamlines)
 
-    def make_admin_report_panel(self, sortby_type='date', sortby_dir='desc'):
-        self._resolved_reports_panel_generic(sortby_type, sortby_dir)
+    @interface_for(REPORTS_PANEL)
+    def make_admin_report_panel(self, sortby='date', order='desc'):
+        sortby_type = sortby
+        sortby_dir = order
 
-    def make_resolved_reports_panel(self, sortby_type='date',
-                                    sortby_dir='desc'):
-        self._resolved_reports_panel_generic(sortby_type, sortby_dir,
-                                             resolved_only=True)
-
-    def _resolved_reports_panel_generic(self, sortby_type, sortby_dir,
-                                        resolved_only=False):
         session = model.Session()
         table = model.report
         sql = table.select()
@@ -443,9 +422,6 @@ class StaffInterface(Template):
         # Enforce limited moderation reign.
         if self.user.account == staff.MODERATOR:
             sql = sql.where(table.c.board.in_(self.user.reign))
-
-        if resolved_only:
-            sql = sql.where(table.c.resolved == 1)
 
         # Determine order.
         if sortby_type in ('board', 'postnum', 'date'):
@@ -472,7 +448,6 @@ class StaffInterface(Template):
                 % (misc.get_secure_script_name(), sortby_type, sortby_dir)
 
         Template.__init__(self, 'report_panel_template',
-                          resolved_posts_only=resolved_only,
                           reports=res.rows,
                           sortby=sortby_type,
                           order=sortby_dir,
@@ -485,18 +460,23 @@ class StaffInterface(Template):
     # the sanity checks and instead delegated them to the non-interface
     # functions, the idea being that they should not come up
     # under normal usage of the interface (without compromising security).
+
+    @interface_for(DEL_STAFF_CONFIRM)
     def make_del_staff_window(self, username):
         Template.__init__(self, 'staff_delete_template',
                                 user_to_delete=username)
 
+    @interface_for(DISABLE_STAFF_CONFIRM)
     def make_disable_staff_window(self, username):
         Template.__init__(self, 'staff_disable_template',
                                 user_to_disable=username)
 
+    @interface_for(ENABLE_STAFF_CONFIRM)
     def make_enable_staff_window(self, username):
         Template.__init__(self, 'staff_enable_template',
                                 user_to_enable=username)
 
+    @interface_for(EDIT_STAFF_CONFIRM)
     def make_edit_staff_window(self, username):
         boards = interboard.get_all_boards()
         edited_user = staff.StaffMember.get(username)
@@ -509,6 +489,7 @@ class StaffInterface(Template):
                                 user_to_edit=username,
                                 boards=boards)
 
+    @interface_for(TRASH_PANEL)
     def make_admin_trash_panel(self):
         board = self.board
         table = model.backup
@@ -655,6 +636,7 @@ class StaffInterface(Template):
         Template.__init__(self, 'backup_panel_template', **template_kwargs)
 
 
+    @interface_for(POST_SEARCH_PANEL)
     def make_admin_post_search_panel(self, search, text, caller='internal'):
         board = self.board
         session = model.Session()
@@ -675,10 +657,11 @@ class StaffInterface(Template):
             sql = table.select().where(table.c.comment.like('%'+text+'%'))
             search_type = 'text string'
         elif search.find('Author') != -1:
-            sql = table.select().where(table.c.name == text)
+            sql = table.select().where(or_(table.c.name.like('%'+text+'%'),
+                table.c.trip.like('%'+text+'%')))
             search_type = 'author'
         else:
-            sql = table.select().where(table.c.num == id)
+            sql = table.select().where(table.c.num == text)
             search_type = 'ID'
 
         if search_type != 'ID':
@@ -693,7 +676,7 @@ class StaffInterface(Template):
             row = session.execute(sql).fetchone()
             if not row:
                 raise WakaError("Post not found. (It may have just been"
-                                " deleted.")
+                                " deleted.)")
             posts = [row]
 
 
@@ -714,6 +697,7 @@ class StaffInterface(Template):
                             + search + '&amp;text='\
                             + text, rowcount=rowcount, popup=popup)
 
+    @interface_for(SQL_PANEL)
     def make_sql_interface_panel(self, sql='', nuke=''):
         if self.user.account != staff.ADMIN:
             raise WakaError(strings.INUSUFFICENTPRIVLEDGES)
@@ -759,9 +743,11 @@ class StaffInterface(Template):
         Template.__init__(self, 'sql_interface_template',
                           results='<br />'.join(results))
 
+    @interface_for(PROXY_PANEL)
     def make_admin_proxy_panel(self):
         Template.__init__(self, 'proxy_panel_template')
 
+    @interface_for(SECURITY_PANEL)
     def make_admin_script_security_panel(self):
         session = model.Session()
         table = model.passprompt
@@ -782,6 +768,7 @@ class StaffInterface(Template):
         
         Template.__init__(self, 'script_security_panel', entries=entries)
 
+    @interface_for(DELETE_ALL_CONFIRM)
     def make_delete_all_window(self, **kwargs):
         Template.__init__(self, 'delete_crap_confirm', **kwargs)
 
@@ -857,7 +844,7 @@ def clear_login_cookies():
     misc.make_cookies(wakaadmin='', wakaadminsave='0', expires=0)
 
 def do_login(username=None, password=None, save_login=False,
-             admin=None, board=None, nexttask=BOARD_PANEL):
+             admin=None, board=None, nexttask=HOME_PANEL):
 
     bad_pass = False
     staff_entry = None
@@ -890,7 +877,7 @@ def do_login(username=None, password=None, save_login=False,
         bad_pass = True
 
     if bad_pass:
-        return make_login_panel()
+        return Template('admin_login_template')
     else:
         login = staff_entry.login_data
         login.make_cookie(save_login=save_login)
@@ -941,8 +928,3 @@ def make_first_time_setup_page(admin):
         return Template('account_setup', admin=admin)
     else:
         return make_first_time_setup_gateway()
-        
-def make_login_panel(dest=BOARD_PANEL):
-    dest = HOME_PANEL
-
-    return Template('admin_login_template', login_task=dest)

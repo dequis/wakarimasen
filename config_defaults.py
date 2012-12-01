@@ -59,6 +59,8 @@ SERVER_NAME = 'localhost'
 IDENTIFY_COMMAND = 'identify'
 FG_ANIM_COLOR = 'white'
 BG_ANIM_COLOR = '#660066'
+
+ICONS = {}
 # add default values to config.py
 import util as _util
 _util.module_default('config', locals())

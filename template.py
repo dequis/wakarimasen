@@ -173,12 +173,12 @@ class Template(object):
 
     @function
     def get_filetypes(self):
-        filetypes = self.board.options['FILETYPES']
+        filetypes = self.board.options.get('EXTRA_FILETYPES', [])
         ret_list = []
         for pictype in ('gif', 'jpg', 'png'):
             if pictype not in filetypes:
                 ret_list.append(pictype.upper())
-        ret_list.extend(filetypes.keys())
+        ret_list.extend(filetypes)
         
         return ', '.join(ret_list)
     
