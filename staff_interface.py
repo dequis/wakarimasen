@@ -660,7 +660,7 @@ class StaffInterface(Template):
             sql = table.select().where(table.c.name == text)
             search_type = 'author'
         else:
-            sql = table.select().where(table.c.num == id)
+            sql = table.select().where(table.c.num == text)
             search_type = 'ID'
 
         if search_type != 'ID':
@@ -675,7 +675,7 @@ class StaffInterface(Template):
             row = session.execute(sql).fetchone()
             if not row:
                 raise WakaError("Post not found. (It may have just been"
-                                " deleted.")
+                                " deleted.)")
             posts = [row]
 
 
