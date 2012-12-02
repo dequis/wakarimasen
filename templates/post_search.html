@@ -8,7 +8,7 @@
 {% elif search == 'Search Posts by Author' %}
     <div class="dellist"><h2>Searching By Poster Name "{{ text }}"</h2></div>
     {% include 'pagination_section.html' %}
-{% elif search == 'Search Posts by ID' %}{% if popup %}<h1 style="text-align:center;font-size:1em">{% endif %}{% if not popup %}<div class="dellist"><h2>{% endif %}Showing Post No.{{ num }}{% if popup %}</h1>{% endif %}{% if not popup %}</h2></div>{% endif %}
+{% elif search == 'Search Posts by ID' %}{% if popup %}<h1 style="text-align:center;font-size:1em">{% endif %}{% if not popup %}<div class="dellist"><h2>{% endif %}Showing Post No.{{ posts[0].num }}{% if popup %}</h1>{% endif %}{% if not popup %}</h2></div>{% endif %}
 {% endif %}
 {% if not popup %}<hr />{% endif %}
 <form action="{{ get_script_name() }}" id="delform">
