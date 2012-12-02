@@ -757,13 +757,14 @@ class StaffInterface(Template):
 
         entries = []
         for row in rows:
-            if row.passfail:
+            row = dict(row)
+            if row['passfail']:
                 row['expiration']\
-                    = config.PASSFAIL_ROLLBACK - now + row.timestamp
+                    = config.PASSFAIL_ROLLBACK - now + row['timestamp']
             else:
                 row['expiration']\
                     = config.PASSPROMPT_EXPIRE_TO_FAILURE - now \
-                      + row.timestamp
+                      + row['timestamp']
             entries.append(row)
         
         Template.__init__(self, 'script_security_panel', entries=entries)
