@@ -445,7 +445,7 @@ def delete_by_ip(task_data, ip, mask='255.255.255.255'):
         reign = [x['board_entry'] for x in get_all_boards()]
 
     Popen(
-        ['python', 'wakarimasen.py', 'delete_by_ip',
+        [sys.executable, sys.argv[0], 'delete_by_ip',
         ip,
         ','.join(reign),
         local.environ['DOCUMENT_ROOT'],
