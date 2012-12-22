@@ -1,6 +1,14 @@
 {% include 'mini_head_include.html' %}
+<script type="text/javascript">
+window.onload = function() {
+  var form = document.getElementById("ban_window_form");
+  form.mask.value = get_cookie("ban_mask") || "255.255.255.255";
+  form.expiration.value = get_cookie("ban_expiration");
+  form.comment.value = get_cookie("ban_comment");
+}
+</script>
 <h1 style="text-align: center; font-size: 1em">{% if delete %}Banning IP Address {{ ip }} and Deleting Post {{ delete }}{% endif %}{% if not delete %}Banning IP Address {{ ip }}{% endif %}</h1>
-<form action="{{ get_script_name() }}" method="post">
+<form action="{{ get_script_name() }}" method="post" id="ban_window_form">
 <input type="hidden" name="ip" value="{{ ip }}" />
 <input type="hidden" name="task" value="addipfrompopup" />
 <input type="hidden" name="delete" value="{{ delete }}" />
