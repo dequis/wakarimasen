@@ -347,6 +347,8 @@ def mark_resolved(task_data, delete, posts):
 
     errors = []
     board_obj = None
+    old_board_obj = local.environ['waka.board']
+
     for (board_name, posts) in posts.iteritems():
         # Access rights enforcement.
         if user.account == staff.MODERATOR and board_name not in user.reign:
@@ -375,6 +377,7 @@ def mark_resolved(task_data, delete, posts):
         if delete:
             try:
                 board_obj = board.Board(board_name)
+                local.environ['waka.board'] = board_obj
             except WakaError:
                 errors.append({'error' : '%s,*: Error loading board.'\
                                          % (board_name)})
@@ -386,6 +389,8 @@ def mark_resolved(task_data, delete, posts):
             except WakaError:
                 errors.append({'error' : '%s,%d: Post already deleted.'\
                                          % (board_name, int(post))})
+
+    local.environ['waka.board'] = old_board_obj
 
     # TODO: This probably should be refactored into StaffInterface.
     return Template('report_resolved', errors=errors,
