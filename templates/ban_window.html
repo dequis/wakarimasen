@@ -36,6 +36,9 @@ window.onload = function() {
 <tr><td class="postblock">{{ strings.BANCOMMENTLABEL }}</td><td><input type="text" name="comment" size="24" /></td></tr>
 <tr><td class="postblock">{{ strings.TOTALBAN }}</td><td><input type="checkbox" name="total" value="yes" style="float:left; clear:none" /> <input type="submit" value="{{ strings.BANIP }}" style="float: right; clear: none"/></td></tr>
 </tbody></table>
-{% if delete %}<p align="center">[<label><input type="checkbox" name="deleteall_confirm" value="1" /> Delete <strong>All</strong> Posts From IP/Mask ({{ count }} for default mask)?</label>]</p>{% endif %}
+{% if delete %}
+<p align="center">[<label><input type="checkbox" name="deleteall_confirm" value="1" /> Delete <strong>All</strong> Posts From IP on this board?</label>]<br />
+[<label><input type="checkbox" name="globaldeleteall_confirm" value="1" /> Delete <strong>All</strong> Posts From IP on <strong>all boards</strong>?</label>]</p>
+{% endif %}
 </form>
 {% include 'mini_foot_include.html' %}

@@ -369,8 +369,8 @@ def task_addipfrompopup(environ, start_response):
     request = environ['werkzeug.request']
     board = environ['waka.board']
 
-    params = {'form':    ['ip', 'total', 'expiration', 'comment', 'delete',
-                          'deleteall_confirm'],
+    params = {'form': ['ip', 'mask', 'total', 'expiration', 'comment', 'delete',
+                       'deleteall_confirm', 'globaldeleteall_confirm'],
               'cookies': ['wakaadmin']}
 
     kwargs = kwargs_from_params(request, params)
@@ -379,9 +379,13 @@ def task_addipfrompopup(environ, start_response):
     kwargs['caller'] = 'window'
     delete = kwargs.pop('delete')
     delete_all = kwargs.pop('deleteall_confirm')
+    globaldelete_all = kwargs.pop('globaldeleteall_confirm')
 
     try:
-        if delete_all:
+        if globaldelete_all:
+            StaffAction(kwargs['admin'], 'delete_by_ip_global',
+                        ip=kwargs['ip']).execute()
+        elif delete_all:
             StaffAction(kwargs['admin'], 'delete_by_ip',
                         ip=kwargs['ip'], board=board).execute()
         elif delete:
