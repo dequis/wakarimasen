@@ -59,7 +59,7 @@ def application(environ, start_response):
     except WakaError, e:
         return app.fffffff(environ, start_response, e)
 
-def cleanup(environ, start_response):
+def cleanup(*args, **kwargs):
     '''Destroy the thread-local session and environ'''
     session = model.Session()
     session.commit()
@@ -68,6 +68,29 @@ def cleanup(environ, start_response):
     local.environ = {}
 
 application = util.cleanup(application, cleanup)
+
+def worker_commands(command, args):
+    if command == 'rebuild_cache':
+        board_name = args.pop(0)
+    elif command == 'delete_by_ip':
+        ip = args.pop(0)
+        boards = args.pop(0).split(',')
+
+    (local.environ['DOCUMENT_ROOT'], local.environ['SCRIPT_NAME'],
+        local.environ['SERVER_NAME']) = args[:3]
+
+    if command == 'rebuild_cache':
+        board = Board(board_name)
+        local.environ['waka.board'] = board
+        board.rebuild_cache()
+
+    elif command == 'rebuild_global_cache':
+        interboard.global_cache_rebuild()
+
+    elif command == 'delete_by_ip':
+        interboard.process_global_delete_by_ip(ip, boards)
+
+    cleanup()
 
 def main():
     # Set up tentative environment variables.
@@ -84,22 +107,9 @@ def main():
     arg = sys.argv[1:] and sys.argv[1] or 'fcgi'
     if arg == 'fcgi':
         fcgi.WSGIServer(application).run()
-    elif sys.argv[1] == 'rebuild_cache':
-        (local.environ['DOCUMENT_ROOT'], local.environ['SCRIPT_NAME'],\
-            local.environ['SERVER_NAME']) = sys.argv[3:6]
-        board = Board(sys.argv[2])
-        local.environ['waka.board'] = board
-        board.rebuild_cache()
-    elif sys.argv[1] == 'rebuild_global_cache':
-        (local.environ['DOCUMENT_ROOT'], local.environ['SCRIPT_NAME'],\
-            local.environ['SERVER_NAME']) = sys.argv[2:5]
-        interboard.global_cache_rebuild()
-    elif sys.argv[1] == 'delete_by_ip':
-        ip = sys.argv[2]
-        boards = sys.argv[3].split(',')
-        (local.environ['DOCUMENT_ROOT'], local.environ['SCRIPT_NAME'],\
-            local.environ['SERVER_NAME']) = sys.argv[4:7]
-        interboard.process_global_delete_by_ip(ip, boards)
+    elif arg in ('rebuild_cache', 'rebuild_global_cache',
+                         'delete_by_ip'):
+        worker_commands(arg, sys.argv[2:])
     else:
         from werkzeug.serving import WSGIRequestHandler
         class WakaRequestHandler(WSGIRequestHandler):
