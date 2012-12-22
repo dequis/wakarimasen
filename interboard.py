@@ -136,9 +136,13 @@ def add_admin_entry(task_data, option, comment, ip='', mask='255.255.255.255',
         query = session.execute(sql)
 
         for row in query:
-            if int(row.ival1) & int(row.ival2) == ival1 & ival2:
-                raise WakaError('IP address and mask match ban #%d.' % \
-                                (row.num))
+            try:
+                if int(row.ival1) & int(row.ival2) == ival1 & ival2:
+                    raise WakaError('IP address and mask match ban #%d.' % \
+                                    (row.num))
+            except ValueError:
+                raise WakaError("Entry #%s on ban table is inconsistent. "
+                    "This shouldn't happen." % row.num)
         # Add info to task data.
         content = ip + (' (' + mask + ')' if mask else '')
 
