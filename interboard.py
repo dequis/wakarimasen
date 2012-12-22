@@ -462,8 +462,11 @@ def delete_by_ip(task_data, ip, mask='255.255.255.255'):
         local.environ['SERVER_NAME']]
     )
 
-    referer = local.environ['HTTP_REFERER']
-    return util.make_http_forward(referer, config.ALTERNATE_REDIRECT)
+    board_name = local.environ['waka.board'].name
+    redir = '?'.join((misc.get_secure_script_name(),
+        urlencode({'task' : 'mpanel', 'board' : board_name})))
+
+    return util.make_http_forward(redir, config.ALTERNATE_REDIRECT)
 
 def trim_reported_posts(date=0):
     mintime = 0
