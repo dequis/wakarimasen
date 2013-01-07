@@ -240,18 +240,15 @@ class StaffInterface(Template):
                      from_obj=[table.join(account_table,
                      table.c.username == model.account.c.username)])
 
-        rooturl=''.join([misc.get_secure_script_name(),
-                       '?task=stafflog&amp;board=', board.name,
-                       '&amp;view=', view,
-                       '&amp;sortby=', sortby_name,
-                       '&amp;order=', sortby_dir])
+        rooturl_args = dict(task='stafflog', board=board.name,
+            view=view, sortby=sortby_name, order=sortby_dir, _amp=True)
 
         if view == 'user':
             if not user_to_view:
                 raise WakaError('Please select a user to view.')
             template_view = 'staff_activity_by_user'
             sql = sql.where(table.c.username == user_to_view)
-            rooturl += '&amp;usertoview=%s' % (user_to_view)
+            rooturl_args['usertoview'] = user_to_view
 
         elif view == 'action':
             if not action_to_view:
@@ -260,21 +257,23 @@ class StaffInterface(Template):
             (action_name, action_content) \
                 = staff_tasks.get_action_name(action_to_view, 1)
             sql = sql.where(table.c.action == action_to_view)
-            rooturl += '&amp;actiontoview=%s' % (action_to_view)
+            rooturl_args['actiontoview'] = action_to_view
 
         elif view == 'ip':
             if not ip_to_view:
                 raise WakaError('Please specify an IP address to view.')
             template_view = 'staff_activity_by_ip_address'
             sql = sql.where(table.c.info.like('%' + ip_to_view + '%'))
-            rooturl += '&amp;iptoview=%s' % (ip_to_view)
+            rooturl_args['iptoview'] = ip_to_view
 
         elif view == 'post':
             if not post_to_view:
                 raise WakaError('Post key missing.')
             template_view = 'staff_activity_by_post'
             sql = sql.where(table.c.info.like('%' + post_to_view + '%'))
-            rooturl += '&amp;posttoview=%s' % (post_to_view)
+            rooturl_args['posttoview'] = post_to_view
+
+        rooturl = misc.make_script_url(**rooturl_args)
 
         # Acquire staff info.
         session = model.Session()
@@ -444,8 +443,8 @@ class StaffInterface(Template):
                   {'name' : 'order', 'value' : sortby_dir},
                   {'name' : 'sortby', 'value' : sortby_type}]
 
-        rooturl = '%s?task=reports&amp;sortby=%s&amp;order=%s' \
-                % (misc.get_secure_script_name(), sortby_type, sortby_dir)
+        rooturl = misc.make_script_url(task='reports', sortby=sortby_type,
+            order=sortby_dir, _amp=True)
 
         Template.__init__(self, 'report_panel_template',
                           reports=res.rows,
@@ -688,14 +687,13 @@ class StaffInterface(Template):
             {'name' : 'search', 'value': search}
         ]
 
+        rooturl = misc.make_script_url(task='searchposts', board=board.name,
+            caller=caller, search=search, text=text, _amp=True)
+
         Template.__init__(self, 'post_search', num=id,
                           posts=posts, search=search, text=text,
                           inputs=inputs, number_of_pages=total_pages,
-                          rooturl=misc.get_secure_script_name()\
-                            +'?task=searchposts&amp;board='+board.name\
-                            + '&amp;caller='+caller+'&amp;search='\
-                            + search + '&amp;text='\
-                            + text, rowcount=rowcount, popup=popup)
+                          rooturl=rooturl, rowcount=rowcount, popup=popup)
 
     @interface_for(SQL_PANEL)
     def make_sql_interface_panel(self, sql='', nuke=''):
@@ -785,9 +783,8 @@ def add_staff_proxy(admin, mpass, usertocreate, passtocreate, account, reign):
     staff.add_staff(usertocreate, passtocreate, account, reign)
 
     board = local.environ['waka.board']
-    return make_http_forward('?'.join((misc.get_secure_script_name(),
-        urlencode({'task' : 'staff',
-                   'board': board.name}))), config.ALTERNATE_REDIRECT)
+    return make_http_forward(misc.make_script_url(task='staff',
+        board=board.name), config.ALTERNATE_REDIRECT)
 
 def del_staff_proxy(admin, mpass, username):
     user = staff.check_password(admin)
@@ -802,9 +799,8 @@ def del_staff_proxy(admin, mpass, username):
     staff.del_staff(username)
 
     board = local.environ['waka.board']
-    return make_http_forward('?'.join((misc.get_secure_script_name(),
-        urlencode({'task' : 'staff',
-                   'board': board.name}))), config.ALTERNATE_REDIRECT)
+    return make_http_forward(misc.make_script_url(task='staff',
+        board=board.name), config.ALTERNATE_REDIRECT)
 
 def edit_staff_proxy(admin, mpass, username, newpassword=None, newclass=None,
                      originalpassword='', reign=None, disable=None):
@@ -828,17 +824,11 @@ def edit_staff_proxy(admin, mpass, username, newpassword=None, newclass=None,
                      reign=reign, disable=disable)
 
     board = local.environ['waka.board']
-    forward = ''
-    if user.username == username:
-        forward = '?'.join((misc.get_secure_script_name(),
-                            urlencode({'task' : 'admin',
-                                       'board': board.name})))
-    else:
-        forward = '?'.join((misc.get_secure_script_name(),
-                            urlencode({'task' : 'staff',
-                                       'board': board.name})))
 
-    return make_http_forward(forward, config.ALTERNATE_REDIRECT)
+    forward_task = 'admin' if user.username == username else 'staff'
+
+    return make_http_forward(misc.make_script_url(task=forward_task,
+        board=board.name), config.ALTERNATE_REDIRECT)
 
 
 def clear_login_cookies():
@@ -895,10 +885,8 @@ def do_logout(admin):
     clear_login_cookies()
 
     board = local.environ['waka.board']
-    return make_http_forward('?'.join((misc.get_secure_script_name(),
-                                       urlencode({'task' : 'admin',
-                                                  'board': board.name}))),
-                                       config.ALTERNATE_REDIRECT)
+    return make_http_forward(misc.make_script_url(task='admin',
+        board=board.name), config.ALTERNATE_REDIRECT)
 
 def make_first_time_setup_gateway():
     # TODO: Make sure we're in secure mode (HTTPS)
@@ -917,10 +905,8 @@ def do_first_time_setup(admin, username, password):
     staff.add_staff(username, password, staff.ADMIN, [])
 
     board = local.environ['waka.board']
-    return make_http_forward('?'.join((misc.get_secure_script_name(),
-                              urlencode({'task' : 'loginpanel',
-                                         'board': board.name}))),
-                              config.ALTERNATE_REDIRECT)
+    return make_http_forward(misc.make_script_url(task='loginpanel',
+        board=board.name), config.ALTERNATE_REDIRECT)
 
 
 def make_first_time_setup_page(admin):

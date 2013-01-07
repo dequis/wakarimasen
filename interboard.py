@@ -181,9 +181,7 @@ def add_admin_entry(task_data, option, comment, ip='', mask='255.255.255.255',
     task_data.action = option
 
     board = local.environ['waka.board']
-    forward_url = '?'.join((misc.get_secure_script_name(),
-                            urlencode({'task' : 'bans',
-                                       'board': board.name})))
+    forward_url = misc.make_script_url(task='bans', board=board.name)
 
     if caller == 'window':
         return Template('edit_successful')
@@ -215,9 +213,7 @@ def remove_admin_entry(task_data, num, override_log=False, no_redirect=False):
                                   + ')')
 
     board = local.environ['waka.board']
-    forward_url = '?'.join((misc.get_secure_script_name(),
-                            urlencode({'task': 'bans',
-                                       'board': board.name})))
+    forward_url = misc.make_script_url(task='bans', board=board.name)
 
     return util.make_http_forward(forward_url, config.ALTERNATE_REDIRECT)
 
@@ -463,8 +459,7 @@ def delete_by_ip(task_data, ip, mask='255.255.255.255'):
     )
 
     board_name = local.environ['waka.board'].name
-    redir = '?'.join((misc.get_secure_script_name(),
-        urlencode({'task' : 'mpanel', 'board' : board_name})))
+    redir = misc.make_script_url(task='mpanel', board=board_name)
 
     return util.make_http_forward(redir, config.ALTERNATE_REDIRECT)
 
@@ -497,9 +492,8 @@ def update_spam_file(task_data, spam):
         f.write(spam)
 
     board = local.environ['waka.board']
-    forward_url = '?'.join([misc.get_secure_script_name(),
-                            urlencode({'task' : 'spam',
-                                       'board': board.name})])
+    forward_url = misc.make_script_url(task='spam', board=board.name)
+
     return util.make_http_forward(forward_url, config.ALTERNATE_REDIRECT)
 
 # Thread Transfer
@@ -597,10 +591,8 @@ def move_thread(task_data, parent, src_brd_obj, dest_brd_obj):
 
     src_brd_obj.delete_stuff([parent], '', False, False, caller='internal')
 
-    forward_url = '?'.join((misc.get_secure_script_name(),
-                            urlencode({'task' : 'mpanel',
-                                       'board' : dest_brd_obj.name,
-                                       'page' : 't' + str(new_parent)})))
+    forward_url = misc.make_script_url(task='mpanel',
+        board=dest_brd_obj.name, page=('t%s' % new_parent))
 
     # Log.
     task_data.contents.append('/%s/%d to /%s/%d' \

@@ -222,6 +222,23 @@ def get_secure_script_name():
         return 'https://' + local.environ['SERVER_NAME'] + script_name
     return script_name
 
+def make_script_url(**kwargs):
+    '''Builds an url pointing to the cgi script
+    Optional params:
+        - _secure: set to False to avoid enforcing https
+        - _amp: set to True to html escape ampersands
+    Everything else is included as url parameters'''
+
+    secure = kwargs.pop('_secure', True)
+    amp = kwargs.pop('_amp', False)
+
+    base = get_secure_script_name() if secure else get_script_name()
+
+    url = '%s?%s' % (base, urllib.urlencode(kwargs))
+    if amp:
+        url = url.replace('&', '&amp;')
+    return url
+
 def get_filestorage_size(filestorage):
     filestorage.stream.seek(0, 2)
     size = filestorage.stream.tell()
