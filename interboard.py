@@ -136,9 +136,13 @@ def add_admin_entry(task_data, option, comment, ip='', mask='255.255.255.255',
         query = session.execute(sql)
 
         for row in query:
-            if int(row.ival1) & int(row.ival2) == ival1 & ival2:
-                raise WakaError('IP address and mask match ban #%d.' % \
-                                (row.num))
+            try:
+                if int(row.ival1) & int(row.ival2) == ival1 & ival2:
+                    raise WakaError('IP address and mask match ban #%d.' % \
+                                    (row.num))
+            except ValueError:
+                raise WakaError("Entry #%s on ban table is inconsistent. "
+                    "This shouldn't happen." % row.num)
         # Add info to task data.
         content = ip + (' (' + mask + ')' if mask else '')
 
@@ -347,6 +351,8 @@ def mark_resolved(task_data, delete, posts):
 
     errors = []
     board_obj = None
+    old_board_obj = local.environ['waka.board']
+
     for (board_name, posts) in posts.iteritems():
         # Access rights enforcement.
         if user.account == staff.MODERATOR and board_name not in user.reign:
@@ -375,6 +381,7 @@ def mark_resolved(task_data, delete, posts):
         if delete:
             try:
                 board_obj = board.Board(board_name)
+                local.environ['waka.board'] = board_obj
             except WakaError:
                 errors.append({'error' : '%s,*: Error loading board.'\
                                          % (board_name)})
@@ -386,6 +393,8 @@ def mark_resolved(task_data, delete, posts):
             except WakaError:
                 errors.append({'error' : '%s,%d: Post already deleted.'\
                                          % (board_name, int(post))})
+
+    local.environ['waka.board'] = old_board_obj
 
     # TODO: This probably should be refactored into StaffInterface.
     return Template('report_resolved', errors=errors,
@@ -445,7 +454,7 @@ def delete_by_ip(task_data, ip, mask='255.255.255.255'):
         reign = [x['board_entry'] for x in get_all_boards()]
 
     Popen(
-        ['python', 'wakarimasen.py', 'delete_by_ip',
+        [sys.executable, sys.argv[0], 'delete_by_ip',
         ip,
         ','.join(reign),
         local.environ['DOCUMENT_ROOT'],
@@ -453,8 +462,11 @@ def delete_by_ip(task_data, ip, mask='255.255.255.255'):
         local.environ['SERVER_NAME']]
     )
 
-    referer = local.environ['HTTP_REFERER']
-    return util.make_http_forward(referer, config.ALTERNATE_REDIRECT)
+    board_name = local.environ['waka.board'].name
+    redir = '?'.join((misc.get_secure_script_name(),
+        urlencode({'task' : 'mpanel', 'board' : board_name})))
+
+    return util.make_http_forward(redir, config.ALTERNATE_REDIRECT)
 
 def trim_reported_posts(date=0):
     mintime = 0

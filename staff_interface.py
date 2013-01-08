@@ -596,8 +596,8 @@ class StaffInterface(Template):
                     thumb_dir \
                         = os.path.join(board.path, board.options['THUMB_DIR'])
 
-                    base_thumb = os.path.basename(post['thumbnail'])
-                    base_image = os.path.basename(post['image'])
+                    base_thumb = os.path.basename(post['thumbnail'] or '')
+                    base_image = os.path.basename(post['image'] or '')
 
                     base_filename \
                         = post['image'].replace(image_dir, '').lstrip('/')
@@ -611,7 +611,7 @@ class StaffInterface(Template):
                         shownimages += 1
 
                     if re.match(board.options['THUMB_DIR'],
-                                post['thumbnail']):
+                                post['thumbnail'] or ''):
                         post['thumbnail'] \
                             = os.path.join(backup_dir, base_thumb)
                 
