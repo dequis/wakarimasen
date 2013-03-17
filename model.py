@@ -51,7 +51,7 @@ def board(name):
         Column("date", Text),                           # The date, as a string
         Column("name", Text(convert_unicode=True)),     # Name of the poster
         Column("trip", Text),                           # Tripcode (encoded)
-        Column("email", Text(convert_unicode=True)),                          # Email address
+        Column("email", Text(convert_unicode=True)),    # Email address
         Column("subject", Text(convert_unicode=True)),  # Subject
         Column("password", Text),                       # Deletion password (in plaintext) 
         Column("comment", Text(convert_unicode=True)),  # Comment text, HTML encoded.
@@ -66,7 +66,7 @@ def board(name):
         Column("tn_height", Text),                      # Thumbnail height in pixels
         Column("lastedit", Text),                       # ADDED - Date of previous edit, as a string 
         Column("lastedit_ip", Text),                    # ADDED - Previous editor of the post, if any
-        Column("admin_post", Text),                  # ADDED - Admin post?
+        Column("admin_post", Text),                     # ADDED - Admin post?
         # TODO: Probably should make this Boolean. Keeping as int for now to maintain compatibility with sorting functions.
         Column("stickied", Integer),                    # ADDED - Stickied?
         Column("locked", Text)                          # ADDED - Locked?
