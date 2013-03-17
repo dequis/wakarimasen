@@ -204,10 +204,10 @@ class Board(object):
         Popen([sys.executable, sys.argv[0], 'rebuild_cache', self.name,
                local.environ['DOCUMENT_ROOT'], local.environ['SCRIPT_NAME'],
                local.environ['SERVER_NAME']])
-        return util.make_http_forward(\
-            '?'.join([misc.get_secure_script_name(),
-            urlencode({'task': 'mpanel',
-                       'board': self.name})]), config.ALTERNATE_REDIRECT)
+
+        return util.make_http_forward(
+            misc.make_script_url(task='mpanel', board=self.name),
+            config.ALTERNATE_REDIRECT)
 
     def parse_page_threads(self, pagethreads):
         threads = []
@@ -266,11 +266,8 @@ class Board(object):
             p['page'] = i
             if admin_page:
                 # Admin mode: direct to staff interface, not board pages.
-                filename = '?'.join((misc.get_secure_script_name(),
-                                     urlencode({'board' : self.name,
-                                                'task' : admin_page,
-                                                'page' : i})))
-                p['filename'] = filename.replace('&', '&amp;')
+                p['filename'] = misc.make_script_url(task=admin_page,
+                    board=self.name, page=i, _amp=True)
             else:
                 p['filename'] = self.make_url(page=i)
             p['current'] = page == i
@@ -840,13 +837,10 @@ class Board(object):
         else:
             # forward back to the mod panel
             if not noko:
-                forward = '?'.join((misc.get_secure_script_name(),
-                    urlencode({'task' : 'mpanel', 'board' : self.name})))
+                forward = misc.make_script_url(task='mpanel', board=self.name)
             else:
-                forward = '?'.join((misc.get_secure_script_name(),
-                    urlencode({'task' : 'mpanel',
-                               'board' : self.name,
-                               'page' : parent})))
+                forward = misc.make_script_url(task='mpanel', board=self.name,
+                    page=parent)
             admin_task_data.contents.append('/%s/%d' % (self.name, post_num))
 
         return util.make_http_forward(forward, config.ALTERNATE_REDIRECT)
@@ -944,8 +938,7 @@ class Board(object):
         self.build_cache()
 
         if admindelete:
-            forward = '?'.join((misc.get_secure_script_name(),
-                urlencode({'task' : 'mpanel', 'board' : self.name})))
+            forward = misc.make_script_url(task='mpanel', board=self.name)
         else:
             forward = self.make_path(page=0, url=True)
         if caller == 'user':
@@ -1661,8 +1654,7 @@ class Board(object):
 
         task_data.contents.append('/%s/%s' % (self.name, num))
 
-        forward_url = '?'.join((misc.get_secure_script_name(),
-            urlencode({'task' : 'mpanel', 'board' : self.name})))
+        forward_url = misc.make_script_url(task='mpanel', board=self.name)
 
         return util.make_http_forward(forward_url, config.ALTERNATE_REDIRECT)
 
