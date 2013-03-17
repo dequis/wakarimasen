@@ -598,8 +598,8 @@ class StaffInterface(Template):
                     base_thumb = os.path.basename(post['thumbnail'] or '')
                     base_image = os.path.basename(post['image'] or '')
 
-                    base_filename \
-                        = post['image'].replace(image_dir, '').lstrip('/')
+                    base_filename = (post['image'] or '')\
+                        .replace(image_dir, '').lstrip('/')
 
                     backup_dir = os.path.join(board.url,
                                               board.options['ARCHIVE_DIR'],
