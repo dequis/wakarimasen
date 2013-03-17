@@ -595,7 +595,7 @@ class StaffInterface(Template):
                     thumb_dir \
                         = os.path.join(board.path, board.options['THUMB_DIR'])
 
-                    base_thumb = os.path.basename(post['thumbnail'] or '')
+                    base_thumb = os.path.basename(post['image'] or '')
                     base_image = os.path.basename(post['image'] or '')
 
                     base_filename = (post['image'] or '')\
