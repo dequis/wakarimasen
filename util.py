@@ -19,9 +19,10 @@ local = DefaultLocal()
 
 class WakaError(Exception):
     '''Error to be reported to the user'''
-    def __init__(self, message, fromwindow=False):
+    def __init__(self, message, fromwindow=False, plain=False):
         self.message = message
         self.fromwindow = fromwindow
+        self.plain = plain
 
     def __str__(self):
         return self.message
