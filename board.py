@@ -751,7 +751,7 @@ class Board(object):
                     session.execute(t.update()
                         .where(or_(t.c.num == parent, t.c.parent == parent))
                         .values(lasthit=timestamp))
-            post_num = result.last_inserted_ids()[0]
+            post_num = result.inserted_primary_key[0]
 
         # remove old threads from the database
         self.trim_database()

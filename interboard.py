@@ -175,7 +175,7 @@ def add_admin_entry(task_data, option, comment, ip='', mask='255.255.255.255',
                                 expiration=expiration)
     result = session.execute(sql)
 
-    task_data.admin_id = result.last_inserted_ids()[0]
+    task_data.admin_id = result.inserted_primary_key[0]
 
     # Add specific action name to task data.
     task_data.action = option
@@ -570,7 +570,7 @@ def move_thread(task_data, parent, src_brd_obj, dest_brd_obj):
         result = session.execute(sql)
 
         if not new_parent:
-            new_parent = result.last_inserted_ids()[0]
+            new_parent = result.inserted_primary_key[0]
 
     # Nested associate for moving files in bulk.
     def rename_files(filename_list, dir_type):
