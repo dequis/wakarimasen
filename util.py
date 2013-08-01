@@ -34,6 +34,7 @@ def wrap_static(application, *app_paths, **kwds):
     @functools.wraps(application)
     def wrapper(environ, start_response):
         filename = environ['PATH_INFO'].strip('/')
+        environ['DOCUMENT_ROOT'] = os.getcwd()
 
         if filename in app_paths or not filename:
             environ['SCRIPT_NAME'] = '/' + filename

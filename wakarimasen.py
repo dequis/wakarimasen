@@ -92,6 +92,16 @@ def worker_commands(command, args):
 
     cleanup()
 
+def development_server():
+    from werkzeug.serving import WSGIRequestHandler
+    app_path = os.path.basename(__file__)
+
+    werkzeug.run_simple('', 8000,
+        util.wrap_static(application, app_path,
+            index='wakaba.html',
+            not_found_handler=app.not_found),
+        use_reloader=True, use_debugger=config.DEBUG)
+
 def main():
     # Set up tentative environment variables.
     local.environ['waka.rootpath'] \
@@ -111,19 +121,7 @@ def main():
                          'delete_by_ip'):
         worker_commands(arg, sys.argv[2:])
     else:
-        from werkzeug.serving import WSGIRequestHandler
-        class WakaRequestHandler(WSGIRequestHandler):
-            def make_environ(self):
-                environ = WSGIRequestHandler.make_environ(self)
-                environ['DOCUMENT_ROOT'] = os.getcwd()
-                return environ
-
-        werkzeug.run_simple('', 8000,
-            util.wrap_static(application, __file__,
-                index='wakaba.html',
-                not_found_handler=app.not_found),
-            use_reloader=True, use_debugger=config.DEBUG,
-            request_handler=WakaRequestHandler)
+        development_server()
 
 if __name__ == '__main__':
     main()
