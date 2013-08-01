@@ -92,6 +92,19 @@ def worker_commands(command, args):
 
     cleanup()
 
+def reset_password(username):
+    import staff
+    new_password = os.urandom(8).encode("base64").strip("=\n")
+
+    try:
+        staff.edit_staff(username, clear_pass=new_password)
+    except staff.LoginError:
+        print "No such user %r" % username
+    else:
+        print "Password of %r set to %r" % (username, new_password)
+
+    cleanup()
+
 def development_server():
     from werkzeug.serving import WSGIRequestHandler
     app_path = os.path.basename(__file__)
@@ -117,6 +130,8 @@ def main():
     arg = sys.argv[1:] and sys.argv[1] or 'fcgi'
     if arg == 'fcgi':
         fcgi.WSGIServer(application).run()
+    elif arg == 'reset_password':
+        reset_password(sys.argv[2])
     elif arg in ('rebuild_cache', 'rebuild_global_cache',
                          'delete_by_ip'):
         worker_commands(arg, sys.argv[2:])
