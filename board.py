@@ -21,6 +21,7 @@ import config
 import strings as strings
 from util import WakaError, local
 from template import Template
+from wakapost import WakaPost
 
 try:
     import board_config_defaults
@@ -115,7 +116,7 @@ class Board(object):
 
     def _get_all_threads(self):
         '''Build a list of threads from the database,
-        where each thread is a list of CompactPost instances'''
+        where each thread is a list of WakaPost instances'''
 
         session = model.Session()
         table = self.table
@@ -132,7 +133,7 @@ class Board(object):
             if thread and not post.parent:
                 threads.append(thread)
                 thread = []
-            thread.append(model.CompactPost(post))
+            thread.append(WakaPost(post))
         threads.append(thread)
 
         return threads
@@ -158,7 +159,7 @@ class Board(object):
         op_query = session.execute(op_sql)
 
         for op in op_query:
-            thread_dict[op.num] = [model.CompactPost(op)]
+            thread_dict[op.num] = [WakaPost(op)]
             thread_nums.append(op.num)
 
         # Query 2: Grab all reply entries and process.
@@ -169,7 +170,7 @@ class Board(object):
         reply_query = session.execute(reply_sql)
 
         for post in reply_query:
-            thread_dict[post.parent].append(model.CompactPost(post))
+            thread_dict[post.parent].append(WakaPost(post))
 
         return [thread_dict[num] for num in thread_nums]
 
@@ -318,7 +319,7 @@ class Board(object):
         thread = []
 
         for post in query:
-            thread.append(model.CompactPost(post))
+            thread.append(WakaPost(post))
 
         if not len(thread):
             raise WakaError('Thread not found.')
@@ -1579,19 +1580,19 @@ class Board(object):
         raise NotImplementedError()
 
     def get_post(self, num):
-        '''Returns None or CompactPost'''
+        '''Returns None or WakaPost'''
         session = model.Session()
         sql = self.table.select(self.table.c.num == num)
         row = session.execute(sql).fetchone()
         if row:
-            return model.CompactPost(row)
+            return WakaPost(row)
 
     def get_parent_post(self, parentid):
         session = model.Session()
         sql = self.table.select(and_(self.table.c.num == parentid,
             self.table.c.parent == 0))
         query = session.execute(sql)
-        return model.CompactPost(query.fetchone())
+        return WakaPost(query.fetchone())
 
     def sage_count(self, parent):
         session = model.Session()
