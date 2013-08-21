@@ -416,7 +416,7 @@ def edit_admin_entry(task_data, num, comment='', ival1=None,
 
     task_data.action = row.type + '_edit'
 
-    if row.type in ('ip', 'whitelist'):
+    if row.type in ('ipban', 'whitelist'):
         if not noexpire:
             try:
                 expiration = datetime(int(year), int(month), int(day),
