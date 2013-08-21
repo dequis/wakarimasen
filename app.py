@@ -8,6 +8,7 @@ from staff_interface import StaffInterface
 from staff_tasks import StaffAction
 from board import Board, NoBoard
 from misc import get_cookie_from_request, kwargs_from_params, make_cookies
+from wakapost import WakaPost
 
 def no_task(environ, start_response):
     board = environ['waka.board']
@@ -42,27 +43,18 @@ def task_post(environ, start_response):
     request = environ['werkzeug.request']
     board = environ['waka.board']
 
-    params = {'form':     ['parent', 'field1', 'email', 'subject', 'comment',
-                           'password', 'nofile', 'captcha', 'no_captcha',
-                           'no_format', 'sticky', 'lock', 'adminpost'],
-              'cookies':  ['wakaadmin'],
-              'file':     ['file']}
-   
-    kwargs = kwargs_from_params(request, params)
- 
-    kwargs['name'] = kwargs.pop('field1')
-    kwargs['oekaki_post'] = kwargs['srcinfo'] = kwargs['pch'] = None
-    kwargs['admin_post_mode'] = kwargs.pop('adminpost')
-    if kwargs['no_format'] == '0':
-        kwargs['no_format'] = False
+    if request.method != 'POST':
+        raise WakaError("POST only accepted")
 
-    if kwargs['admin_post_mode']:
-        kwargs['action'] = 'admin_post'
-        kwargs['board'] = board
-        return StaffAction(**kwargs).execute()
-    
-    del kwargs['admin']
-    return board.post_stuff(**kwargs)
+    admin = get_cookie_from_request(request, 'wakaadmin')
+
+    wakapost = WakaPost.from_request(request)
+
+    if wakapost.admin_post:
+        return StaffAction(admin, 'admin_post', wakapost=wakapost,
+            board=board).execute()
+    else:
+        return board.post_stuff(wakapost)
 
 # Post Deletion
 def task_delpostwindow(environ, start_response):
@@ -162,7 +154,7 @@ def task_editpostwindow(environ, start_response):
               'cookies': ['wakaadmin']}
 
     kwargs = kwargs_from_params(request, params)
-    kwargs['admin_edit_mode'] = kwargs.pop('admineditmode')
+    kwargs['admin_mode'] = kwargs.pop('admineditmode')
     kwargs['post_num'] = kwargs.pop('num')
 
     return board.edit_window(**kwargs)
@@ -171,25 +163,19 @@ def task_editpost(environ, start_response):
     request = environ['werkzeug.request']
     board = environ['waka.board']
 
-    params = {'form': ['num', 'field1', 'email', 'subject', 'comment',
-                       'password', 'nofile', 'captcha', 'no_captcha',
-                       'no_format', 'sticky', 'lock', 'adminedit', 'killtrip',
-                       'postfix', 'ninja'],
-              'cookies': ['wakaadmin'],
-              'file':    ['file']}
+    if request.method != 'POST':
+        raise WakaError("POST only accepted")
 
-    kwargs = kwargs_from_params(request, params)
-    kwargs['name'] = kwargs.pop('field1')
-    kwargs['post_num'] = kwargs.pop('num')
-    kwargs['admin_edit_mode'] = kwargs.pop('adminedit')
-    kwargs['oekaki_post'] = kwargs['srcinfo'] = kwargs['pch'] = None
-    if kwargs['admin_edit_mode']:
-        kwargs['board'] = board
-        kwargs['action'] = 'admin_edit'
-        return StaffAction(**kwargs).execute()
+    admin = get_cookie_from_request(request, 'wakaadmin')
 
-    del kwargs['admin']
-    return board.edit_stuff(**kwargs)
+    wakapost = WakaPost.from_request(request)
+
+    if wakapost.admin_post:
+        return StaffAction(admin, 'admin_edit', wakapost=wakapost,
+            board=board).execute()
+    else:
+        return board.edit_stuff(wakapost)
+
 
 def task_report(environ, start_response):
     request = environ['werkzeug.request']
