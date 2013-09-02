@@ -16,7 +16,7 @@
 		<label><input type="checkbox" name="num" value="{{ report.board_name }}-{{ report.postnum }}" /><big><b>{{ report.postnum }}</b></big>&nbsp;&nbsp;</label>
 		</td>
 		<td>
-		<big><strong><a href="{{ get_script_name() }}?task=searchposts&amp;board={{ report.board_name }}&amp;idview=1&amp;text={{ report.postnum }}&amp;caller=board" target="_blank" onclick="popUpPost('{{ get_script_name() }}?task=searchposts&amp;board={{ report.board_name }}&amp;idview=1&amp;id={{ report.postnum }}&amp;caller=field');return false">View post</a></strong></big><br />
+		<big><strong><a href="{{ get_script_name() }}?task=searchposts&amp;board={{ report.board_name }}&amp;idview=1&amp;text={{ report.postnum }}&amp;caller=board" target="_blank" onclick="popUpPost('{{ get_script_name() }}?task=searchposts&amp;board={{ report.board_name }}&amp;idview=1&amp;text={{ report.postnum }}&amp;caller=field');return false">View post</a></strong></big><br />
 		[<a href="{{ get_script_name() }}?task=editpostwindow&amp;board={{ report.board_name }}&amp;num={{ report.postnum }}&amp;admineditmode=1" target="_blank" onclick="popUpPost('{{ get_script_name() }}?task=editpostwindow&amp;board={{ report.board_name }}&amp;admineditmode=1&amp;num={{ num }}'); return false">Edit</a>]
 		</td>
 		</tr>
