@@ -42,10 +42,12 @@ def task_post(environ, start_response):
     request = environ['werkzeug.request']
     board = environ['waka.board']
 
+    style_cookie = board.options.get('STYLE_COOKIE', 'wakastyle')
     params = {'form':     ['parent', 'field1', 'email', 'subject', 'comment',
                            'password', 'nofile', 'captcha', 'no_captcha',
-                           'no_format', 'sticky', 'lock', 'adminpost'],
-              'cookies':  ['wakaadmin'],
+                           'no_format', 'sticky', 'lock', 'adminpost',
+                           'hcaptcha'],
+              'cookies':  ['wakaadmin', style_cookie],
               'file':     ['file']}
    
     kwargs = kwargs_from_params(request, params)
@@ -56,11 +58,27 @@ def task_post(environ, start_response):
     if kwargs['no_format'] == '0':
         kwargs['no_format'] = False
 
+    hcaptcha = kwargs.pop('hcaptcha', '').lower()
+    style_cookie_value = kwargs.pop(style_cookie, '')
+    is_nokosage = kwargs['email'].lower() in ['noko', 'sage']
+
     if kwargs['admin_post_mode']:
         kwargs['action'] = 'admin_post'
         kwargs['board'] = board
         return StaffAction(**kwargs).execute()
     
+    # not admin, so let's check for hcaptcha
+    import config
+    if (config.HCAPTCHA and
+        hcaptcha != config.HCAPTCHA_ANSWER and
+        not (config.HCAPTCHA_COOKIE_BYPASS and style_cookie_value != '') and
+        not (config.HCAPTCHA_NOKOSAGE_BYPASS and is_nokosage)):
+
+        return Template('hcaptcha_failed',
+            question=config.HCAPTCHA_QUESTION,
+            answer=config.HCAPTCHA_ANSWER,
+        )
+
     del kwargs['admin']
     return board.post_stuff(**kwargs)
 
