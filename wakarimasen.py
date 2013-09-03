@@ -24,7 +24,7 @@ def application(environ, start_response):
     request = werkzeug.BaseRequest(environ)
 
     task = request.values.get('task', request.values.get('action', ''))
-    boardname = request.values.get('board', '')
+    boardname = request.values.get('board', 'sugg')
 
 
     environ['waka.task'] = task
