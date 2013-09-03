@@ -540,6 +540,10 @@ def task_stafflog(environ, start_response):
 # Error-handling
 
 def fffffff(environ, start_response, error):
+    if error.plain:
+        start_response('200 OK', [('Content-Type', 'text/plain')])
+        return str(error.message)
+
     start_response('200 OK', [('Content-Type', 'text/html')])
 
     mini = '_mini' if environ['waka.fromwindow'] else ''

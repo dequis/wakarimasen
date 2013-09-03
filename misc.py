@@ -143,9 +143,6 @@ def check_captcha(*args):
     # broken in wakaba+desuchan?
     pass
 
-def proxy_check(ip):
-    pass
-
 def make_date(timestamp, style='futaba'):
     '''Generate a date string from a passed timestamp based on a requested
     style. The string formatting power of the time module's strftime()

@@ -620,7 +620,7 @@ class Board(object):
             misc.check_captcha(captcha, ip, parent)
 
         if not whitelisted and self.options['ENABLE_PROXY_CHECK']:
-            misc.proxy_check(ip)
+            self.proxy_check(ip)
 
         # check if thread exists, and get lasthit value
         parent_res = ''
@@ -751,7 +751,7 @@ class Board(object):
                     session.execute(t.update()
                         .where(or_(t.c.num == parent, t.c.parent == parent))
                         .values(lasthit=timestamp))
-            post_num = result.last_inserted_ids()[0]
+            post_num = result.inserted_primary_key[0]
 
         # remove old threads from the database
         self.trim_database()
@@ -1712,6 +1712,47 @@ class Board(object):
         Template('rss_template', items=posts,
                  pub_date=misc.make_date(time.time(), 'http'))\
                  .render_to_file(rss_file)
+
+    def proxy_check(self, ip):
+        session = model.Session()
+
+        # TODO proxy_clean
+
+        sql = select([func.count()], 'type="black" AND ip=:ip',
+            model.proxy).params(ip=ip)
+        row = session.execute(sql).fetchone()
+        if row and row[0]:
+            raise WakaError(strings.PROXY, plain=True)
+
+        sql = select([func.count()], 'type="white" AND ip=:ip',
+            model.proxy).params(ip=ip)
+        row = session.execute(sql).fetchone()
+        is_white = (row and row[0])
+
+        timestamp = time.time()
+        date = misc.make_date(timestamp, self.options['DATE_STYLE'])
+
+        if is_white:
+            # known good IP, refresh entry
+            sql = model.proxy.update().where(model.proxy.c.ip == ip)\
+                .values(timestamp=timestamp, date=date)
+            session.execute(sql)
+        else:
+            # unknown IP, check for proxy
+
+            # enterprise command launching system
+            # may send crap to stderr on failure
+            retval = os.system(self.options['PROXY_COMMAND'] + " %s" % ip)
+
+            sql = model.proxy.insert().values(ip=ip,
+                timestamp=timestamp, date=date)
+
+            retval_blacklist = self.options.get('PROXY_RETVAL_BLACKLIST', 100)
+            if retval == retval_blacklist:
+                session.execute(sql.values(type='black'))
+                raise WakaError(strings.PROXY, plain=True)
+            else:
+                session.execute(sql.values(type='white'))
 
 
 class NoBoard(object):

@@ -19,9 +19,10 @@ local = DefaultLocal()
 
 class WakaError(Exception):
     '''Error to be reported to the user'''
-    def __init__(self, message, fromwindow=False):
+    def __init__(self, message, fromwindow=False, plain=False):
         self.message = message
         self.fromwindow = fromwindow
+        self.plain = plain
 
     def __str__(self):
         return self.message
@@ -33,6 +34,7 @@ def wrap_static(application, *app_paths, **kwds):
     @functools.wraps(application)
     def wrapper(environ, start_response):
         filename = environ['PATH_INFO'].strip('/')
+        environ['DOCUMENT_ROOT'] = os.getcwd()
 
         if filename in app_paths or not filename:
             environ['SCRIPT_NAME'] = '/' + filename
