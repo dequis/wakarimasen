@@ -77,6 +77,9 @@
 	<tr><td class="postblock">{{ strings.SUBJECT }}</td><td><input type="text" name="subject" size="35" />
 	<input type="submit" value="{{ strings.SUBMIT }}" /></td></tr>
 	<tr><td class="postblock">{{ strings.COMMENT }}</td><td><textarea name="comment" cols="48" rows="4"></textarea></td></tr>
+  {% if config.HCAPTCHA -%}
+  <tr><td class="postblock">{{ config.HCAPTCHA_QUESTION }}</td><td><input type="text" name="hcaptcha" size="35" /></td></tr>
+  {% endif %}
 
 	{% if image_inp %}
 		<tr><td class="postblock">{{ strings.UPLOADFILE }}</td><td><input type="file" name="file" size="35" />
