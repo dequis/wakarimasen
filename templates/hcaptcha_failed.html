@@ -1,0 +1,12 @@
+{% include 'normal_head_include.html' %}
+
+<div style="text-align: center">
+<h1>You didn't fill in the "{{question}}" field!</h1>
+<h2>Oh no!</h2>
+<p><em>(Hint: You have to write "{{answer}}" in there)</em></p>
+<p><em>(This is like a captcha, but hopefully less annoying)</em></p>
+<br /><br /><br /><br />
+<h2><a href="{{ (environ['HTTP_REFERER'])|escape }}" onclick="window.history.back(); return false">{{ strings.RETURN }}</a></h2>
+<br /><br /><br /><br />
+
+{% include 'normal_foot_include.html' %}
