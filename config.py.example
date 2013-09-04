@@ -2,7 +2,14 @@
 # Wakarimasen configuration
 ADMIN_PASS = 'desu'			# Admin password. For fucks's sake, change this.
 SECRET = 'desu'				# Cryptographic secret. CHANGE THIS to something totally random, and long.
-SQL_ENGINE = 'mysql://desu:desu@localhost/desu'
+
+# engine configuration for mysql
+SQL_ENGINE = 'mysql:///username:password@localhost/database'
+
+# engine configuration for sqlite (requires disabling pooling)
+#SQL_ENGINE = 'sqlite:///wakarimasen.sqlite'
+#SQL_POOLING = False
+
 #SQL_BACKUP_TABLE = '__waka_backup'	# Table backup
 #SQL_ADMIN_TABLE = 'admin'		# Table used for admin information
 #SQL_PROXY_TABLE = 'proxy'		# Table used for proxy information
