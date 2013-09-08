@@ -2,11 +2,9 @@ import os
 import re
 import time
 import sys
-import random
 import hashlib
 import mimetypes
 from subprocess import Popen, PIPE
-from urllib import urlencode
 
 import misc
 import str_format

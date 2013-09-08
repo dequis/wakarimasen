@@ -1,9 +1,7 @@
 import os
-import sys
 import glob
 import random
 import re
-from str_format import percent_encode
 
 import jinja2
 

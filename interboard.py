@@ -8,8 +8,7 @@ import sys
 import traceback
 from datetime import datetime
 from calendar import timegm
-from urllib import urlencode
-from subprocess import Popen, PIPE
+from subprocess import Popen
 
 import config
 import strings
@@ -22,7 +21,7 @@ import misc
 from template import Template
 from util import WakaError, local
 
-from sqlalchemy.sql import case, or_, and_, select, func, null
+from sqlalchemy.sql import or_, and_, select
 
 # Common Site Table!
 

@@ -1,12 +1,11 @@
 import model
 import staff_interface
-import urllib
 
 from template import Template
 from util import WakaError
 from staff_interface import StaffInterface
 from staff_tasks import StaffAction
-from board import Board, NoBoard
+from board import Board
 from misc import get_cookie_from_request, kwargs_from_params, make_cookies
 
 def no_task(environ, start_response):
