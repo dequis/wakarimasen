@@ -584,9 +584,12 @@ def check_setup(environ, start_response):
 
     issues = []
 
-    if ('DOCUMENT_ROOT' not in environ or 'SCRIPT_NAME' not in environ or
-        'SERVER_NAME' not in environ):
-        return ["CGI environment not complete\n"]
+    ENV_CHECKS = ['DOCUMENT_ROOT', 'SCRIPT_NAME', 'SERVER_NAME']
+    MISSING_ENV = [x for x in ENV_CHECKS if x not in environ]
+    if MISSING_ENV:
+        print environ.keys()
+        return ['Environment not complete. Missing: %s\n' %
+                ', '.join(MISSING_ENV)]
 
     full_board_dir = os.path.join(environ['DOCUMENT_ROOT'], config.BOARD_DIR)
     if not os.access(full_board_dir, os.W_OK):
