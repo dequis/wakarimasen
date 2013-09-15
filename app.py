@@ -1,12 +1,11 @@
 import model
 import staff_interface
-import urllib
 
 from template import Template
 from util import WakaError
 from staff_interface import StaffInterface
 from staff_tasks import StaffAction
-from board import Board, NoBoard
+from board import Board
 from misc import get_cookie_from_request, kwargs_from_params, make_cookies
 from wakapost import WakaPost
 
@@ -53,8 +52,27 @@ def task_post(environ, start_response):
     if wakapost.admin_post:
         return StaffAction(admin, 'admin_post', wakapost=wakapost,
             board=board).execute()
-    else:
-        return board.post_stuff(wakapost)
+
+
+    # not admin, so let's check for hcaptcha
+
+    style_cookie = get_cookie_from_request(request,
+        board.options.get('STYLE_COOKIE', 'wakastyle'))
+    hcaptcha = request.values.get('hcaptcha', '').lower()
+    is_nokosage = wakapost.email.lower() in ['noko', 'sage']
+
+    import config
+    if (config.HCAPTCHA and
+        hcaptcha != config.HCAPTCHA_ANSWER and
+        not (config.HCAPTCHA_COOKIE_BYPASS and style_cookie != '') and
+        not (config.HCAPTCHA_NOKOSAGE_BYPASS and is_nokosage)):
+
+        return Template('hcaptcha_failed',
+            question=config.HCAPTCHA_QUESTION,
+            answer=config.HCAPTCHA_ANSWER,
+        )
+
+    return board.post_stuff(wakapost)
 
 # Post Deletion
 def task_delpostwindow(environ, start_response):
@@ -552,9 +570,12 @@ def check_setup(environ, start_response):
 
     issues = []
 
-    if ('DOCUMENT_ROOT' not in environ or 'SCRIPT_NAME' not in environ or
-        'SERVER_NAME' not in environ):
-        return ["CGI environment not complete\n"]
+    ENV_CHECKS = ['DOCUMENT_ROOT', 'SCRIPT_NAME', 'SERVER_NAME']
+    MISSING_ENV = [x for x in ENV_CHECKS if x not in environ]
+    if MISSING_ENV:
+        print environ.keys()
+        return ['Environment not complete. Missing: %s\n' %
+                ', '.join(MISSING_ENV)]
 
     full_board_dir = os.path.join(environ['DOCUMENT_ROOT'], config.BOARD_DIR)
     if not os.access(full_board_dir, os.W_OK):

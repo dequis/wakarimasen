@@ -1,5 +1,4 @@
 # misc.py: Temporary place for new functions
-import sys
 import os
 import re
 import time

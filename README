@@ -3,7 +3,7 @@ Wakarimasen - A wakaba-compatible python imageboard
 Wakarimasen is still experimental software - use it at your own risk and
 if you know how to fix stuff when it breaks.
 
-Installation instructions are available in the INSTALL file
+Installation instructions are available in the INSTALL.md file
 
 FAQ:
     Q. What does "wakarimasen" mean?

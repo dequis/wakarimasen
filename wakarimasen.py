@@ -1,8 +1,7 @@
-#!/usr/bin/python
+#!/usr/bin/python2
 
 import os
 import sys
-import re
 
 import fcgi
 import werkzeug
@@ -11,7 +10,6 @@ import config, config_defaults
 import app
 import util
 import model
-import board
 import interboard
 from board import Board, NoBoard
 from util import WakaError, local
@@ -106,7 +104,6 @@ def reset_password(username):
     cleanup()
 
 def development_server():
-    from werkzeug.serving import WSGIRequestHandler
     app_path = os.path.basename(__file__)
 
     werkzeug.run_simple('', 8000,

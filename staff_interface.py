@@ -4,8 +4,7 @@ import time
 import os
 import re
 from datetime import datetime
-from sqlalchemy.sql import case, or_, and_, not_, exists, select, func, null
-from urllib import urlencode
+from sqlalchemy.sql import or_, and_, not_, exists, select, func
 
 import staff_tasks
 import interboard
@@ -414,7 +413,6 @@ class StaffInterface(Template):
         sortby_type = sortby
         sortby_dir = order
 
-        session = model.Session()
         table = model.report
         sql = table.select()
 

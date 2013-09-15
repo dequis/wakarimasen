@@ -1,6 +1,5 @@
 import re
 
-import config, config_defaults
 from urllib import quote
 from util import local
 

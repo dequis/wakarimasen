@@ -1,12 +1,20 @@
 import config, config_defaults
 from sqlalchemy import create_engine
-from sqlalchemy import Table, Column, Integer, Text, String, MetaData, Boolean
-from sqlalchemy.orm import sessionmaker, mapper, scoped_session
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.sql import func
+from sqlalchemy import Table, Column, Integer, Text, String, MetaData
+from sqlalchemy.orm import sessionmaker, scoped_session
 from sqlalchemy.exc import OperationalError
+from sqlalchemy.sql import func
 
-engine = create_engine(config.SQL_ENGINE, pool_size=100, max_overflow=10)
+pool_opts = {}
+
+if config.SQL_POOLING:
+    pool_opts = {
+        'pool_size': config.SQL_POOL_SIZE,
+        'max_overflow': config.SQL_POOL_MAX_OVERFLOW,
+    }
+
+engine = create_engine(config.SQL_ENGINE, **pool_opts)
+
 Session = scoped_session(sessionmaker(bind=engine))
 metadata = MetaData()
 

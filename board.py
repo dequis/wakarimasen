@@ -2,11 +2,9 @@ import os
 import re
 import time
 import sys
-import random
 import hashlib
 import mimetypes
 from subprocess import Popen, PIPE
-from urllib import urlencode
 
 import misc
 import str_format
@@ -1503,7 +1501,8 @@ class Board(object):
             sql = model.proxy.insert().values(ip=ip,
                 timestamp=timestamp, date=date)
 
-            if retval:
+            retval_blacklist = self.options.get('PROXY_RETVAL_BLACKLIST', 100)
+            if retval == retval_blacklist:
                 session.execute(sql.values(type='black'))
                 raise WakaError(strings.PROXY, plain=True)
             else:

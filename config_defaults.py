@@ -1,4 +1,8 @@
 
+SQL_POOLING = True
+SQL_POOL_SIZE = 100
+SQL_POOL_MAX_OVERFLOW = 10
+
 SQL_ADMIN_TABLE = 'admin'
 SQL_PROXY_TABLE = 'proxy'
 SQL_REPORT_TABLE = 'reports'
@@ -61,6 +65,13 @@ FG_ANIM_COLOR = 'white'
 BG_ANIM_COLOR = '#660066'
 
 ICONS = {}
+
+HCAPTCHA = False
+HCAPTCHA_QUESTION = 'desu'
+HCAPTCHA_ANSWER = 'desu'
+HCAPTCHA_COOKIE_BYPASS = True
+HCAPTCHA_NOKOSAGE_BYPASS = True
+
 # add default values to config.py
 import util as _util
 _util.module_default('config', locals())
