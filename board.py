@@ -556,12 +556,12 @@ class Board(object):
     def post_stuff(self, wakapost,
                    admin_mode=None, admin_task_data=None):
 
-        post_num = self._handle_post(wakapost, None,
-            admin_mode, admin_task_data)
-
         # For use with noko, below.
         parent = wakapost.parent or post_num
         noko = wakapost.noko
+
+        post_num = self._handle_post(wakapost, None,
+            admin_mode, admin_task_data)
 
         forward = ''
         if not admin_mode:

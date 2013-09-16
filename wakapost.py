@@ -74,7 +74,8 @@ class WakaPost(object):
 
     @property
     def noko(self):
-        return (self.subject.lower() == 'noko' or self.email.lower() == 'noko')
+        return ((self.subject.lower() == 'noko') or
+                (self.email.lower() == 'noko'))
 
     @property
     def db_values(self):
