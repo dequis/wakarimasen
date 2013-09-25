@@ -802,12 +802,16 @@ class Board(object):
                    oekaki_post, srcinfo, pch, sticky, lock,
                    admin_post_mode, admin_task_data=None):
     
-        post_num = self._handle_post(name, email, subject, comment,
-                                     file, password, nofile, captcha,
-                                     no_captcha, no_format, oekaki_post,
-                                     srcinfo, pch, sticky, lock,
-                                     admin_post_mode, parent=parent,
-                                     admin_task_data=admin_task_data)
+        try:
+            post_num = self._handle_post(name, email, subject, comment,
+                                         file, password, nofile, captcha,
+                                         no_captcha, no_format, oekaki_post,
+                                         srcinfo, pch, sticky, lock,
+                                         admin_post_mode, parent=parent,
+                                         admin_task_data=admin_task_data)
+        except util.SpamError:
+            forward = self.make_path(page=0, url=True)
+            return util.make_http_forward(forward, config.ALTERNATE_REDIRECT)
 
         # For use with noko, below.
         if not parent:
@@ -1361,12 +1365,15 @@ class Board(object):
                    admin_edit_mode, killtrip, postfix, admin_task_data=None,
                    ninja=False):
 
-        self._handle_post(name, email, subject, comment, file,
-                          password, nofile, captcha, no_captcha,
-                          no_format, oekaki_post, srcinfo, pch, sticky, lock,
-                          admin_edit_mode, post_num=post_num,
-                          killtrip=killtrip, admin_task_data=admin_task_data,
-                          ninja=ninja)
+        try:
+            self._handle_post(name, email, subject, comment, file,
+                              password, nofile, captcha, no_captcha,
+                              no_format, oekaki_post, srcinfo, pch, sticky, lock,
+                              admin_edit_mode, post_num=post_num,
+                              killtrip=killtrip, admin_task_data=admin_task_data,
+                              ninja=ninja)
+        except util.SpamError:
+            return Template('edit_successful')
 
         if admin_edit_mode:
             admin_task_data.contents\
