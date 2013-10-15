@@ -216,10 +216,10 @@ class WakaPost(object):
 
         # get file size, and check for limitations.
         if self.req_file:
-            size = misc.get_filestorage_size(self.req_file)
-            if size > (options['MAX_KB'] * 1024):
+            self.size = misc.get_filestorage_size(self.req_file)
+            if self.size > (options['MAX_KB'] * 1024):
                 raise ValidationError(strings.TOOBIG)
-            if size == 0:
+            if self.size == 0:
                 raise ValidationError(strings.TOOBIGORNONE)
 
     def clean_fields(self, editing, admin_mode, options):
