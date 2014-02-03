@@ -650,6 +650,9 @@ class Board(object):
         sql = table.select().where(table.c.ip.op('&')(mask) == ip & mask)
         rows = session.execute(sql)
 
+        if not rows.rowcount:
+            return
+
         timestamp = None
         if config.POST_BACKUP:
             timestamp = time.time()
