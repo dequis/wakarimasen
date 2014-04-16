@@ -543,15 +543,21 @@ def task_stafflog(environ, start_response):
 
 # Error-handling
 
-def fffffff(environ, start_response, error):
-    if error.plain:
-        start_response('200 OK', [('Content-Type', 'text/plain')])
-        return str(error.message)
+def error(environ, start_response, error=None):
 
-    start_response('200 OK', [('Content-Type', 'text/html')])
+    message = error.message if error else 'Unhandled exception'
 
-    mini = '_mini' if environ['waka.fromwindow'] else ''
-    return Template('error_template' + mini, error=error.message)
+    if not (error and error.plain):
+        mini = '_mini' if environ['waka.fromwindow'] else ''
+        try:
+            return Template('error_template' + mini, error=message)
+        except:
+            # if for some reason we can't render templates,
+            # fallback to text/plain error reporting
+            pass
+
+    environ['waka.headers']['Content-Type'] = 'text/plain'
+    return [str(message)]
 
 MAIN_SITE_URL = 'http://www.desuchan.net'
 def not_found(environ, start_response):
@@ -566,14 +572,14 @@ def not_found(environ, start_response):
 
 def check_setup(environ, start_response):
     import os, config
-    from template import TEMPLATES_DIR
+    import interboard
+    from template import TEMPLATES_DIR, CACHE_DIR
 
     issues = []
 
     ENV_CHECKS = ['DOCUMENT_ROOT', 'SCRIPT_NAME', 'SERVER_NAME']
     MISSING_ENV = [x for x in ENV_CHECKS if x not in environ]
     if MISSING_ENV:
-        print environ.keys()
         return ['Environment not complete. Missing: %s\n' %
                 ', '.join(MISSING_ENV)]
 
@@ -597,6 +603,17 @@ def check_setup(environ, start_response):
     templates_dir = os.path.abspath(TEMPLATES_DIR)
     if not os.access(templates_dir, os.W_OK):
         issues.append("No write access to templates dir (%s)" % templates_dir)
+
+    cache_dir = os.path.abspath(CACHE_DIR)
+    if not os.access(cache_dir, os.W_OK):
+        issues.append("No write access to templates cache dir (%s)" % cache_dir)
+
+    try:
+        model.metadata.create_all(model.engine)
+        interboard.remove_old_bans()
+        interboard.remove_old_backups()
+    except model.OperationalError, e:
+        issues.append("Error writing to database: %s" % e.args[0])
 
     if issues:
         return ["<p>Setup issues found:</p> <ul>"] + \

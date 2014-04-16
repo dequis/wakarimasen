@@ -908,6 +908,9 @@ def do_first_time_setup(admin, username, password):
 
 
 def make_first_time_setup_page(admin):
+    if not hasattr(config, 'ADMIN_PASS'):
+        raise WakaError("ADMIN_PASS not set in config")
+
     if admin == config.ADMIN_PASS:
         admin = staff.crypt_pass(admin, local.environ['REMOTE_ADDR'])
         return Template('account_setup', admin=admin)

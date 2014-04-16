@@ -45,7 +45,7 @@ def application(environ, start_response):
             raise WakaError("No board parameter set. "
                 "If you haven't created boards yet, do it now.")
     except WakaError, e:
-        return app.fffffff(environ, start_response, e)
+        return app.error(environ, start_response, e)
 
     # the task function if it exists, otherwise no_task()
     function = getattr(app, 'task_%s' % task.lower(), app.no_task)
@@ -53,9 +53,17 @@ def application(environ, start_response):
     try:
         interboard.remove_old_bans()
         interboard.remove_old_backups()
+    except model.OperationalError, e:
+        return ["Error initializing database: %s" % e.args[0]]
+
+    try:
         return function(environ, start_response)
     except WakaError, e:
-        return app.fffffff(environ, start_response, e)
+        return app.error(environ, start_response, e)
+    except:
+        environ['waka.status'] = '503 Service unavailable'
+        return app.error(environ, start_response)
+
 
 def cleanup(*args, **kwargs):
     '''Destroy the thread-local session and environ'''

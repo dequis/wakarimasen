@@ -718,7 +718,7 @@ class Board(object):
                 raise WakaError(strings.MODDELETEONLY)
 
             if password != row.password:
-                raise WakaError(post + strings.BADDELPASS)
+                raise WakaError("Post #%s: %s" % (post, strings.BADDELPASS))
 
         if config.POST_BACKUP and not archiving:
             if not timestampofarchival:
@@ -777,7 +777,7 @@ class Board(object):
                     = select([table.c.image, table.c.thumbnail],
                              or_(table.c.num == post, table.c.parent == post))
             images_to_baleet = session.execute(select_thread_images)
-            
+
             for i in images_to_baleet:
                 if i.image and i.thumbnail:
                     self.delete_file(i.image, i.thumbnail, archiving=archiving)
