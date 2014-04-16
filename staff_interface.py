@@ -208,8 +208,8 @@ class StaffInterface(Template):
                 row['action'] = last_action['action']
                 row['actiondate'] = last_action['date']
             else:
-                row['action'] = 'None'
-                row['actiondate'] = 'Never'
+                row['action'] = None
+                row['actiondate'] = None
 
         Template.__init__(self, 'staff_management', users=users)
 
