@@ -1325,10 +1325,11 @@ class Board(object):
         if filename.startswith("/") or re.match('\w+:', filename):
             return filename
 
-        self_path = self.url
-
         if force_http:
-            self_path = 'http://' + local.environ['SERVER_NAME'] + self_path
+            host_url = local.environ['werkzeug.request'].host_url.strip('/')
+            self_path = host_url + self.url
+        else:
+            self_path = self.url
 
         return os.path.join(self_path, str_format.percent_encode(filename))
 
