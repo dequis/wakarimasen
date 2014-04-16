@@ -91,11 +91,11 @@ def http(application, host='', port=8000):
 
 @command
 @need_application
-def fcgi_tcp(application, host='', port=9000):
+def fcgi_tcp(application, host='127.0.0.1', port=9000):
     """
     $0 fcgi_tcp [host [port]]
 
-    Defaults to listening on all interfaces, port 9000
+    Defaults to listening on 127.0.0.1, port 9000
     """
     fcgi.WSGIServer(application, bindAddress=(host, int(port))).run()
 
