@@ -697,8 +697,6 @@ class Board(object):
                     timestampofarchival=None, recur=False):
         '''Delete a single post from the board. This method does not rebuild
         index cache automatically.'''
-        thumb = self.options['THUMB_DIR']
-        src = self.options['IMG_DIR']
 
         table = self.table
 
@@ -714,7 +712,7 @@ class Board(object):
         if not admin:
             archiving = False
 
-            if row.admin_post:
+            if int(row.admin_post):
                 raise WakaError(strings.MODDELETEONLY)
 
             if password != row.password:
