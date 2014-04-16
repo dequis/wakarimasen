@@ -557,7 +557,7 @@ class Board(object):
                    admin_mode=None, admin_task_data=None):
 
         # For use with noko, below.
-        parent = wakapost.parent or post_num
+        parent = wakapost.parent or wakapost.num
         noko = wakapost.noko
 
         post_num = self._handle_post(wakapost, None,
