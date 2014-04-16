@@ -559,15 +559,6 @@ def error(environ, start_response, error=None):
     environ['waka.headers']['Content-Type'] = 'text/plain'
     return [str(message)]
 
-MAIN_SITE_URL = 'http://www.desuchan.net'
-def not_found(environ, start_response):
-    '''Not found handler that redirects to desuchan
-    Meant for the development server'''
-
-    start_response('302 Found',
-        [('Location', MAIN_SITE_URL + environ['PATH_INFO'])])
-    return []
-
 # Initial setup
 
 def check_setup(environ, start_response):
