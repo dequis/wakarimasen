@@ -560,8 +560,12 @@ class Board(object):
         parent = wakapost.parent or wakapost.num
         noko = wakapost.noko
 
-        post_num = self._handle_post(wakapost, None,
-            admin_mode, admin_task_data)
+        try:
+            post_num = self._handle_post(wakapost, None,
+                admin_mode, admin_task_data)
+        except util.SpamError:
+            forward = self.make_path(page=0, url=True)
+            return util.make_http_forward(forward, config.ALTERNATE_REDIRECT)
 
         forward = ''
         if not admin_mode:
@@ -1114,7 +1118,10 @@ class Board(object):
         if wakapost.killtrip:
             original_post.trip = ''
 
-        self._handle_post(wakapost, editing=original_post)
+        try:
+            self._handle_post(wakapost, editing=original_post)
+        except util.SpamError:
+            return Template('edit_successful')
 
         if admin_mode:
             admin_task_data.contents\
