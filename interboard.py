@@ -91,12 +91,8 @@ def global_cache_rebuild():
 def global_cache_rebuild_proxy(task_data):
     if task_data.user.account != staff.ADMIN:
         raise WakaError(strings.INUSUFFICENTPRIVLEDGES)
-    Popen(
-        [sys.executable, sys.argv[0], 'rebuild_global_cache',
-        local.environ['DOCUMENT_ROOT'],
-        local.environ['SCRIPT_NAME'],
-        local.environ['SERVER_NAME']]
-    )
+    Popen([sys.executable, sys.argv[0], 'rebuild_global_cache'],
+        env=util.proxy_environ())
     referer = local.environ['HTTP_REFERER']
     task_data.contents.append(referer)
     return util.make_http_forward(referer, config.ALTERNATE_REDIRECT)
@@ -448,14 +444,8 @@ def delete_by_ip(task_data, ip, mask='255.255.255.255'):
     else:
         reign = [x['board_entry'] for x in get_all_boards()]
 
-    Popen(
-        [sys.executable, sys.argv[0], 'delete_by_ip',
-        ip,
-        ','.join(reign),
-        local.environ['DOCUMENT_ROOT'],
-        local.environ['SCRIPT_NAME'],
-        local.environ['SERVER_NAME']]
-    )
+    Popen([sys.executable, sys.argv[0], 'delete_by_ip', ip, ','.join(reign)],
+        env=util.proxy_environ())
 
     board_name = local.environ['waka.board'].name
     redir = misc.make_script_url(task='mpanel', board=board_name)

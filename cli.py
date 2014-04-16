@@ -6,8 +6,8 @@ import werkzeug
 import util
 import fcgi
 import config
+import board
 import interboard
-from board import Board
 from util import local
 
 COMMANDS = {}
@@ -22,40 +22,38 @@ def need_application(f):
     f.need_application = True
     return f
 
+def need_environment(f):
+    f.need_environment = True
+    return f
+
 # commands
 
-def set_env_vars(*args):
-    (local.environ['DOCUMENT_ROOT'],
-     local.environ['SCRIPT_NAME'],
-     local.environ['SERVER_NAME']) = args[:3]
+@command
+@need_environment
+def rebuild_cache(board_name):
+    """
+    $0 rebuild_cache board_name
+    """
+    this_board = board.Board(board_name)
+    local.environ['waka.board'] = this_board
+    this_board.rebuild_cache()
 
 @command
-def rebuild_cache(board_name, *env_vars):
+@need_environment
+def delete_by_ip(ip, boards, ):
     """
-    $0 rebuild_cache board_name document_root script_name server_name
-    """
-    set_env_vars(*env_vars)
-
-    board = Board(board_name)
-    local.environ['waka.board'] = board
-    board.rebuild_cache()
-
-@command
-def delete_by_ip(ip, boards, *env_vars):
-    """
-    $0 delete_by_ip ip boards document_root script_name server_name
+    $0 delete_by_ip ip boards
     """
     boards = boards.split(",")
-    set_env_vars(*env_vars)
 
     interboard.process_global_delete_by_ip(ip, boards)
 
 @command
-def rebuild_global_cache(*env_vars):
+@need_environment
+def rebuild_global_cache():
     """
-    $0 document_root script_name server_name
+    $0
     """
-    set_env_vars(*env_vars)
 
     interboard.global_cache_rebuild()
 
@@ -121,18 +119,58 @@ def help(command=None):
         docstring = str(f.__doc__).replace("$0", sys.argv[0])
         print "Usage:", docstring
 
+def init_environ():
+    """
+    Initialize a wsgi-ish environment for commands.
+
+    Tries to get variables from the OS env and checks for required ones.
+    """
+
+    ENV_VAR_HELP = """
+    Environment variables explanation:
+    - DOCUMENT_ROOT: full filesystem path to html files
+      ex: /srv/http/imageboard.example.com/
+    - SCRIPT_NAME: url to wakarimasen.py without host part
+      ex: /wakarimasen.py
+    - SERVER_NAME: hostname of the webserver
+      ex: imageboard.example.com
+    - SERVER_PORT: port of the webserver (optional)
+      ex: 80
+    """
+
+    local.environ.update(os.environ)
+    werkzeug.BaseRequest(local.environ)
+
+    local.environ.setdefault('waka.rootpath',
+        os.path.join('/', config.BOARD_DIR, ''))
+    local.environ.setdefault('wsgi.url_scheme', 'http')
+    local.environ.setdefault('SERVER_PORT', '80')
+
+    required_vars = ['DOCUMENT_ROOT', 'SCRIPT_NAME', 'SERVER_NAME']
+
+    for var in required_vars:
+        if var not in local.environ:
+            print "Error: %s not in environment" % (var,)
+            print ENV_VAR_HELP
+            sys.exit(1)
+
 def handle_command(args, application):
     name = args.pop(0)
     f = COMMANDS.get(name, help)
 
-    if getattr(f, 'need_application', False):
+    if hasattr(f, 'need_application'):
         args.insert(0, application)
+
+    if hasattr(f, 'need_environment'):
+        # Initialize environment
+        init_environ()
 
     try:
         # attempt to call function with specified arguments
         inspect.getcallargs(f, *args)
     except TypeError:
         # it doesn't fit
-        return help(name)
+        help(name)
+        sys.exit(1)
 
     f(*args)

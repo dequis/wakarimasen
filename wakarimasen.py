@@ -80,9 +80,6 @@ def cleanup(*args, **kwargs):
 application = util.cleanup(application, cleanup)
 
 def main():
-    # Set up tentative environment variables.
-    local.environ['waka.rootpath'] \
-        = os.path.join('/', config.BOARD_DIR, '')
     try:
         app.init_database()
     except model.OperationalError, e:

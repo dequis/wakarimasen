@@ -200,9 +200,8 @@ class Board(object):
         self.check_access(task_data.user)
         task_data.contents.append(self.name)
 
-        Popen([sys.executable, sys.argv[0], 'rebuild_cache', self.name,
-               local.environ['DOCUMENT_ROOT'], local.environ['SCRIPT_NAME'],
-               local.environ['SERVER_NAME']])
+        Popen([sys.executable, sys.argv[0], 'rebuild_cache', self.name],
+            env=util.proxy_environ())
 
         return util.make_http_forward(
             misc.make_script_url(task='mpanel', board=self.name),

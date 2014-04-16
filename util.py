@@ -229,3 +229,12 @@ class FileLock(object):
             lying around.
         """
         self.release()
+
+def proxy_environ():
+    """Returns a cleaned up version of the environment for proxied calls"""
+
+    environ = {}
+    for key, value in local.environ.iteritems():
+        if isinstance(value, basestring):
+            environ[key] = value
+    return environ
