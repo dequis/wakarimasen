@@ -8,6 +8,7 @@ import werkzeug
 
 import config, config_defaults
 import app
+import cli
 import util
 import model
 import interboard
@@ -75,51 +76,6 @@ def cleanup(*args, **kwargs):
 
 application = util.cleanup(application, cleanup)
 
-def worker_commands(command, args):
-    if command == 'rebuild_cache':
-        board_name = args.pop(0)
-    elif command == 'delete_by_ip':
-        ip = args.pop(0)
-        boards = args.pop(0).split(',')
-
-    (local.environ['DOCUMENT_ROOT'], local.environ['SCRIPT_NAME'],
-        local.environ['SERVER_NAME']) = args[:3]
-
-    if command == 'rebuild_cache':
-        board = Board(board_name)
-        local.environ['waka.board'] = board
-        board.rebuild_cache()
-
-    elif command == 'rebuild_global_cache':
-        interboard.global_cache_rebuild()
-
-    elif command == 'delete_by_ip':
-        interboard.process_global_delete_by_ip(ip, boards)
-
-    cleanup()
-
-def reset_password(username):
-    import staff
-    new_password = os.urandom(8).encode("base64").strip("=\n")
-
-    try:
-        staff.edit_staff(username, clear_pass=new_password)
-    except staff.LoginError:
-        print "No such user %r" % username
-    else:
-        print "Password of %r set to %r" % (username, new_password)
-
-    cleanup()
-
-def development_server():
-    app_path = os.path.basename(__file__)
-
-    werkzeug.run_simple('', 8000,
-        util.wrap_static(application, app_path,
-            index='wakaba.html',
-            not_found_handler=app.not_found),
-        use_reloader=True, use_debugger=config.DEBUG)
-
 def main():
     # Set up tentative environment variables.
     local.environ['waka.rootpath'] \
@@ -132,16 +88,11 @@ def main():
         print "Error initializing database: %s" % e.args[0]
         return
 
-    arg = sys.argv[1:] and sys.argv[1] or 'fcgi'
-    if arg == 'fcgi':
+    if not sys.argv[1:] or sys.argv[1] == 'fcgi':
         fcgi.WSGIServer(application).run()
-    elif arg == 'reset_password':
-        reset_password(sys.argv[2])
-    elif arg in ('rebuild_cache', 'rebuild_global_cache',
-                         'delete_by_ip'):
-        worker_commands(arg, sys.argv[2:])
     else:
-        development_server()
+        cli.handle_command(sys.argv[1:], application)
+        cleanup()
 
 if __name__ == '__main__':
     main()
