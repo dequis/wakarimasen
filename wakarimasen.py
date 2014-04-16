@@ -59,7 +59,8 @@ def application(environ, start_response):
         return ["Error initializing database: %s" % e.args[0]]
 
     try:
-        return function(environ, start_response)
+        # wrap with list() to run inside this try..except
+        return list(function(environ, start_response))
     except WakaError, e:
         return app.error(environ, start_response, e)
     except:
