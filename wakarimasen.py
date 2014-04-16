@@ -2,6 +2,7 @@
 
 import os
 import sys
+import traceback
 
 import fcgi
 import werkzeug
@@ -63,6 +64,7 @@ def application(environ, start_response):
         return app.error(environ, start_response, e)
     except:
         environ['waka.status'] = '503 Service unavailable'
+        traceback.print_exc()
         return app.error(environ, start_response)
 
 
