@@ -5,22 +5,25 @@ if you know how to fix stuff when it breaks.
 
 ## Requirements
 
-* python >= 2.6, <= 3
-* werkzeug
-* sqlalchemy >= 0.8
-* jinja2
+* Shell access to the server
+* Python >= 2.6, <= 3
+* Werkzeug
+* SQLAlchemy >= 0.8
+* Jinja2
+* ImageMagick commandline tools (`convert` and `identify`)
+* `file` command
 
 ### Supported deployment methods
 
-* uWSGI (recommended)
+* uWSGI
 * FastCGI
 * CGI (fallback)
 
 ### Supported webservers
 
 * Apache: Completely supported
-* nginx: Works, but a few features such as bans rely in .htaccess (TODO)
-* lighttpd: Should work (same as nginx), but untested.
+* nginx: Works, but a few features such as bans rely in .htaccess
+* lighttpd: Works, but same as nginx.
 
 Development server included (`python wakarimasen.py http`)
 
@@ -28,8 +31,21 @@ Development server included (`python wakarimasen.py http`)
 
 Most instructions in here assume that you have at least a virtual private
 server with root access. However, it's technically possible to install
-requirements using virtualenv and even run uwsgi in shared hosts such as
-dreamhost. See [this tutorial][dh] for that (Good luck!).
+requirements using [virtualenv][] and use wakarimasen over cgi or fastcgi if
+already configured in a shared server.
+
+## Installing dependencies
+
+All dependencies should be available from the package manager of the average
+linux distro.
+
+If the python dependencies are too old, you could [install them with pip][pip]
+instead. If you don't want or can't do system-wide installs of python packages,
+[virtualenv][] exists and integrates nicely with pip.
+
+If you don't have `convert`, `identify` or `file`, and can't install them with a
+package manager system-wide, well, hope you don't mind not having images in the
+imageboard.
 
 ## Basic installation (CGI)
 
@@ -66,14 +82,114 @@ for cgi, it must be chmod 755, too.
 - Go to `http://example.com/wakarimasen.py?board=temp` - This should rebuild the
 cache and redirect you to your board.
 
-
 ## Webserver configuration
+
+### Apache
+
+#### CGI
+
+TODO (Should be very similar to the first steps of FastCGI setup..)
+
+#### FastCGI
+
+Add this to your config:
+
+    DirectoryIndex wakaba.html
+
+    <Directory "/path/to/wakarimasen">
+        Options +ExecCGI
+    </Directory>
+
+Choose either `mod_fastcgi`:
+
+    LoadModule fastcgi_module modules/mod_fastcgi.so
+    <IfModule fastcgi_module>
+      AddHandler fastcgi-script .fcgi
+    </IfModule>
+
+Or `mod_fcgid`:
+
+    LoadModule fcgid_module modules/mod_fcgid.so
+    <IfModule fcgid_module>
+        AddHandler fcgid-script .py .fcgi
+    </IfModule>
+
+### Nginx
+
+#### CGI with fcgiwrap
+
+See [this page](http://wiki.nginx.org/Fcgiwrap) for fcgiwrap installation details.
+
+Then add this to the server block:
+
+    index wakaba.html;
+    include /etc/nginx/fcgiwrap.conf;
+
+You should ensure that fcgiwrap.conf includes a location block, and that it
+matches wakarimasen.py (sometimes it's limited to .cgi files). If it doesn't
+have a location block, put that include inside one:
+
+    location /wakarimasen.py {
+        include /etc/nginx/fcgiwrap.conf;
+    }
+
+If you don't do this, fcgiwrap might do weird stuff like throwing '502 bad
+gateway' errors for most files.
+
+#### FastCGI servers
+
+Recent versions of wakarimasen have TCP and unix socket based standalone fastcgi
+servers. To use them, start wakarimasen.py like this:
+
+    # start a tcp fcgi server with the default settings, in 127.0.0.1:9000
+    python wakarimasen.py fcgi_tcp
+
+    # bind tcp fcgi server to a certain ethernet interface, port 9001
+    python wakarimasen.py fcgi_tcp 192.168.0.1 9001
+
+    # start a unix socket fcgi server in /tmp/derp
+    python wakarimasen.py fcgi_unix /tmp/derp
+
+In the nginx config:
+
+    index wakaba.html;
+    location /wakarimasen.py {
+        include /etc/nginx/fastcgi.conf;
+        fastcgi_pass unix:/tmp/derp;
+
+        # or: fastcgi_pass 127.0.0.1:9001;
+    }
+
+When using unix sockets, check that the file is readable by the nginx user.
+
+Nginx doesn't have a fastcgi process spawner. You'll have to write a init
+script, a systemd unit, or use something like [supervisor][].
+
+Or just leave the thing running in a tmux/screen session, only to find a few
+weeks later that your wakarimasen has been offline for a long time because your
+server mysteriously rebooted.
+
+### Lighttpd
+
+#### CGI
+
+Just add this to the config:
+
+    server.modules += ("mod_cgi")
+    cgi.assign = (".py"  => "/usr/bin/python2")
+    index-file.names += ("wakaba.html")
+
+As an nginx fanboy I'm slightly annoyed at how easy this was.
+
+#### FastCGI
+
+TODO
 
 ### uWSGI
 
-uWSGI is the recommended deployment setup. It can also be the most complex to
-setup, but not by much. This document is not going to cover the details, but
-you can check the [uWSGI docs][ud]. In particular:
+uWSGI is probably the best deployment setup. It can also be the most complex to
+setup. This document is not going to cover the details, but you can check the
+[uWSGI docs][ud]. In particular:
 
  * The [quickstart][qs] gives a rough outline of the process.
     * Note: wakarimasen can't run directly with the uwsgi http server for
@@ -89,54 +205,10 @@ you can check the [uWSGI docs][ud]. In particular:
 
 More detailed instructions soon&trade;
 
-### Apache + mod_fastcgi
-
-The default html file of boards is usually called "wakaba.html", so add this to
-your config (can be in .htaccess)
-
-    DirectoryIndex wakaba.html
-
-Enable CGI execution:
-
-    <Directory "/path/to/wakarimasen">
-        Options +ExecCGI
-    </Directory>
-
-Load mod_fastcgi or mod_fcgid:
-
-    # mod_fastcgi
-    LoadModule fastcgi_module modules/mod_fastcgi.so
-
-    # *or* mod_fcgid:
-    LoadModule fcgid_module modules/mod_fcgid.so
-
-Handle .py files with it:
-
-    # mod_fastcgi
-    <IfModule fastcgi_module>
-      AddHandler fastcgi-script .fcgi
-    </IfModule>
-
-    # *or* mod_fcgid
-    <IfModule fcgid_module>
-        AddHandler fcgid-script .py .fcgi
-    </IfModule>
-
-### Nginx + cgi with fcgiwrap
-
-Turns out that nginx requires a listening fastcgi process, it doesn't do
-process spawning. Wakarimasen doesn't work as a listening daemon either.
-
-If you want a real nginx wakarimasen setup, use uwsgi, but this method is okay
-to get something quick and dirty running.
-
-Just install fcgiwrap from your distro and add this to the server block:
-
-    index wakaba.html;
-    include /etc/nginx/fcgiwrap.conf;
-
-[dh]: http://uwsgi-docs.readthedocs.org/en/latest/tutorials/dreamhost.html
 [ud]: http://uwsgi-docs.readthedocs.org/en/latest/
 [qs]: http://uwsgi-docs.readthedocs.org/en/latest/WSGIquickstart.html
 [emp]: http://uwsgi-docs.readthedocs.org/en/latest/Emperor.html
 [ws]: http://uwsgi-docs.readthedocs.org/en/latest/WebServers.html
+[supervisor]: http://supervisord.org/configuration.html#fcgi-program-x-section-settings
+[pip]: http://www.pip-installer.org/en/latest/quickstart.html
+[virtualenv]: http://www.virtualenv.org/en/latest/virtualenv.html
