@@ -116,17 +116,6 @@ def task_delete(environ, start_response, archiving=False):
     del kwargs['admin']
     return board.delete_stuff(**kwargs)
 
-def task_deleteall_confirm(environ, start_response):
-    request = environ['werkzeug.request']
-
-    params = {'form':    ['ip', 'mask', 'global'],
-              'cookies': ['wakaadmin']}
-
-    kwargs = kwargs_from_params(request, params)
-    kwargs['dest'] = staff_interface.DELETE_ALL_CONFIRM
-
-    return StaffInterface(**kwargs)
-
 def task_deleteall(environ, start_response):
     request = environ['werkzeug.request']
 
@@ -356,9 +345,12 @@ task_edituserwindow = si_task_factory('EDIT_STAFF_CONFIRM', 'username')
 task_searchposts = si_task_factory('POST_SEARCH_PANEL',
     'search', 'caller', 'text')
 
+task_deleteall_confirm = si_task_factory('DELETE_ALL_CONFIRM',
+    'ip', 'mask', 'global')
+
 def task_addip(environ, start_response):
     request = environ['werkzeug.request']
-    
+
     params = {'form':    ['type', 'comment', 'ip', 'mask', 'total',
                           'expiration'],
               'cookies': ['wakaadmin']}
