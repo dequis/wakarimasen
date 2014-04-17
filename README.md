@@ -29,9 +29,9 @@ Looks exactly like wakaba. You should already know what wakaba looks like.
 
 ### Installation
 
-Installation instructions are available in the [INSTALL.md][] file
+Installation instructions are available in the [docs][]
 
-[INSTALL.md]: https://github.com/dequis/wakarimasen/blob/master/INSTALL.md
+[INSTALL.md]: https://github.com/dequis/wakarimasen/blob/master/docs/install.rst
 
 ### Known issues
 

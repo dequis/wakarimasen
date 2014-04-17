@@ -1,0 +1,5 @@
+.*.swp
+*.pyc
+*.pyo
+/templates/.cache
+/docs/_build
