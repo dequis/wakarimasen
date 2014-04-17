@@ -5,6 +5,8 @@ A wakaba-compatible python imageboard.
 Wakarimasen is still experimental software - use it at your own risk and
 if you know how to fix stuff when it breaks.
 
+[Documentation](http://wakarimasen.readthedocs.org)
+
 ### Features
 
  * Looks like wakaba
@@ -29,9 +31,9 @@ Looks exactly like wakaba. You should already know what wakaba looks like.
 
 ### Installation
 
-Installation instructions are available in the [docs][]
+Installation instructions are available in the [docs][install]
 
-[INSTALL.md]: https://github.com/dequis/wakarimasen/blob/master/docs/install.rst
+[install]: https://github.com/dequis/wakarimasen/blob/master/docs/install.rst
 
 ### Known issues
 

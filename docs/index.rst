@@ -6,7 +6,7 @@
 Wakarimasen docs
 ================
 
-わかりまえん！
+わかりません！
 
 Contents:
 

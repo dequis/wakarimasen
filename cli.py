@@ -40,7 +40,7 @@ def rebuild_cache(board_name):
 
 @command
 @need_environment
-def delete_by_ip(ip, boards, ):
+def delete_by_ip(ip, boards):
     """
     $0 delete_by_ip ip boards
     """
