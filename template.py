@@ -117,6 +117,13 @@ class Template(object):
         return misc.get_script_name()
 
     @function
+    def task_url(self, task, **kwargs):
+        kwargs['task'] = task
+        kwargs['board'] = self.board.name
+        from werkzeug.urls import url_encode
+        return misc.get_script_name() + "?" + url_encode(kwargs)
+
+    @function
     def get_secure_script_name(self):
         return misc.get_secure_script_name()
         
