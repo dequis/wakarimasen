@@ -188,7 +188,7 @@ NEWFILE = "New File"                                         # Prompt for replac
 STRINGFIELDMISSING = "Please input string to ban."
 MODDELETEONLY = "This was posted by a moderator or admin and cannot be deleted this way."
 POSTNOTFOUND = "Post %d not found on %s."
-INUSUFFICENTPRIVLEDGES = 'Insufficient privileges'
+INSUFFICIENTPRIVILEGES = 'Insufficient privileges'
 
 #
 # Oekaki

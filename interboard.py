@@ -90,7 +90,7 @@ def global_cache_rebuild():
 
 def global_cache_rebuild_proxy(task_data):
     if task_data.user.account != staff.ADMIN:
-        raise WakaError(strings.INUSUFFICENTPRIVLEDGES)
+        raise WakaError(strings.INSUFFICIENTPRIVILEGES)
     Popen([sys.executable, sys.argv[0], 'rebuild_global_cache'],
         env=util.proxy_environ())
     referer = local.environ['HTTP_REFERER']
@@ -474,7 +474,7 @@ def trim_activity():
 
 def update_spam_file(task_data, spam):
     if task_data.user.account == staff.MODERATOR:
-        raise WakaError(strings.INUSUFFICENTPRIVLEDGES)
+        raise WakaError(strings.INSUFFICIENTPRIVILEGES)
 
     # Dump all contents to first spam file.
     with open(config.SPAM_FILES[0], 'w') as f:

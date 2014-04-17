@@ -54,7 +54,7 @@ def admin_only(f):
     def ret_func(*args, **kwargs):
         self = args[0]
         if self.user.account != staff.ADMIN:
-            raise WakaError(strings.INUSUFFICENTPRIVLEDGES)
+            raise WakaError(strings.INSUFFICIENTPRIVILEGES)
         f(*args, **kwargs)
 
     return ret_func
@@ -65,7 +65,7 @@ def global_only(f):
     def ret_func(*args, **kwargs):
         self = args[0]
         if self.user.account == staff.MODERATOR:
-            raise WakaError(strings.INUSUFFICENTPRIVLEDGES)
+            raise WakaError(strings.INSUFFICIENTPRIVILEGES)
         f(*args, **kwargs)
 
     return ret_func
@@ -696,7 +696,7 @@ class StaffInterface(Template):
     @interface_for(SQL_PANEL)
     def make_sql_interface_panel(self, sql='', nuke=''):
         if self.user.account != staff.ADMIN:
-            raise WakaError(strings.INUSUFFICENTPRIVLEDGES)
+            raise WakaError(strings.INSUFFICIENTPRIVILEGES)
 
         results = []
 
@@ -773,7 +773,7 @@ def add_staff_proxy(admin, mpass, usertocreate, passtocreate, account, reign):
     user = staff.check_password(admin)
 
     if user.account != staff.ADMIN:
-        raise WakaError(strings.INUSUFFICENTPRIVLEDGES)
+        raise WakaError(strings.INSUFFICIENTPRIVILEGES)
 
     if account == staff.ADMIN and mpass != config.ADMIN_PASS:
         raise WakaError('Incorrect management password.')
@@ -788,7 +788,7 @@ def del_staff_proxy(admin, mpass, username):
     user = staff.check_password(admin)
 
     if user.account != staff.ADMIN:
-        raise WakaError(strings.INUSUFFICENTPRIVLEDGES)
+        raise WakaError(strings.INSUFFICIENTPRIVILEGES)
 
     user_to_kill = staff.StaffMember.get(username)
     if user_to_kill.account == staff.ADMIN and mpass != config.ADMIN_PASS:
@@ -816,7 +816,7 @@ def edit_staff_proxy(admin, mpass, username, newpassword=None, newclass=None,
         if edited_user.account == staff.ADMIN and mpass != config.ADMIN_PASS:
             raise WakaError('Incorrect management password.')
     else:
-        raise WakaError(strings.INUSUFFICENTPRIVLEDGES)
+        raise WakaError(strings.INSUFFICIENTPRIVILEGES)
 
     staff.edit_staff(username, clear_pass=newpassword, new_class=newclass,
                      reign=reign, disable=disable)
