@@ -179,8 +179,8 @@
 			<label><input type="checkbox" name="num" value="{{ post.num }}" />
 			<span class="filetitle">{{ post.subject }}</span>
 			{% if post.email %}<span class="postername"><a href="{{ post.email }}">{{ post.name }}</a></span>{% if post.trip %}<span class="postertrip"><a href="{{ post.email }}">{{ post.trip }}</a></span>{% endif %}{% endif %}
-			{% if not post.email %}<span class="postername">{{ post.name }}</span>{% if post.trip %}<span class="postertrip">{{ post.trip }}</span>{% endif %}{% endif %} 
-			<span class="ipaddr">(IP: {{ (post.ip)|dec_to_dot }}{% if post.admin_post == 'yes' %}; {% if not post.lastedit %}<strong>Moderator Post</strong>{% endif %}{% if post.lastedit %}<strong>Moderator Edit</strong>{% endif %}{% endif %})</span> 
+			{% if not post.email %}<span class="postername">{{ post.name }}</span>{% if post.trip %}<span class="postertrip">{{ post.trip }}</span>{% endif %}{% endif %}
+			<span class="ipaddr">(IP: <a href="{{ get_script_name() }}?task=searchposts&caller=board&board={{ board.name }}&text={{ (post.ip)|dec_to_dot }}&search=Search+Posts+by+IP+Address">{{ (post.ip)|dec_to_dot }}</a>{% if post.admin_post == 'yes' %}; {% if not post.lastedit %}<strong>Moderator Post</strong>{% endif %}{% if post.lastedit %}<strong>Moderator Edit</strong>{% endif %}{% endif %})</span> 
 			{% if post.stickied %} <img src="{{ ('/include/boards/sticky.gif')|expand_url }}" alt="{{ strings.STICKIEDALT }}" title="{{ strings.STICKIED }}" /> {% endif %}
 			{% if post.locked == 'yes' %} <img src="{{ ('/include/boards/locked.gif')|expand_url }}" alt="{{ strings.LOCKEDALT }}" title="{{ strings.LOCKED }}" /> {% endif %}
 			{{ post.date }}</label>
@@ -223,8 +223,8 @@
 			<label><input type="checkbox" name="num" value="{{ post.num }}" />
 			<span class="replytitle">{{ post.subject }}</span>
 			{% if post.email %}<span class="commentpostername"><a href="{{ post.email }}">{{ post.name }}</a></span>{% if post.trip %}<span class="postertrip"><a href="{{ post.email }}">{{ post.trip }}</a></span>{% endif %}{% endif %}
-			{% if not post.email %}<span class="commentpostername">{{ post.name }}</span>{% if post.trip %}<span class="postertrip">{{ post.trip }}</span>{% endif %}{% endif %} 
-			<span class="ipaddr">(IP: {{ (post.ip)|dec_to_dot }}{% if post.admin_post == 'yes' %}; {% if not post.lastedit %}<strong>Moderator Post</strong>{% endif %}{% if post.lastedit %}<strong>Moderator Edit</strong>{% endif %}{% endif %})</span> 
+			{% if not post.email %}<span class="commentpostername">{{ post.name }}</span>{% if post.trip %}<span class="postertrip">{{ post.trip }}</span>{% endif %}{% endif %}
+			<span class="ipaddr">(IP: <a href="{{ get_script_name() }}?task=searchposts&caller=board&board={{ board.name }}&text={{ (post.ip)|dec_to_dot }}&search=Search+Posts+by+IP+Address">{{ (post.ip)|dec_to_dot }}</a>{% if post.admin_post == 'yes' %}; {% if not post.lastedit %}<strong>Moderator Post</strong>{% endif %}{% if post.lastedit %}<strong>Moderator Edit</strong>{% endif %}{% endif %})</span> 
 			{{ post.date }}</label>
 			<span class="reflink">
 			{% if not thread %}<span><a href="{{ (post.parent)|get_reply_link(0) }}#{{ post.num }}">No.</a><a href="{{ (post.parent)|get_reply_link(0) }}#i{{ post.num }}">{{ post.num }}</a></span>{% endif %}
