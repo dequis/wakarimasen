@@ -852,8 +852,7 @@ class Board(object):
                 os.chmod(full_backup_path, 0644)
             else:
                 os.unlink(full_file_path)
-        if os.path.exists(full_thumb_path) \
-                and re.match(self.options['THUMB_DIR'], relative_file_path):
+        if os.path.exists(full_thumb_path):
             if archiving:
                 os.renames(full_thumb_path, full_tarchive_path)
                 os.chmod(full_tarchive_path, 0644)
@@ -949,14 +948,11 @@ class Board(object):
 
             # Move file/thumb.
             if arch_image and os.path.exists(arch_image):
-                orig_path = os.path.join(self.path, row.image)
                 os.renames(arch_image, os.path.join(self.path, row.image))
-                os.chmod(orig_path, 0644)
-            if arch_thumb \
-                    and re.match(self.options['THUMB_DIR'],
-                                 row.thumbnail) \
-                    and os.path.exists(arch_thumb):
-                os.renames(arch_thumb, os.path.join(self.path, row.thumb))
+                os.chmod(os.path.join(self.path, row.image), 0o644)
+            if arch_thumb and os.path.exists(arch_thumb):
+                os.renames(arch_thumb, os.path.join(self.path, row.thumbnail))
+                os.chmod(os.path.join(self.path, row.thumbnail), 0o644)
 
             if not child:
                 if row.parent:
@@ -966,11 +962,8 @@ class Board(object):
         else:
             # Delete file/thumb.
             if arch_image and os.path.exists(arch_image):
-                os.unlink(os.path.join(arch_image))
-            if arch_thumb \
-                    and re.match(self.options['THUMB_DIR'],
-                                 row.thumbnail) \
-                    and os.path.exists(arch_thumb):
+                os.unlink(arch_image)
+            if arch_thumb and os.path.exists(arch_thumb):
                 os.unlink(arch_thumb)
 
         # Remove (and restore if appropriate) all thread backups made at the
