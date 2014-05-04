@@ -386,9 +386,12 @@ class Board(object):
                                         self.options['ARCHIVE_DIR'],
                                         self.options['RES_DIR'], '')
             try:
-                os.makedirs(archive_base, 0755)
+                os.makedirs(archive_base, 0o755)
             except os.error:
                 pass
+            # umask a shit
+            if os.path.isdir(archive_base): os.chmod(archive_base, 0o755)
+
             archive_thread_page = archive_base + full_filename
 
             with open(full_thread_page, 'r') as res_in:

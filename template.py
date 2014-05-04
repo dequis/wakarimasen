@@ -28,8 +28,9 @@ def function(f):
 
 class Template(object):
     def __init__(self, name, **vars):
-        if not os.path.exists(CACHE_DIR):
-            os.makedirs(CACHE_DIR)
+        if not os.path.exists(CACHE_DIR): os.makedirs(CACHE_DIR, 0o755)
+        # umask a shit
+        if os.path.isdir(CACHE_DIR): os.chmod(CACHE_DIR, 0o755)
 
         # Environment init
         self.env = jinja2.Environment(
