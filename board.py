@@ -824,10 +824,15 @@ class Board(object):
         backup_base = os.path.join(archive_base, self.options['BACKUP_DIR'])
 
         if config.POST_BACKUP:
-            try:
-                os.makedirs(backup_base, 0755)
-            except os.error:
-                pass
+            for path in (archive_base, backup_base,
+                        os.path.join(archive_base,self.options['IMG_DIR']),
+                        os.path.join(archive_base,self.options['THUMB_DIR'])):
+                try:
+                    os.makedirs(path, 0o755)
+                except os.error:
+                    pass
+                # umask a shit
+                if os.path.isdir(path): os.chmod(path, 0o755)
 
         full_archive_path = os.path.join(archive_base,
                                          relative_file_path)
