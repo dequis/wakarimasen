@@ -853,7 +853,7 @@ class Board(object):
                 os.renames(full_thumb_path, full_tarchive_path)
                 os.chmod(full_tarchive_path, 0644)
             elif config.POST_BACKUP:
-                os.renames(full_file_path, full_tbackup_path)
+                os.renames(full_thumb_path, full_tbackup_path)
                 os.chmod(full_tbackup_path, 0644)
             else:
                 os.unlink(full_thumb_path)
