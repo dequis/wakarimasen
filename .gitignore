@@ -1,4 +1,8 @@
+.*.swp
 *.pyc
+*.pyo
+/templates/.cache
+/docs/_build
 announcements_global.html
 header.html
 footer.html

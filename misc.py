@@ -1,11 +1,9 @@
 # misc.py: Temporary place for new functions
-import sys
 import os
 import re
 import time
 import crypt
 import struct
-import strings
 from subprocess import Popen, PIPE
 
 import util
@@ -119,7 +117,7 @@ def compile_spam_checker(spam_files):
 
 def spam_engine(trap_fields, spam_files):
     def spam_screen():
-        raise util.WakaError(strings.SPAM)
+        raise util.SpamError()
 
     request = local.request
     for field in trap_fields:

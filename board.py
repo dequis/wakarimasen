@@ -2,11 +2,9 @@ import os
 import re
 import time
 import sys
-import random
 import hashlib
 import mimetypes
 from subprocess import Popen, PIPE
-from urllib import urlencode
 
 import misc
 import str_format
@@ -21,6 +19,7 @@ import config
 import strings as strings
 from util import WakaError, local
 from template import Template
+from wakapost import WakaPost
 
 try:
     import board_config_defaults
@@ -115,7 +114,7 @@ class Board(object):
 
     def _get_all_threads(self):
         '''Build a list of threads from the database,
-        where each thread is a list of CompactPost instances'''
+        where each thread is a list of WakaPost instances'''
 
         session = model.Session()
         table = self.table
@@ -132,7 +131,7 @@ class Board(object):
             if thread and not post.parent:
                 threads.append(thread)
                 thread = []
-            thread.append(model.CompactPost(post))
+            thread.append(WakaPost(post))
         threads.append(thread)
 
         return threads
@@ -158,7 +157,7 @@ class Board(object):
         op_query = session.execute(op_sql)
 
         for op in op_query:
-            thread_dict[op.num] = [model.CompactPost(op)]
+            thread_dict[op.num] = [WakaPost(op)]
             thread_nums.append(op.num)
 
         # Query 2: Grab all reply entries and process.
@@ -169,7 +168,7 @@ class Board(object):
         reply_query = session.execute(reply_sql)
 
         for post in reply_query:
-            thread_dict[post.parent].append(model.CompactPost(post))
+            thread_dict[post.parent].append(WakaPost(post))
 
         return [thread_dict[num] for num in thread_nums]
 
@@ -201,9 +200,8 @@ class Board(object):
         self.check_access(task_data.user)
         task_data.contents.append(self.name)
 
-        Popen([sys.executable, sys.argv[0], 'rebuild_cache', self.name,
-               local.environ['DOCUMENT_ROOT'], local.environ['SCRIPT_NAME'],
-               local.environ['SERVER_NAME']])
+        Popen([sys.executable, sys.argv[0], 'rebuild_cache', self.name],
+            env=util.proxy_environ())
 
         return util.make_http_forward(
             misc.make_script_url(task='mpanel', board=self.name),
@@ -318,7 +316,7 @@ class Board(object):
         thread = []
 
         for post in query:
-            thread.append(model.CompactPost(post))
+            thread.append(WakaPost(post))
 
         if not len(thread):
             raise WakaError('Thread not found.')
@@ -434,324 +432,114 @@ class Board(object):
         for row in query:
             self.build_thread_cache(row[0])
 
-    def _handle_post(self, name, email, subject, comment, file,
-                      password, nofile, captcha, no_captcha,
-                      no_format, oekaki_post, srcinfo, pch, sticky, lock,
-                      admin_post_mode, post_num=None, killtrip=False,
-                      parent='0', admin_task_data=None, ninja=False):
+    def _handle_post(self, wakapost, editing=None,
+                     admin_mode=False, admin_task_data=None):
+        """Worst function ever"""
 
         session = model.Session()
 
         # get a timestamp for future use
-        timestamp = 0
-        if not post_num:
-            timestamp = time.time()
+        timestamp = wakapost.timestamp = time.time()
 
-        # Other automatically determined variables.
-        trip = ''
-        date = lastedit = lasthit = ''
-        post_ip = lastedit_ip = ''
-        filename = thumbnail = md5 = ''
-        size = width = height = tn_width = tn_height = 0
+        if admin_mode:
+            # check admin password - allow both encrypted and non-encrypted
+            # raises exceptions
+            self.check_access(admin_task_data.user)
+            wakapost.admin_post = True
 
-        # Initialize admin_post variable--tells whether or not this post has
-        # fallen under the hand of a mod/admin
-        admin_post = ''
-
-        # check that the request came in as a POST, or from the command line
-        if local.environ.get('REQUEST_METHOD', '') != 'POST':
-            raise WakaError(strings.UNJUST)
-
-        # Get parent post and original file if post_num is provided (editing).
-        if post_num:
-            original_row = session.execute(
-                self.table.select(self.table.c.num == post_num))\
-                .fetchone()
-
-            if original_row == None:
-                raise WakaError('Post not found') # TODO
-                
-            if not admin_post_mode and password != original_row['password']:
-                raise WakaError('Wrong password for editing') # TODO
-
-            parent = original_row['parent']
-            filename = original_row['image']
-            thumbnail = original_row['thumbnail']
-            md5 = original_row['md5']
-            height = original_row['height']
-            width = original_row['width']
-            tn_width = original_row['tn_width']
-            tn_height = original_row['tn_height']
-            timestamp = original_row['timestamp']
-            date = original_row['date']
-            post_ip = original_row['ip']
-            size = original_row['size']
-            lasthit = original_row['lasthit']
-            sticky = original_row['stickied']
-            if not killtrip:
-                trip = original_row['trip']
+        # run several post validations - raises exceptions
+        wakapost.validate(editing, admin_mode, self.options)
 
         # check whether the parent thread is stickied
-        if parent:
-            sticky_check = session.execute(
-                select([self.table.c.stickied, self.table.c.locked],
-                    self.table.c.num == parent)).fetchone()
-
-            if sticky_check is None:
-                raise WakaError('Thread not found.')
-
-            if sticky_check['stickied']:
-                sticky = 1
-            elif not admin_post_mode:
-                sticky = 0
-
-            if sticky_check['locked'] == 'yes' and not admin_post_mode:
-                raise WakaError(strings.THREADLOCKEDERROR)
-
-        username = accounttype = ''
-
-        # check admin password - allow both encrypted and non-encrypted
-        if admin_post_mode:
-            user = self.check_access(admin_task_data.user)
-            username = user.username
-            accounttype = user.account
-            admin_post = 'yes'
-        else:
-            if no_captcha or no_format or (sticky and not parent) or lock:
-                raise WakaError(strings.WRONGPASS)
-
-            if parent:
-                if file and not self.options['ALLOW_IMAGE_REPLIES']:
-                    raise WakaError(strings.NOTALLOWED)
-                if not file and not self.options['ALLOW_TEXT_REPLIES']:
-                    raise WakaError(strings.NOTALLOWED)
-            else:
-                if file and not self.options['ALLOW_IMAGES']:
-                    raise WakaError(strings.NOTALLOWED)
-                if not file and nofile and self.options['ALLOW_TEXTONLY']:
-                    raise WakaError(strings.NOTALLOWED)
-
-
-        threadupdate = self.table.update().where(
-            or_(self.table.c.num == parent, self.table.c.parent == parent))
-            
-        if sticky and parent:
-            threadupdate = threadupdate.values(stickied=1)
-
-        if lock:
-            if parent:
-                threadupdate = threadupdate.values(locked='yes')
-            lock = 'yes'
-        else:
-            lock = ''
-
-        if (sticky or lock) and parent:
-            session.execute(threadupdate)
-
-        has_crlf = lambda x: '\n' in x or '\r' in x
-
-        # check for weird characters
-        if not post_num and ((len(parent) != 0 and not parent.isdigit())
-           or len(parent) > 10 or has_crlf(name) or has_crlf(email)
-           or has_crlf(subject)):
-            raise WakaError(strings.UNUSUAL)
-
-        # convert parent to integer type
-        if not post_num and len(parent) == 0:
-            parent = 0
-        else:
-            parent = int(parent)
-
-        # check for excessive amounts of text
-        if (len(name) > self.options['MAX_FIELD_LENGTH'] or
-               len(email) > self.options['MAX_FIELD_LENGTH'] or
-               len(subject) > self.options['MAX_FIELD_LENGTH'] or
-               len(comment) > self.options['MAX_COMMENT_LENGTH']):
-            raise WakaError(strings.TOOLONG)
-
-        # check to make sure the user selected a file, or clicked the checkbox
-        if not post_num and not parent and not file and not nofile:
-            raise WakaError(strings.NOPIC)
-
-        # check for empty reply or empty text-only post
-        if not comment.strip() and not file:
-            raise WakaError(strings.NOTEXT)
-
-        # get file size, and check for limitations.
-        if file:
-            size = misc.get_filestorage_size(file)
-            if size > (self.options['MAX_KB'] * 1024):
-                raise WakaError(strings.TOOBIG)
-            if size == 0:
-                raise WakaError(strings.TOOBIGORNONE)
+        if wakapost.parent:
+            self.sticky_lock_check(wakapost, admin_mode)
+            self.sticky_lock_update(wakapost.parent, wakapost.stickied,
+                wakapost.locked)
 
         ip = local.environ['REMOTE_ADDR']
         numip = misc.dot_to_dec(ip)
 
-        if post_num:
-            lastedit_ip = numip
-        else:
-            post_ip = numip
+        wakapost.set_ip(numip, editing)
 
         # set up cookies
-        c_name = name
-        c_email = email
-        c_password = password
+        wakapost.make_post_cookies(self.options, self.url)
 
         # check if IP is whitelisted
         whitelisted = misc.is_whitelisted(numip)
 
-        # process the tripcode - maybe the string should be decoded later
-        name, temp = misc.process_tripcode(name, self.options['TRIPKEY'])
-        trip = trip or temp
-
-        if not whitelisted and not admin_post_mode:
+        if not whitelisted and not admin_mode:
             # check for bans
-            interboard.ban_check(numip, c_name, subject, comment)
+            interboard.ban_check(numip, wakapost.name,
+                wakapost.subject, wakapost.comment)
 
+            # check for spam matches
             trap_fields = []
             if self.options['SPAM_TRAP']:
                 trap_fields = ['name', 'link']
 
             misc.spam_engine(trap_fields, config.SPAM_FILES)
 
-        if self.options['ENABLE_CAPTCHA'] and not no_captcha and \
-           not misc.is_trusted(trip):
-            misc.check_captcha(captcha, ip, parent)
-
-        if not whitelisted and self.options['ENABLE_PROXY_CHECK']:
-            self.proxy_check(ip)
+            # check for open proxies
+            if self.options['ENABLE_PROXY_CHECK']:
+                self.proxy_check(ip)
 
         # check if thread exists, and get lasthit value
-        parent_res = ''
-        if not post_num:
-            if parent:
-                parent_res = self.get_parent_post(parent)
+        parent_res = None
+        if not editing:
+            if wakapost.parent:
+                parent_res = self.get_parent_post(wakapost.parent)
                 if not parent_res:
                     raise WakaError(strings.NOTHREADERR)
-                lasthit = parent_res.lasthit
+                wakapost.lasthit = parent_res.lasthit
             else:
-                lasthit = timestamp
+                wakapost.lasthit = timestamp
 
-        # kill the name if anonymous posting is being enforced
-        if self.options['FORCED_ANON']:
-            name = ''
-            trip = ''
-            if email.lower() == 'sage':
-                email = 'sage'
-            else:
-                email = ''
+        # split tripcode and name
+        wakapost.set_tripcode(self.options['TRIPKEY'])
 
-        # fix up the email/link, if it is not a generic URI already.
-        if email and not re.search("(?:^\w+:)|(?:\:\/\/)", email):
-            email = "mailto:" + email
-
-        # clean up the inputs
-        subject = str_format.clean_string(str_format.decode_string(subject))
-
-        # format comment
-        if not no_format:
-            comment = str_format.format_comment(str_format.clean_string(
-                str_format.decode_string(comment)))
-
-        # insert default values for empty fields
-        if not parent:
-            parent = 0
-
-        if not (name or trip):
-            name = self.make_anonymous(ip, timestamp)
-
-        subject = subject or self.options['S_ANOTITLE']
-        comment = comment or self.options['S_ANOTEXT']
+        # clean fields
+        wakapost.clean_fields(editing, admin_mode, self.options)
 
         # flood protection - must happen after inputs have been cleaned up
-        self.flood_check(numip, timestamp, comment, file, not bool(post_num),
-                         False)
-
-        # Manager and deletion stuff - duuuuuh?
+        self.flood_check(numip, timestamp, wakapost.comment,
+            wakapost.req_file, editing is None, False)
 
         # generate date
-        if not post_num:
-            date = misc.make_date(timestamp, self.options['DATE_STYLE'])
-        else:
-            if not ninja:
-                lastedit = misc.make_date(timestamp, self.options['DATE_STYLE'])
+        wakapost.set_date(editing, self.options['DATE_STYLE'])
 
         # generate ID code if enabled
         if self.options['DISPLAY_ID']:
-            date += ' ID:' + self.make_id_code(ip, timestamp, email)
-
+            wakapost.date += ' ID:' + \
+                self.make_id_code(ip, timestamp, wakapost.email)
 
         # copy file, do checksums, make thumbnail, etc
-        if file:
-            if filename or thumbnail:
-                self.delete_file(filename, thumbnail)
+        if wakapost.req_file:
+            if editing and (editing.filename or editing.thumbnail):
+                self.delete_file(editing.filename, editing.thumbnail)
 
-            filename, md5, width, height, thumbnail, tn_width, tn_height = \
-                self.process_file(file, timestamp, parent, bool(post_num))
+            # TODO: this process_file is just a thin wrapper around awful code
+            wakapost.process_file(self, editing is not None)
 
-            if oekaki_post and self.options['ENABLE_OEKAKI']:
-                # TODO: oekaki not supported
-                raise NotImplementedError()
-                # i don't know what the hell is this pch stuff
-                new_pch_filename = source_file = source_pch = ''
-
-                # Check to see, if it is a modification of a source,
-                # if the source has an animation file.
-                srcinfo_array = srcinfo.split(",")
-                if len(srcinfo_array) >= 3:
-                    source_file = srcinfo_array[2].lstrip("/")
-                    source_pch = oekaki.find_pch(source_file)
-
-                # If applicable, copy PCH file with the same filename base
-                # as the file we just copied.
-                if pch and (not source_file or os.path.exists(source_pch)):
-                    new_pch_filename = oekaki.copy_animation_file(pch, filename)
-                    # TODO create postfix from OEKAKI_INFO_TEMPLATE
-                    postfix = 'TODO'
-                    #my $postfix = OEKAKI_INFO_TEMPLATE->(decode_srcinfo($srcinfo,$uploadname,$new_pch_filename));
-                    comment += postfix
-
-        # Make sure sticky is a numeric 0. TODO: do we need this in python?
-        if not sticky:
-            sticky = 0
+            # TODO: here lies the ashes of oekaki
 
         # choose whether we need an SQL UPDATE (editing) or INSERT (posting)
         db_update_function = None
-        if post_num:
-            db_update_function = self.table.update
+        if editing:
+            db_update = self.table.update().where(
+                self.table.c.num == editing.num)
         else:
-            db_update_function = self.table.insert
+            db_update = self.table.insert()
 
-        # TODO: Make a keyword dictionary for this?...
-        db_update = db_update_function().values(parent=parent,
-            timestamp=timestamp, ip=post_ip, date=date,
-            name=name, trip=trip, email=email, subject=subject,
-            password=password, comment=comment, image=filename, size=size,
-            md5=md5, width=width, height=height, thumbnail=thumbnail,
-            tn_width=tn_width, tn_height=tn_height, admin_post=admin_post,
-            stickied=sticky, locked=lock, lastedit_ip=lastedit_ip,
-            lasthit=lasthit, lastedit=lastedit)
+        db_update = db_update.values(**wakapost.db_values)
 
         # finally, write to the database
-        result = None
-        if post_num:
-            # We have to be selective if editing.
-            result = session.execute(db_update\
-                                     .where(self.table.c.num == post_num))
-        else:
-            result = session.execute(db_update)
+        result = session.execute(db_update)
 
-        if not post_num:
-            if parent: # bumping
-                # check for sage, or too many replies
-                if not (email.lower() == "mailto:sage" or
-                        self.sage_count(parent_res) > self.options['MAX_RES']):
-                    t = self.table
-                    session.execute(t.update()
-                        .where(or_(t.c.num == parent, t.c.parent == parent))
-                        .values(lasthit=timestamp))
-            post_num = result.inserted_primary_key[0]
+        if not editing:
+            if wakapost.parent:
+                self.update_bump(wakapost, parent_res)
+
+            wakapost.num = result.inserted_primary_key[0]
 
         # remove old threads from the database
         self.trim_database()
@@ -760,73 +548,31 @@ class Board(object):
         self.build_cache()
 
         # update the individual thread cache
-        if parent:
-            self.build_thread_cache(parent)
-        else: # new thread, id is in num
-            if admin_post_mode:
-                # TODO add_log_entry not implemented
-                # add_log_entry(username, 'admin_post',
-                #    '%s,%s' % (self.name, post_num),
-                #    date, numip, 0, timestamp)
-                pass
-            if post_num == 1:
-                # If this is the first post on a board recently cleared
-                # of posts, the post count will reset; so should our
-                # reports, then.
-                report_table = model.report
-                sql = report_table.delete()\
-                    .where(report_table.c.board == self.name)
-                session.execute(sql)
+        self.build_thread_cache(wakapost.parent or wakapost.num)
 
-            self.build_thread_cache(post_num)
+        return wakapost.num
 
-        # set the name, email and password cookies
-        autopath = self.options['COOKIE_PATH']
-        if autopath == 'current':
-            path = self.url
-        elif autopath == 'parent':
-            path = local.environ['waka.rootpath']
-        else:
-            path = '/'
-
-        misc.make_cookies(name=c_name, email=c_email, password=c_password,
-                          path=path) # yum !
-
-        return post_num
-
-    def post_stuff(self, parent, name, email, subject, comment, file,
-                   password, nofile, captcha, no_captcha, no_format,
-                   oekaki_post, srcinfo, pch, sticky, lock,
-                   admin_post_mode, admin_task_data=None):
-    
-        post_num = self._handle_post(name, email, subject, comment,
-                                     file, password, nofile, captcha,
-                                     no_captcha, no_format, oekaki_post,
-                                     srcinfo, pch, sticky, lock,
-                                     admin_post_mode, parent=parent,
-                                     admin_task_data=admin_task_data)
+    def post_stuff(self, wakapost,
+                   admin_mode=None, admin_task_data=None):
 
         # For use with noko, below.
-        if not parent:
-            parent = post_num
+        parent = wakapost.parent or wakapost.num
+        noko = wakapost.noko
 
-        noko = False
-        # check subject field for 'noko' (legacy)
-        if subject.lower() == 'noko':
-            subject = ''
-            noko = True
-        # and the link field (proper)
-        elif email.lower() == 'noko':
-            noko = True
-            email = ''
+        try:
+            post_num = self._handle_post(wakapost, None,
+                admin_mode, admin_task_data)
+        except util.SpamError:
+            forward = self.make_path(page=0, url=True)
+            return util.make_http_forward(forward, config.ALTERNATE_REDIRECT)
 
         forward = ''
-        if not admin_post_mode:
+        if not admin_mode:
             if not noko:
                 # forward back to the main page
                 forward = self.make_path(page=0, url=True)
             else:
-                # ...unless we have "noko" (a la 4chan)--then forward to 
+                # ...unless we have "noko" (a la 4chan)--then forward to
                 # thread ("parent" contains current post number if a new
                 # thread was posted)
                 if not os.path.exists(self.make_path(thread=parent,
@@ -836,11 +582,13 @@ class Board(object):
                     forward = self.make_url(thread=parent, abbr=True)
         else:
             # forward back to the mod panel
-            if not noko:
-                forward = misc.make_script_url(task='mpanel', board=self.name)
-            else:
-                forward = misc.make_script_url(task='mpanel', board=self.name,
-                    page=parent)
+            kwargs = dict(task='mpanel', board=self.name
+                    )
+            if noko:
+                kwargs['page'] = parent
+
+            forward = misc.make_script_url(**kwargs)
+
             admin_task_data.contents.append('/%s/%d' % (self.name, post_num))
 
         return util.make_http_forward(forward, config.ALTERNATE_REDIRECT)
@@ -863,7 +611,7 @@ class Board(object):
         if not post_num.isdigit():
             raise WakaError('Please enter post number.') # TODO
 
-        if task == 'edit': 
+        if task == 'edit':
             return Template('password', admin_post=admin_post, num=post_num)
         else:
             return Template('delpassword', num=post_num)
@@ -904,6 +652,9 @@ class Board(object):
 
         sql = table.select().where(table.c.ip.op('&')(mask) == ip & mask)
         rows = session.execute(sql)
+
+        if not rows.rowcount:
+            return
 
         timestamp = None
         if config.POST_BACKUP:
@@ -949,8 +700,6 @@ class Board(object):
                     timestampofarchival=None, recur=False):
         '''Delete a single post from the board. This method does not rebuild
         index cache automatically.'''
-        thumb = self.options['THUMB_DIR']
-        src = self.options['IMG_DIR']
 
         table = self.table
 
@@ -963,14 +712,14 @@ class Board(object):
         if row is None:
             raise WakaError(strings.POSTNOTFOUND % (int(post), self.name))
 
-        if not admin: 
+        if not admin:
             archiving = False
 
-            if row.admin_post:
+            if int(row.admin_post):
                 raise WakaError(strings.MODDELETEONLY)
 
             if password != row.password:
-                raise WakaError(post + strings.BADDELPASS)
+                raise WakaError("Post #%s: %s" % (post, strings.BADDELPASS))
 
         if config.POST_BACKUP and not archiving:
             if not timestampofarchival:
@@ -1029,7 +778,7 @@ class Board(object):
                     = select([table.c.image, table.c.thumbnail],
                              or_(table.c.num == post, table.c.parent == post))
             images_to_baleet = session.execute(select_thread_images)
-            
+
             for i in images_to_baleet:
                 if i.image and i.thumbnail:
                     self.delete_file(i.image, i.thumbnail, archiving=archiving)
@@ -1289,7 +1038,7 @@ class Board(object):
             sql = select([self.table.c.ip], self.table.c.num == post,
                          self.table)
             post_row = session.execute(sql).fetchone()
-        
+
             if not post_row:
                 errors.append({'error' \
                     : '%s: Post not found (likely deleted).' % (post) })
@@ -1330,7 +1079,7 @@ class Board(object):
                         error_occurred=len(errors)>0,
                         referer=referer)
 
-    def edit_window(self, post_num, admin, password, admin_edit_mode=False):
+    def edit_window(self, post_num, admin, password, admin_mode=False):
 
         session = model.Session()
         table = self.table
@@ -1339,31 +1088,43 @@ class Board(object):
 
         if row is None:
             raise WakaError('Post not found') # TODO
-        
-        if admin_edit_mode:
+
+        if admin_mode:
             self.check_access(staff.check_password(admin))
         elif password != row['password']:
             raise WakaError('Wrong pass for editing') # TODO
 
         return Template('post_edit_template', loop=[row],
-                                              admin=admin_edit_mode)
+                                              admin=admin_mode)
 
-    def edit_stuff(self, post_num, name, email, subject, comment, file,
-                   password, nofile, captcha, no_captcha,
-                   no_format, oekaki_post, srcinfo, pch, sticky, lock,
-                   admin_edit_mode, killtrip, postfix, admin_task_data=None,
-                   ninja=False):
+    def edit_stuff(self, wakapost,
+                   admin_mode=None, admin_task_data=None):
 
-        self._handle_post(name, email, subject, comment, file,
-                          password, nofile, captcha, no_captcha,
-                          no_format, oekaki_post, srcinfo, pch, sticky, lock,
-                          admin_edit_mode, post_num=post_num,
-                          killtrip=killtrip, admin_task_data=admin_task_data,
-                          ninja=ninja)
+        session = model.Session()
 
-        if admin_edit_mode:
+        original_row = session.execute(
+            self.table.select(self.table.c.num == wakapost.num))\
+            .fetchone()
+
+        if original_row == None:
+            raise WakaError('Post not found')
+
+        if not admin_mode and wakapost.password != original_row['password']:
+            raise WakaError('Wrong password for editing')
+
+        original_post = WakaPost(original_row)
+
+        if wakapost.killtrip:
+            original_post.trip = ''
+
+        try:
+            self._handle_post(wakapost, editing=original_post)
+        except util.SpamError:
+            return Template('edit_successful')
+
+        if admin_mode:
             admin_task_data.contents\
-                           .append('/%s/%d' % (self.name, int(post_num)))
+                           .append('/%s/%d' % (self.name, int(wakapost.num)))
 
         return Template('edit_successful')
 
@@ -1563,10 +1324,11 @@ class Board(object):
         if filename.startswith("/") or re.match('\w+:', filename):
             return filename
 
-        self_path = self.url
-
         if force_http:
-            self_path = 'http://' + local.environ['SERVER_NAME'] + self_path
+            host_url = local.environ['werkzeug.request'].host_url.strip('/')
+            self_path = host_url + self.url
+        else:
+            self_path = self.url
 
         return os.path.join(self_path, str_format.percent_encode(filename))
 
@@ -1579,19 +1341,19 @@ class Board(object):
         raise NotImplementedError()
 
     def get_post(self, num):
-        '''Returns None or CompactPost'''
+        '''Returns None or WakaPost'''
         session = model.Session()
         sql = self.table.select(self.table.c.num == num)
         row = session.execute(sql).fetchone()
         if row:
-            return model.CompactPost(row)
+            return WakaPost(row)
 
     def get_parent_post(self, parentid):
         session = model.Session()
         sql = self.table.select(and_(self.table.c.num == parentid,
             self.table.c.parent == 0))
         query = session.execute(sql)
-        return model.CompactPost(query.fetchone())
+        return WakaPost(query.fetchone())
 
     def sage_count(self, parent):
         session = model.Session()
@@ -1754,6 +1516,61 @@ class Board(object):
             else:
                 session.execute(sql.values(type='white'))
 
+    def sticky_lock_check(self, wakapost, admin_mode):
+        '''Checks for sticky status (or locked) and updates the whole thread
+        if it's possible to post there. Raises exception on locked thread.
+        Modifies wakapost if needed.'''
+
+        sticky_check = model.Session().execute(
+            select([self.table.c.stickied, self.table.c.locked],
+                self.table.c.num == wakapost.parent)).fetchone()
+
+        if sticky_check is None:
+            raise WakaError('Thread not found.')
+
+        if sticky_check['stickied']:
+            wakapost.stickied = True
+        elif not admin_mode:
+            wakapost.stickied = False
+
+        if sticky_check['locked'] == 'yes':
+            if not admin_mode:
+                raise WakaError(strings.THREADLOCKEDERROR)
+            else:
+                wakapost.locked = True
+
+        return (wakapost.stickied, wakapost.locked)
+
+    def sticky_lock_update(self, parent, stickied, locked):
+        '''Update the whole thread to make it all sticky or locked'''
+
+        threadupdate = self.table.update().where(
+            or_(self.table.c.num == parent,
+                self.table.c.parent == parent))
+        do_thread_update = False
+
+        if stickied:
+            threadupdate = threadupdate.values(stickied=1)
+            do_thread_update = True
+
+        if locked:
+            threadupdate = threadupdate.values(locked='yes')
+            do_thread_update = True
+
+        if do_thread_update:
+            model.Session().execute(threadupdate)
+
+    def update_bump(self, wakapost, parent_res):
+        '''Bumping - check for sage, or too many replies'''
+
+        if (wakapost.email.lower() == "mailto:sage" or
+             self.sage_count(parent_res) > self.options['MAX_RES']):
+            return
+
+        model.Session().execute(self.table.update()
+            .where(or_(self.table.c.num == wakapost.parent,
+                       self.table.c.parent == wakapost.parent))
+            .values(lasthit=wakapost.timestamp))
 
 class NoBoard(object):
     '''Object that provides the minimal attributes to use a few templates

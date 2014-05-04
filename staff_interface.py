@@ -4,8 +4,7 @@ import time
 import os
 import re
 from datetime import datetime
-from sqlalchemy.sql import case, or_, and_, not_, exists, select, func, null
-from urllib import urlencode
+from sqlalchemy.sql import or_, and_, not_, exists, select, func
 
 import staff_tasks
 import interboard
@@ -55,7 +54,7 @@ def admin_only(f):
     def ret_func(*args, **kwargs):
         self = args[0]
         if self.user.account != staff.ADMIN:
-            raise WakaError(strings.INUSUFFICENTPRIVLEDGES)
+            raise WakaError(strings.INSUFFICIENTPRIVILEGES)
         f(*args, **kwargs)
 
     return ret_func
@@ -66,7 +65,7 @@ def global_only(f):
     def ret_func(*args, **kwargs):
         self = args[0]
         if self.user.account == staff.MODERATOR:
-            raise WakaError(strings.INUSUFFICENTPRIVLEDGES)
+            raise WakaError(strings.INSUFFICIENTPRIVILEGES)
         f(*args, **kwargs)
 
     return ret_func
@@ -209,8 +208,8 @@ class StaffInterface(Template):
                 row['action'] = last_action['action']
                 row['actiondate'] = last_action['date']
             else:
-                row['action'] = 'None'
-                row['actiondate'] = 'Never'
+                row['action'] = None
+                row['actiondate'] = None
 
         Template.__init__(self, 'staff_management', users=users)
 
@@ -414,7 +413,6 @@ class StaffInterface(Template):
         sortby_type = sortby
         sortby_dir = order
 
-        session = model.Session()
         table = model.report
         sql = table.select()
 
@@ -698,7 +696,7 @@ class StaffInterface(Template):
     @interface_for(SQL_PANEL)
     def make_sql_interface_panel(self, sql='', nuke=''):
         if self.user.account != staff.ADMIN:
-            raise WakaError(strings.INUSUFFICENTPRIVLEDGES)
+            raise WakaError(strings.INSUFFICIENTPRIVILEGES)
 
         results = []
 
@@ -775,7 +773,7 @@ def add_staff_proxy(admin, mpass, usertocreate, passtocreate, account, reign):
     user = staff.check_password(admin)
 
     if user.account != staff.ADMIN:
-        raise WakaError(strings.INUSUFFICENTPRIVLEDGES)
+        raise WakaError(strings.INSUFFICIENTPRIVILEGES)
 
     if account == staff.ADMIN and mpass != config.ADMIN_PASS:
         raise WakaError('Incorrect management password.')
@@ -790,7 +788,7 @@ def del_staff_proxy(admin, mpass, username):
     user = staff.check_password(admin)
 
     if user.account != staff.ADMIN:
-        raise WakaError(strings.INUSUFFICENTPRIVLEDGES)
+        raise WakaError(strings.INSUFFICIENTPRIVILEGES)
 
     user_to_kill = staff.StaffMember.get(username)
     if user_to_kill.account == staff.ADMIN and mpass != config.ADMIN_PASS:
@@ -818,7 +816,7 @@ def edit_staff_proxy(admin, mpass, username, newpassword=None, newclass=None,
         if edited_user.account == staff.ADMIN and mpass != config.ADMIN_PASS:
             raise WakaError('Incorrect management password.')
     else:
-        raise WakaError(strings.INUSUFFICENTPRIVLEDGES)
+        raise WakaError(strings.INSUFFICIENTPRIVILEGES)
 
     staff.edit_staff(username, clear_pass=newpassword, new_class=newclass,
                      reign=reign, disable=disable)
@@ -910,6 +908,9 @@ def do_first_time_setup(admin, username, password):
 
 
 def make_first_time_setup_page(admin):
+    if not hasattr(config, 'ADMIN_PASS'):
+        raise WakaError("ADMIN_PASS not set in config")
+
     if admin == config.ADMIN_PASS:
         admin = staff.crypt_pass(admin, local.environ['REMOTE_ADDR'])
         return Template('account_setup', admin=admin)

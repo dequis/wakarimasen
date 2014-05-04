@@ -1,15 +1,13 @@
 '''Staff management.'''
 
 import time
-from sqlalchemy.sql import case, or_, and_, select, func, null
+from sqlalchemy.sql import select, func
 
 import strings
 import model
 import misc
-import staff_interface
 import config, config_defaults
 from util import WakaError, local
-from template import Template
 
 # TODO: Synchronized cache of staff personnel objects.
 # _staff = {}

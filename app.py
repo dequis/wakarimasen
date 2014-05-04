@@ -1,13 +1,13 @@
 import model
 import staff_interface
-import urllib
 
 from template import Template
 from util import WakaError
 from staff_interface import StaffInterface
 from staff_tasks import StaffAction
-from board import Board, NoBoard
+from board import Board
 from misc import get_cookie_from_request, kwargs_from_params, make_cookies
+from wakapost import WakaPost
 
 def no_task(environ, start_response):
     board = environ['waka.board']
@@ -42,36 +42,29 @@ def task_post(environ, start_response):
     request = environ['werkzeug.request']
     board = environ['waka.board']
 
-    style_cookie = board.options.get('STYLE_COOKIE', 'wakastyle')
-    params = {'form':     ['parent', 'field1', 'email', 'subject', 'comment',
-                           'password', 'nofile', 'captcha', 'no_captcha',
-                           'no_format', 'sticky', 'lock', 'adminpost',
-                           'hcaptcha'],
-              'cookies':  ['wakaadmin', style_cookie],
-              'file':     ['file']}
-   
-    kwargs = kwargs_from_params(request, params)
- 
-    kwargs['name'] = kwargs.pop('field1')
-    kwargs['oekaki_post'] = kwargs['srcinfo'] = kwargs['pch'] = None
-    kwargs['admin_post_mode'] = kwargs.pop('adminpost')
-    if kwargs['no_format'] == '0':
-        kwargs['no_format'] = False
+    if request.method != 'POST':
+        raise WakaError("POST only accepted")
 
-    hcaptcha = kwargs.pop('hcaptcha', '').lower()
-    style_cookie_value = kwargs.pop(style_cookie, '')
-    is_nokosage = kwargs['email'].lower() in ['noko', 'sage']
+    admin = get_cookie_from_request(request, 'wakaadmin')
 
-    if kwargs['admin_post_mode']:
-        kwargs['action'] = 'admin_post'
-        kwargs['board'] = board
-        return StaffAction(**kwargs).execute()
-    
+    wakapost = WakaPost.from_request(request)
+
+    if wakapost.admin_post:
+        return StaffAction(admin, 'admin_post', wakapost=wakapost,
+            board=board).execute()
+
+
     # not admin, so let's check for hcaptcha
+
+    style_cookie = get_cookie_from_request(request,
+        board.options.get('STYLE_COOKIE', 'wakastyle'))
+    hcaptcha = request.values.get('hcaptcha', '').lower()
+    is_nokosage = wakapost.email.lower() in ['noko', 'sage']
+
     import config
     if (config.HCAPTCHA and
         hcaptcha != config.HCAPTCHA_ANSWER and
-        not (config.HCAPTCHA_COOKIE_BYPASS and style_cookie_value != '') and
+        not (config.HCAPTCHA_COOKIE_BYPASS and style_cookie != '') and
         not (config.HCAPTCHA_NOKOSAGE_BYPASS and is_nokosage)):
 
         return Template('hcaptcha_failed',
@@ -79,8 +72,7 @@ def task_post(environ, start_response):
             answer=config.HCAPTCHA_ANSWER,
         )
 
-    del kwargs['admin']
-    return board.post_stuff(**kwargs)
+    return board.post_stuff(wakapost)
 
 # Post Deletion
 def task_delpostwindow(environ, start_response):
@@ -123,17 +115,6 @@ def task_delete(environ, start_response, archiving=False):
 
     del kwargs['admin']
     return board.delete_stuff(**kwargs)
-
-def task_deleteall_confirm(environ, start_response):
-    request = environ['werkzeug.request']
-
-    params = {'form':    ['ip', 'mask', 'global'],
-              'cookies': ['wakaadmin']}
-
-    kwargs = kwargs_from_params(request, params)
-    kwargs['dest'] = staff_interface.DELETE_ALL_CONFIRM
-
-    return StaffInterface(**kwargs)
 
 def task_deleteall(environ, start_response):
     request = environ['werkzeug.request']
@@ -180,7 +161,7 @@ def task_editpostwindow(environ, start_response):
               'cookies': ['wakaadmin']}
 
     kwargs = kwargs_from_params(request, params)
-    kwargs['admin_edit_mode'] = kwargs.pop('admineditmode')
+    kwargs['admin_mode'] = kwargs.pop('admineditmode')
     kwargs['post_num'] = kwargs.pop('num')
 
     return board.edit_window(**kwargs)
@@ -189,25 +170,19 @@ def task_editpost(environ, start_response):
     request = environ['werkzeug.request']
     board = environ['waka.board']
 
-    params = {'form': ['num', 'field1', 'email', 'subject', 'comment',
-                       'password', 'nofile', 'captcha', 'no_captcha',
-                       'no_format', 'sticky', 'lock', 'adminedit', 'killtrip',
-                       'postfix', 'ninja'],
-              'cookies': ['wakaadmin'],
-              'file':    ['file']}
+    if request.method != 'POST':
+        raise WakaError("POST only accepted")
 
-    kwargs = kwargs_from_params(request, params)
-    kwargs['name'] = kwargs.pop('field1')
-    kwargs['post_num'] = kwargs.pop('num')
-    kwargs['admin_edit_mode'] = kwargs.pop('adminedit')
-    kwargs['oekaki_post'] = kwargs['srcinfo'] = kwargs['pch'] = None
-    if kwargs['admin_edit_mode']:
-        kwargs['board'] = board
-        kwargs['action'] = 'admin_edit'
-        return StaffAction(**kwargs).execute()
+    admin = get_cookie_from_request(request, 'wakaadmin')
 
-    del kwargs['admin']
-    return board.edit_stuff(**kwargs)
+    wakapost = WakaPost.from_request(request)
+
+    if wakapost.admin_post:
+        return StaffAction(admin, 'admin_edit', wakapost=wakapost,
+            board=board).execute()
+    else:
+        return board.edit_stuff(wakapost)
+
 
 def task_report(environ, start_response):
     request = environ['werkzeug.request']
@@ -370,9 +345,12 @@ task_edituserwindow = si_task_factory('EDIT_STAFF_CONFIRM', 'username')
 task_searchposts = si_task_factory('POST_SEARCH_PANEL',
     'search', 'caller', 'text')
 
+task_deleteall_confirm = si_task_factory('DELETE_ALL_CONFIRM',
+    'ip', 'mask', 'global')
+
 def task_addip(environ, start_response):
     request = environ['werkzeug.request']
-    
+
     params = {'form':    ['type', 'comment', 'ip', 'mask', 'total',
                           'expiration'],
               'cookies': ['wakaadmin']}
@@ -557,36 +535,36 @@ def task_stafflog(environ, start_response):
 
 # Error-handling
 
-def fffffff(environ, start_response, error):
-    if error.plain:
-        start_response('200 OK', [('Content-Type', 'text/plain')])
-        return str(error.message)
+def error(environ, start_response, error=None):
 
-    start_response('200 OK', [('Content-Type', 'text/html')])
+    message = error.message if error else 'Unhandled exception'
 
-    mini = '_mini' if environ['waka.fromwindow'] else ''
-    return Template('error_template' + mini, error=error.message)
+    if not (error and error.plain):
+        mini = '_mini' if environ['waka.fromwindow'] else ''
+        try:
+            return Template('error_template' + mini, error=message)
+        except:
+            # if for some reason we can't render templates,
+            # fallback to text/plain error reporting
+            pass
 
-MAIN_SITE_URL = 'http://www.desuchan.net'
-def not_found(environ, start_response):
-    '''Not found handler that redirects to desuchan
-    Meant for the development server'''
-
-    start_response('302 Found',
-        [('Location', MAIN_SITE_URL + environ['PATH_INFO'])])
-    return []
+    environ['waka.headers']['Content-Type'] = 'text/plain'
+    return [str(message)]
 
 # Initial setup
 
 def check_setup(environ, start_response):
     import os, config
-    from template import TEMPLATES_DIR
+    import interboard
+    from template import TEMPLATES_DIR, CACHE_DIR
 
     issues = []
 
-    if ('DOCUMENT_ROOT' not in environ or 'SCRIPT_NAME' not in environ or
-        'SERVER_NAME' not in environ):
-        return ["CGI environment not complete\n"]
+    ENV_CHECKS = ['DOCUMENT_ROOT', 'SCRIPT_NAME', 'SERVER_NAME']
+    MISSING_ENV = [x for x in ENV_CHECKS if x not in environ]
+    if MISSING_ENV:
+        return ['Environment not complete. Missing: %s\n' %
+                ', '.join(MISSING_ENV)]
 
     full_board_dir = os.path.join(environ['DOCUMENT_ROOT'], config.BOARD_DIR)
     if not os.access(full_board_dir, os.W_OK):
@@ -608,6 +586,17 @@ def check_setup(environ, start_response):
     templates_dir = os.path.abspath(TEMPLATES_DIR)
     if not os.access(templates_dir, os.W_OK):
         issues.append("No write access to templates dir (%s)" % templates_dir)
+
+    cache_dir = os.path.abspath(CACHE_DIR)
+    if not os.access(cache_dir, os.W_OK):
+        issues.append("No write access to templates cache dir (%s)" % cache_dir)
+
+    try:
+        model.metadata.create_all(model.engine)
+        interboard.remove_old_bans()
+        interboard.remove_old_backups()
+    except model.OperationalError, e:
+        issues.append("Error writing to database: %s" % e.args[0])
 
     if issues:
         return ["<p>Setup issues found:</p> <ul>"] + \

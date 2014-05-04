@@ -7,6 +7,7 @@ import Cookie
 import threading
 import mimetypes
 import functools
+import strings
 
 class DefaultLocal(threading.local):
     environ = {}
@@ -26,6 +27,12 @@ class WakaError(Exception):
 
     def __str__(self):
         return self.message
+
+class SpamError(WakaError):
+    '''Specialized spam-catch error for potential catching.'''
+    def __init__(self, message=None, fromwindow=False):
+        message = message or strings.SPAM
+        super(SpamError, self).__init__(message, fromwindow)
 
 def wrap_static(application, *app_paths, **kwds):
     '''Application used in the development server to serve static files
@@ -222,3 +229,12 @@ class FileLock(object):
             lying around.
         """
         self.release()
+
+def proxy_environ():
+    """Returns a cleaned up version of the environment for proxied calls"""
+
+    environ = {}
+    for key, value in local.environ.iteritems():
+        if isinstance(value, basestring):
+            environ[key] = value
+    return environ

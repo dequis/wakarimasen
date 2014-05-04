@@ -1,40 +1,24 @@
 import config, config_defaults
 from sqlalchemy import create_engine
-from sqlalchemy import Table, Column, Integer, Text, String, MetaData, Boolean
-from sqlalchemy.orm import sessionmaker, mapper, scoped_session
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.sql import func
+from sqlalchemy import Table, Column, Integer, Text, String, MetaData
+from sqlalchemy.orm import sessionmaker, scoped_session
 from sqlalchemy.exc import OperationalError
+from sqlalchemy.sql import func
 
-engine = create_engine(config.SQL_ENGINE, pool_size=100, max_overflow=10)
+pool_opts = {}
+
+if config.SQL_POOLING:
+    pool_opts = {
+        'pool_size': config.SQL_POOL_SIZE,
+        'max_overflow': config.SQL_POOL_MAX_OVERFLOW,
+    }
+
+engine = create_engine(config.SQL_ENGINE, **pool_opts)
+
 Session = scoped_session(sessionmaker(bind=engine))
 metadata = MetaData()
 
 _boards = {}
-
-class CompactPost(object):
-    '''A prematurely optimized post object'''
-
-    __slots__ = [
-        # columns copied directly from rowproxy
-        'num', 'parent', 'timestamp', 'lasthit', 'ip', 'date', 'name', 'trip',
-        'email', 'subject', 'password', 'comment', 'image', 'size', 'md5',
-        'width', 'height', 'thumbnail', 'tn_width', 'tn_height', 'lastedit',
-        'lastedit_ip', 'admin_post', 'stickied', 'locked',
-        # extensions
-        'abbrev',
-    ]
-
-    def __init__(self, rowproxy):
-        for key, value in rowproxy.items():
-            setattr(self, key, value)
-        self.abbrev = 0
-    
-    def __repr__(self):
-        parent = ''
-        if self.parent:
-            parent = ' in thread %s' % self.parent
-        return '<Post >>%s%s>' % (self.num, parent)
 
 def board(name):
     '''Generates board table objects'''

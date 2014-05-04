@@ -11,13 +11,13 @@
 			<th>Options</th>
 		</tr>
 	{% for user in users %}
-		<tr class="row{{ rowtype }}">
+		<tr class="row{{ user.rowtype }}">
 			<td><strong>{{ user.username }}</strong></td>
 			<td>{% if user.account == 'admin' %}Administrator{% endif %}
 			{% if user.account == 'mod' %}Moderator{% endif %}
 			{% if user.account == 'globmod' %}Global Moderator{% endif %}</td>
 			<td>{% if user.account != 'mod' %}<em>All</em>{% endif %}{% if user.account == 'mod' %}{{ user.reign }}{% endif %}</td>
-			<td>{% if action %}{{ (action)|get_action_name }} on {{ actiondate }} [<a href="{{ get_script_name() }}?task=stafflog&amp;board={{ board.name }}&amp;view=user&amp;usertoview={{ user.username }}">View All</a>]{% endif %}{% if not action %}<em>None</em>{% endif %}</td>
+			<td>{% if user.action %}{{ (user.action)|get_action_name }} on {{ user.actiondate }} [<a href="{{ get_script_name() }}?task=stafflog&amp;board={{ board.name }}&amp;view=user&amp;usertoview={{ user.username }}">View All</a>]{% endif %}{% if not user.action %}<em>None</em>{% endif %}</td>
 			<td>[<a href="{{ get_script_name() }}?task=edituserwindow&amp;board={{ board.name }}&amp;username={{ user.username }}">Edit</a>] [{% if user.disabled %}<a href="{{ get_script_name() }}?task=enableuserwindow&amp;board={{ board.name }}&amp;username={{ user.username }}">Enable</a>{% endif %}{% if not user.disabled %}<a href="{{ get_script_name() }}?task=disableuserwindow&amp;board={{ board.name }}&amp;username={{ user.username }}">Disable</a>{% endif %}] [<a href="{{ get_script_name() }}?task=deleteuserwindow&amp;board={{ board.name }}&amp;username={{ user.username }}">Remove</a>]</td>
 		</tr>
 	{% endfor %}
