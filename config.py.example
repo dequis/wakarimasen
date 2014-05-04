@@ -1,4 +1,3 @@
-
 # Wakarimasen configuration
 ADMIN_PASS = 'desu'			# Admin password. For fucks's sake, change this.
 SECRET = 'desu'				# Cryptographic secret. CHANGE THIS to something totally random, and long.
@@ -14,36 +13,75 @@ SQL_ENGINE = 'mysql:///username:password@localhost/database'
 #SQL_ADMIN_TABLE = 'admin'		# Table used for admin information
 #SQL_PROXY_TABLE = 'proxy'		# Table used for proxy information
 #DATE_STYLE = 'futaba'			# Date style ('futaba', '2ch', 'localtime', 'tiny')
-#ERRORLOG = ''				# Writes out all errors seen by user, mainly useful for debugging
+ERRORLOG = 'stderr'			# Writes out all errors seen by user, mainly useful for debugging
 #CONVERT_COMMAND = 'convert'		# location of the ImageMagick convert command (usually just 'convert', but sometime a full path is needed)
 #ALTERNATE_REDIRECT = 0			# Use alternate redirect method. (Javascript/meta-refresh instead of HTTP forwards. Needed to run on certain servers, like IIS.)
-#USE_SECURE_ADMIN = 1			# Use HTTPS for admin logins.
-#USE_TEMPFILES = 1			# Set this to 1 under Unix and 0 under Windows! (Use tempfiles when creating pages)
-#PAGE_EXT = '.html'			# File extension for all board pages.
-#CHARSET = 'utf-8'
+USE_SECURE_ADMIN = 1			# Use HTTPS for admin logins.
+USE_TEMPFILES = 1			# Set this to 1 under Unix and 0 under Windows! (Use tempfiles when creating pages)
+PAGE_EXT = '.html'			# File extension for all board pages.
+CHARSET = 'utf-8'	
 #CONVERT_CHARSETS = 1			# Do character set conversions internally
 #SPAM_FILES = 'spam.txt'
-#USE_XHTML = 1
-#HOME = './'
-#HTACCESS_PATH = './'
-#PASSFAIL_THRESHOLD = 5			# Number of times a user may fail a password prompt prior to banning.
-#PASSFAIL_ROLLBACK = 1*24*3600		# How long a failed password prompt is held against a host.
-#PASSPROMPT_EXPIRE_TO_FAILURE = 300	# How long password prompts last before timing out and counting against the user.
-#MAX_FCGI_LOOPS = 250
-#TIME_OFFSET = 0				# Time offset in seconds, for display on board pages. You can use this to adjust board time to your local time!
-							# Positive value adjusts forward; negative value adjusts backward.
+USE_XHTML = 0
+HOME = './'
+HTACCESS_PATH = './'
+PASSFAIL_THRESHOLD = 5			# Number of times a user may fail a password prompt prior to banning.
+PASSFAIL_ROLLBACK = 3600*24*1		# How long a failed password prompt is held against a host. (3600*24*14 = 1 day)
+PASSPROMPT_EXPIRE_TO_FAILURE = 30	# How long password prompts last before timing out and counting against the user.
+MAX_FCGI_LOOPS = 25
+TIME_OFFSET = 0				# Time offset in seconds, for display on board pages. You can use this to adjust board time to your local time!
+					# Positive value adjusts forward; negative value adjusts backward.
 #SQL_REPORT_TABLE = 'user_report'
-#STAFF_LOG_RETENTION = 30*24*3600	# How long should staff log entries be retained? (Seconds)
-#REPORT_RETENTION = 30*24*3600		# How long should report entries be retained? (Seconds)
-#POST_BACKUP = 1				# 1: Back up posts that are deleted or edited. 0: Do not back up.
-#POST_BACKUP_EXPIRE = 3600*24*14		# How long should backups last prior to purging?
-#REPLIES_PER_STICKY = 1			# Number of replies per stickied thread.
-#ENABLE_ABBREVIATED_THREAD_PAGES = 1	# Want to enable "Last xx Posts?" Then set this to 1.
-#POSTS_IN_ABBREVIATED_THREAD_PAGES = 50	# Number of posts to show in abbreviated reply views.
-#ENABLE_RSS = 1				# Do RSS feeds.
-#RSS_LENGTH = 10				# Number of items in each feed.
-#RSS_WEBMASTER = "dark.master.schmidt@gmail.com (Dark^Master^Schmidt)"
-							# Webmaster email address and name. Example format should be preserved for RSS spec.
-#BOARD_DIR = ''                         # Root of board cache relative to document root.
-#SERVER_NAME = 'desuchan.net'           # What's the name of this server?
-#DEBUG = False                          # Debug mode
+STAFF_LOG_RETENTION = 3600*24*365	# How long should staff log entries be retained? (Seconds; 3600*24*365 = 1 year)
+REPORT_RETENTION = 3600*24*30		# How long should report entries be retained? (Seconds; 3600*24*30 = 30 days)
+BACKUP_POST = 1				# 1: Back up posts that are deleted or edited. 0: Do not back up.
+POST_BACKUP = 1
+POST_BACKUP_EXPIRE = 3600*24*14		# How long should backups last prior to purging? (Seconds; 3600*24*14 = 14 days)
+POST_BACKUP_LIMIT = 200			# limit of the number of backups on file
+REPLIES_PER_STICKY = 2			# Number of replies per stickied thread.
+ENABLE_ABBREVIATED_THREAD_PAGES = 1	# Want to enable "Last xx Posts?" Then set this to 1.
+POSTS_IN_ABBREVIATED_THREAD_PAGES = 50	# Number of posts to show in abbreviated reply views.
+ENABLE_RSS = 1				# Do RSS feeds.
+RSS_LENGTH = 10				# Number of items in each feed.
+RSS_WEBMASTER = "this.is.fake&#64;gmail.com (nou)"	# Webmaster email address and name. Example format should be preserved for RSS spec.
+BOARD_DIR = ""
+SERVER_NAME = "desuchan.net"
+DEBUG = False
+HCAPTCHA = True
+HCAPTCHA_QUESTION = '<Some meme from your board>'
+HCAPTCHA_ANSWER = '<top secret meme>'
+ICONS = { \
+	# Audio files
+	'mp3':	'/include/boards/icons/audio-mp3.png',
+	'ogg':	'/include/boards/icons/audio-ogg.png',
+	'aac':	'/include/boards/icons/audio-aac.png',
+	'm4a':	'/include/boards/icons/audio-aac.png',
+	'midi':	'/include/boards/icons/audio-ogg.png',
+	'mpc':	'/include/boards/icons/audio-mpc.png',
+	'mpp':	'/include/boards/icons/audio-mpp.png',
+	'mod':	'/include/boards/icons/audio-mod.png',
+	'it':	'/include/boards/icons/audio-it.png',
+	'xm':	'/include/boards/icons/audio-xm.png',
+	'fla':	'/include/boards/icons/audio-flac.png',
+	'flac':	'/include/boards/icons/audio-flac.png',
+	'sid':	'/include/boards/icons/audio-sid.png',
+	'mo3':	'/include/boards/icons/audio-mo3.png',
+	'spc':	'/include/boards/icons/audio-spc.png',
+	'nsf':	'/include/boards/icons/audio-nsf.png',
+	# Video files
+	'avi':	'/include/boards/icons/video-avi.png',
+	'ogm':	'/include/boards/icons/video-ogm.png',
+	'mkv':	'/include/boards/icons/video-mkv.png',
+	# Archive files
+	'zip':	'/include/boards/icons/archive-zip.png',
+	'rar':	'/include/boards/icons/archive-rar.png',
+	'lzh':	'/include/boards/icons/archive-lzh.png',
+	'lha':	'/include/boards/icons/archive-lzh.png',
+	'gz':	'/include/boards/icons/archive-gz.png',
+	'bz2':	'/include/boards/icons/archive-bz2.png',
+	'7z':	'/include/boards/icons/archive-7z.png',
+	# Other files
+	'swf':	'/include/boards/icons/flash.png',
+	'torrent':	'/include/boards/icons/torrent.png'
+}
+
