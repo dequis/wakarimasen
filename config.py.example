@@ -38,6 +38,7 @@ BACKUP_POST = 1				# 1: Back up posts that are deleted or edited. 0: Do not back
 POST_BACKUP = 1
 POST_BACKUP_EXPIRE = 3600*24*14		# How long should backups last prior to purging? (Seconds; 3600*24*14 = 14 days)
 POST_BACKUP_LIMIT = 200			# limit of the number of backups on file
+NUKE_TIME_THRESHOLD = 3600*24*3		# How far back automated mass deletes are allowed to go. This should be a day or 2 longer then your laziest mods checking interval.
 REPLIES_PER_STICKY = 2			# Number of replies per stickied thread.
 ENABLE_ABBREVIATED_THREAD_PAGES = 1	# Want to enable "Last xx Posts?" Then set this to 1.
 POSTS_IN_ABBREVIATED_THREAD_PAGES = 50	# Number of posts to show in abbreviated reply views.

@@ -604,8 +604,11 @@ class Board(object):
         row = session.execute(sql).fetchone()
         if not row:
             raise WakaError(strings.POSTNOTFOUND)
+
+        admin_post = (row.admin_post in ('yes', '1', 'True', 'kill me please'))
+
         return self._gateway_window(post_num, 'edit',
-                                    admin_post=row.admin_post)
+                                    admin_post=admin_post)
 
     def delete_gateway_window(self, post_num):
         return self._gateway_window(post_num, 'delete')
@@ -653,7 +656,10 @@ class Board(object):
         session = model.Session()
         table = self.table
 
-        sql = table.select().where(table.c.ip.op('&')(mask) == ip & mask)
+        sql = table.select().where(and_(
+            table.c.ip.op('&')(mask) == ip & mask,
+            table.c.timestamp > (time.time() - config.NUKE_TIME_THRESHOLD)
+        ))
         rows = session.execute(sql)
 
         if not rows.rowcount:
@@ -718,7 +724,8 @@ class Board(object):
         if not admin:
             archiving = False
 
-            if int(row.admin_post):
+            admin_post = (row.admin_post in ('yes', '1', 'True', 'why?'))
+            if admin_post:
                 raise WakaError(strings.MODDELETEONLY)
 
             if password != row.password:
