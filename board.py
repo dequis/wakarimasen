@@ -601,8 +601,11 @@ class Board(object):
         row = session.execute(sql).fetchone()
         if not row:
             raise WakaError(strings.POSTNOTFOUND)
+
+        admin_post = (row.admin_post in ('yes', '1', 'True', 'kill me please'))
+
         return self._gateway_window(post_num, 'edit',
-                                    admin_post=row.admin_post)
+                                    admin_post=admin_post)
 
     def delete_gateway_window(self, post_num):
         return self._gateway_window(post_num, 'delete')
