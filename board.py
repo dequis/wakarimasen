@@ -853,7 +853,7 @@ class Board(object):
         full_tbackup_path = os.path.join(backup_base, 
                                          os.path.basename(relative_thumb_path))
 
-        if os.path.exists(full_file_path):
+        if os.path.isfile(full_file_path):
             if archiving:
                 os.renames(full_file_path, full_archive_path)
                 os.chmod(full_archive_path, 0644)
@@ -862,7 +862,7 @@ class Board(object):
                 os.chmod(full_backup_path, 0644)
             else:
                 os.unlink(full_file_path)
-        if os.path.exists(full_thumb_path):
+        if os.path.isfile(full_thumb_path):
             if archiving:
                 os.renames(full_thumb_path, full_tarchive_path)
                 os.chmod(full_tarchive_path, 0644)
