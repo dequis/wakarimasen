@@ -721,7 +721,8 @@ class Board(object):
         if not admin:
             archiving = False
 
-            if int(row.admin_post):
+            admin_post = (row.admin_post in ('yes', '1', 'True', 'why?'))
+            if admin_post:
                 raise WakaError(strings.MODDELETEONLY)
 
             if password != row.password:
