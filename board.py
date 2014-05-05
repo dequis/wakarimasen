@@ -653,7 +653,10 @@ class Board(object):
         session = model.Session()
         table = self.table
 
-        sql = table.select().where(table.c.ip.op('&')(mask) == ip & mask)
+        sql = table.select().where(and_(
+            table.c.ip.op('&')(mask) == ip & mask,
+            table.c.timestamp > (time.time() - config.NUKE_TIME_THRESHOLD)
+        ))
         rows = session.execute(sql)
 
         if not rows.rowcount:

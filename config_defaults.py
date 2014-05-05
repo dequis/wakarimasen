@@ -72,6 +72,8 @@ HCAPTCHA_ANSWER = 'desu'
 HCAPTCHA_COOKIE_BYPASS = True
 HCAPTCHA_NOKOSAGE_BYPASS = True
 
+NUKE_TIME_THRESHOLD = 30*24*3600
+
 # add default values to config.py
 import util as _util
 _util.module_default('config', locals())
