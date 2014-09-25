@@ -27,11 +27,11 @@
 	<span class="reflink">No.{{ post.num }}</span>&nbsp;
 	<span><em>{% if post.parent %}<a href="{{ get_script_name() }}?task=mpanel&amp;board={{ board.name }}&amp;page=t{{ post.parent }}#{{ post.num }}">Response to Thread No.{{ post.parent }}</a>{% endif %}{% if not post.parent %}<a href="{{ get_script_name() }}?task=mpanel&amp;board={{ board.name }}&amp;page=t{{ post.num }}">Thread Opener</a>{% endif %}</em></span>&nbsp;
 	<span class="deletelink" id="deletelink{{ post.num }}">
-		[<a href="#" target="_blank" onclick="passfield('{{ post.num }}',true); return false">Delete</a>
+		[<a href="{{ get_script_name() }}?task=delpostwindow&amp;num={{ post.num }}&amp;board={{ board.name }}" target="_blank" onclick="passfield('{{ post.num }}',true); return false">Delete</a>
 		<span id="delpostcontent{{ post.num }}" style="display:inline"></span>
 	</span> 
 	<a href="{{ get_script_name() }}?task=banpopup&amp;board={{ board.name }}&amp;ip={{ (post.ip)|dec_to_dot }}&amp;delete={{ post.num }}" onclick="popUpPost('{{ get_script_name() }}?task=banpopup&amp;board={{ board.name }}&amp;ip={{ (post.ip)|dec_to_dot }}&amp;delete={{ post.num }}');return false">&amp;</a> 
-	<a href="{{ get_script_name() }}?task=bans&amp;board={{ board.name }}&amp;ip={{ post.ip }}">{{ strings.MPBAN }}</a>]&nbsp;
+	<a href="{{ get_script_name() }}?task=banpopup&amp;board={{ board.name }}&amp;ip={{ (post.ip)|dec_to_dot }}">{{ strings.MPBAN }}</a>]&nbsp;
 	[<a href="{{ get_script_name() }}?task=editpostwindow&amp;board={{ board.name }}&amp;num={{ post.num }}&amp;admineditmode=1" target="_blank" onclick="popUpPost('{{ get_script_name() }}?task=editpostwindow&amp;board={{ board.name }}&amp;num={{ post.num }}&amp;admineditmode=1'); return false">Edit</a>]
 	{% if post.image %}
 		<br />

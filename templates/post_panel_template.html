@@ -189,7 +189,7 @@
 			{% if thread %}<span><a href="#{{ post.num }}">No.</a><a href="javascript:insert('&gt;&gt;{{ post.num }}')">{{ post.num }}</a></span>{% endif %}
 			</span>&nbsp;
 			<span class="deletelink" id="deletelink{{ post.num }}">
-				[<a href="{{ get_script_name() }}?task=delpostwindow&amp;num={{ post.num }}" target="_blank" onclick="passfield('{{ post.num }}',true); return false">Delete</a>
+				[<a href="{{ get_script_name() }}?task=delpostwindow&amp;num={{ post.num }}&amp;board={{ board.name }}" target="_blank" onclick="passfield('{{ post.num }}',true); return false">Delete</a>
 				<span id="delpostcontent{{ post.num }}" style="display:inline"></span>
 			</span> 
 			<a href="{{ get_script_name() }}?task=banpopup&amp;board={{ board.name }}&amp;ip={{ (post.ip)|dec_to_dot }}&amp;delete={{ post.num }}" onclick="popUpPost('{{ get_script_name() }}?task=banpopup&amp;board={{ board.name }}&amp;ip={{ (post.ip)|dec_to_dot }}&amp;delete={{ post.num }}');return false">&amp;</a> 
