@@ -430,8 +430,7 @@ class Board(object):
         for row in query:
             self.build_thread_cache(row[0])
 
-    def _handle_post(self, wakapost, editing=None,
-                     admin_mode=False, admin_data=None):
+    def _handle_post(self, wakapost, editing=None, admin_data=None):
         """Worst function ever"""
 
         session = model.Session()
@@ -439,16 +438,16 @@ class Board(object):
         # get a timestamp for future use
         timestamp = wakapost.timestamp = time.time()
 
-        if admin_mode:
+        if admin_data:
             admin_data.user.check_access(self.name)
             wakapost.admin_post = True
 
         # run several post validations - raises exceptions
-        wakapost.validate(editing, admin_mode, self.options)
+        wakapost.validate(editing, admin_data, self.options)
 
         # check whether the parent thread is stickied
         if wakapost.parent:
-            self.sticky_lock_check(wakapost, admin_mode)
+            self.sticky_lock_check(wakapost, admin_data)
             self.sticky_lock_update(wakapost.parent, wakapost.stickied,
                 wakapost.locked)
 
@@ -463,7 +462,7 @@ class Board(object):
         # check if IP is whitelisted
         whitelisted = misc.is_whitelisted(numip)
 
-        if not whitelisted and not admin_mode:
+        if not whitelisted and not admin_data:
             # check for bans
             interboard.ban_check(numip, wakapost.name,
                 wakapost.subject, wakapost.comment)
@@ -494,7 +493,7 @@ class Board(object):
         wakapost.set_tripcode(self.options['TRIPKEY'])
 
         # clean fields
-        wakapost.clean_fields(editing, admin_mode, self.options)
+        wakapost.clean_fields(editing, admin_data, self.options)
 
         # flood protection - must happen after inputs have been cleaned up
         self.flood_check(numip, timestamp, wakapost.comment,
@@ -545,22 +544,20 @@ class Board(object):
 
         return wakapost.num
 
-    def post_stuff(self, wakapost,
-                   admin_mode=None, admin_data=None):
+    def post_stuff(self, wakapost, admin_data=None):
 
         # For use with noko, below.
         parent = wakapost.parent or wakapost.num
         noko = wakapost.noko
 
         try:
-            post_num = self._handle_post(wakapost, None,
-                admin_mode, admin_data)
+            post_num = self._handle_post(wakapost, admin_data=admin_data)
         except util.SpamError:
             forward = self.make_path(page=0, url=True)
             return util.make_http_forward(forward, config.ALTERNATE_REDIRECT)
 
         forward = ''
-        if not admin_mode:
+        if not admin_data:
             if not noko:
                 # forward back to the main page
                 forward = self.make_path(page=0, url=True)
@@ -1084,8 +1081,7 @@ class Board(object):
         return Template('post_edit_template', loop=[wakapost],
                                               admin=admin_mode)
 
-    def edit_stuff(self, wakapost,
-                   admin_mode=None, admin_data=None):
+    def edit_stuff(self, wakapost, admin_data=None):
 
         session = model.Session()
 
@@ -1096,7 +1092,7 @@ class Board(object):
         if original_row == None:
             raise WakaError('Post not found')
 
-        if not admin_mode and wakapost.password != original_row['password']:
+        if not admin_data and wakapost.password != original_row['password']:
             raise WakaError('Wrong password for editing')
 
         original_post = WakaPost(original_row)
@@ -1105,11 +1101,11 @@ class Board(object):
             original_post.trip = ''
 
         try:
-            self._handle_post(wakapost, editing=original_post)
+            self._handle_post(wakapost, original_post, admin_data)
         except util.SpamError:
             return Template('edit_successful')
 
-        if admin_mode:
+        if admin_data:
             admin_data.contents\
                            .append('/%s/%d' % (self.name, int(wakapost.num)))
 
