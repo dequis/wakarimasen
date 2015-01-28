@@ -8,7 +8,6 @@ from subprocess import Popen, PIPE
 
 import misc
 import str_format
-import oekaki
 import util
 import model
 import staff
@@ -51,7 +50,7 @@ class Board(object):
             self.options.update(module.config)
         else:
             self.options = module.config
-        
+
         self.table = model.board(self.options['SQL_TABLE'])
 
         # TODO likely will still need customization
@@ -91,7 +90,7 @@ class Board(object):
             hash = '#%s' % hash
         else:
             hash = ''
-        
+
         if file:
             if abbr:
                 file += '_abbr'
@@ -172,7 +171,7 @@ class Board(object):
 
     def build_cache(self):
         threads = self._get_all_threads()
-        
+
         per_page = self.options['IMAGES_PER_PAGE']
         total = get_page_count(threads, per_page)
 
@@ -236,7 +235,7 @@ class Board(object):
                     thread['omitimages'] += 1
 
             thread['posts'] = [parent] + replies
-            
+
             for post in thread['posts']:
                 abbreviation = abbreviate_html(post.comment,
                     self.options['MAX_LINES_SHOWN'],
@@ -247,7 +246,7 @@ class Board(object):
                     post.comment = abbreviation
 
             threads.append(thread)
-       
+
         return threads
 
     def get_board_page_data(self, page, total, admin_page=''):
@@ -417,7 +416,7 @@ class Board(object):
                             line)
 
                         res_out.write(line)
-                
+
         if os.path.exists(full_thread_page):
             os.unlink(full_thread_page)
         if os.path.exists(abbrev_thread_page):
@@ -427,7 +426,7 @@ class Board(object):
         session = model.Session()
         sql = select([self.table.c.num], self.table.c.parent == 0)
         query = session.execute(sql)
-        
+
         for row in query:
             self.build_thread_cache(row[0])
 
@@ -517,10 +516,7 @@ class Board(object):
             # TODO: this process_file is just a thin wrapper around awful code
             wakapost.process_file(self, editing is not None)
 
-            # TODO: here lies the ashes of oekaki
-
         # choose whether we need an SQL UPDATE (editing) or INSERT (posting)
-        db_update_function = None
         if editing:
             db_update = self.table.update().where(
                 self.table.c.num == editing.num)
@@ -811,7 +807,6 @@ class Board(object):
 
     def delete_file(self, relative_file_path, relative_thumb_path,
                     archiving=False):
-        # pch = oekaki.find_pch(row.image)
         full_file_path = os.path.join(self.path, relative_file_path)
         full_thumb_path = os.path.join(self.path, relative_thumb_path)
         archive_base = os.path.join(self.path,
@@ -1267,7 +1262,7 @@ class Board(object):
             # cut off any directory in the original filename
             newfilename = self.make_path(filestorage.filename.split("/")[-1],
                                          dirc='IMG_DIR', ext=None)
-                              
+
 
             # verify no name clash
             if not os.path.exists(newfilename):

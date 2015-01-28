@@ -321,7 +321,7 @@ def ban_check(numip, name, subject, comment):
     if ip_row:
         raise WakaError('Address %s banned. Reason: %s' % \
             (misc.dec_to_dot(numip), ip_row.comment))
-    
+
     # To determine possible string bans, first normalize input to lowercase.
     comment = comment.lower()
     subject = subject.lower()

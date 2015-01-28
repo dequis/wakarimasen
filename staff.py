@@ -46,9 +46,9 @@ class LoginData(object):
 class StaffMember(object):
     '''A staff object for acquiring and updating personnel account
     information. Use the class factory method to initialize:
-    
+
     >>> StaffMember.get('SirDerpDeeDoo')
-    
+
     To create new staff accounts, use the add_staff() function instead.'''
 
     def __init__(self, username):
@@ -81,7 +81,6 @@ class StaffMember(object):
 
     @password.setter
     def password(self, new):
-        table = self._table
         if len(new) < 8:
             raise WakaError('Passwords should be at least eight characters!')
 
@@ -232,7 +231,7 @@ def edit_staff(username, clear_pass=None, new_class=None, reign=None,
                disable=None):
 
     staff_obj = StaffMember.get(username)
-    
+
     if clear_pass:
         staff_obj.password = clear_pass
 

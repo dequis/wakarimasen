@@ -227,7 +227,7 @@ class StaffInterface(Template):
 
         table = model.activity
         account_table = model.account
-        
+
         dual_table_select = [account_table.c.username,
                              account_table.c.account,
                              account_table.c.disabled,
@@ -481,7 +481,7 @@ class StaffInterface(Template):
         for board in boards:
             if board in edited_user.reign:
                 board['underpower'] = True
-            
+
         Template.__init__(self, 'staff_edit_template',
                                 user_to_edit=username,
                                 boards=boards)
@@ -587,17 +587,17 @@ class StaffInterface(Template):
                     item['standalone'] = 1
 
                 for post in thread:
-                    image_dir \
-                        = os.path.join(board.path, board.options['IMG_DIR'])
+                    #image_dir \
+                    #    = os.path.join(board.path, board.options['IMG_DIR'])
 
-                    thumb_dir \
-                        = os.path.join(board.path, board.options['THUMB_DIR'])
+                    #thumb_dir \
+                    #    = os.path.join(board.path, board.options['THUMB_DIR'])
 
                     base_thumb = os.path.basename(post['thumbnail'] or '')
                     base_image = os.path.basename(post['image'] or '')
 
-                    base_filename = (post['image'] or '')\
-                        .replace(image_dir, '').lstrip('/')
+                    #base_filename = (post['image'] or '')\
+                    #    .replace(image_dir, '').lstrip('/')
 
                     backup_dir = os.path.join(board.url,
                                               board.options['ARCHIVE_DIR'],
@@ -611,7 +611,7 @@ class StaffInterface(Template):
                                 post['thumbnail'] or ''):
                         post['thumbnail'] \
                             = os.path.join(backup_dir, base_thumb)
-                
+
                 item['omit'] = postcount - max_res if postcount > max_res\
                                                    else 0
 
@@ -762,7 +762,7 @@ class StaffInterface(Template):
                     = config.PASSPROMPT_EXPIRE_TO_FAILURE - now \
                       + row['timestamp']
             entries.append(row)
-        
+
         Template.__init__(self, 'script_security_panel', entries=entries)
 
     @interface_for(DELETE_ALL_CONFIRM)
