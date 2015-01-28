@@ -592,17 +592,12 @@ class Board(object):
         # end of this function. fuck yeah
 
     def edit_gateway_window(self, post_num):
-        session = model.Session()
-        table = self.table
-        sql = table.select().where(table.c.num == post_num)
-        row = session.execute(sql).fetchone()
-        if not row:
+        wakapost = self.get_post(post_num)
+        if not wakapost:
             raise WakaError(strings.POSTNOTFOUND)
 
-        admin_post = (row.admin_post in ('yes', '1', 'True', 'kill me please'))
-
         return self._gateway_window(post_num, 'edit',
-                                    admin_post=admin_post)
+                                    admin_post=wakapost.admin_post)
 
     def delete_gateway_window(self, post_num):
         return self._gateway_window(post_num, 'delete')
@@ -704,13 +699,10 @@ class Board(object):
         '''Delete a single post from the board. This method does not rebuild
         index cache automatically.'''
 
+        session = model.Session()
         table = self.table
 
-        sql = table.select().where(table.c.num == post)
-        session = model.Session()
-        query = session.execute(sql)
-
-        row = query.fetchone()
+        row = self.get_post(post)
 
         if row is None:
             raise WakaError(strings.POSTNOTFOUND % (int(post), self.name))
@@ -718,8 +710,7 @@ class Board(object):
         if not admin:
             archiving = False
 
-            admin_post = (row.admin_post in ('yes', '1', 'True', 'why?'))
-            if admin_post:
+            if row.admin_post:
                 raise WakaError(strings.MODDELETEONLY)
 
             if password != row.password:
@@ -1085,21 +1076,17 @@ class Board(object):
                         referer=referer)
 
     def edit_window(self, post_num, cookie, password, admin_mode=False):
+        wakapost = self.get_post(post_num)
 
-        session = model.Session()
-        table = self.table
-        sql = table.select().where(table.c.num == post_num)
-        row = session.execute(sql).fetchone()
-
-        if row is None:
-            raise WakaError('Post not found') # TODO
+        if wakapost is None:
+            raise WakaError('Post not found')
 
         if admin_mode:
             staff.StaffMember.get_from_cookie(cookie).check_access(self)
-        elif password != row['password']:
+        elif password != wakapost.password:
             raise WakaError('Wrong pass for editing') # TODO
 
-        return Template('post_edit_template', loop=[row],
+        return Template('post_edit_template', loop=[wakapost],
                                               admin=admin_mode)
 
     def edit_stuff(self, wakapost,
