@@ -357,7 +357,7 @@ def make_thumbnail(filename, thumbnail, width, height, quality, convert):
 def get_cookie_from_request(request, key):
     return urllib.unquote(request.cookies.get(key, '')).decode('unicode-escape')
 
-def kwargs_from_params(request, params):
+def kwargs_from_params(request, params_arg=None, **params):
     '''Associate function to convert CGI request data with dictionary
     of parameter keys to a dictionary of keyword arguments for passing
     to an application function.
@@ -368,15 +368,17 @@ def kwargs_from_params(request, params):
     
     Not all keys are necessary. Invalid keys are ignored.'''
 
+    if params_arg:
+        params = params_arg
+
     kwargs = {}
+
+    if 'admin' in params.keys():
+        kwargs['cookie'] = get_cookie_from_request(request, 'wakaadmin')
+
     if 'cookies' in params.keys():
         for param in params['cookies']:
             kwargs[param] = get_cookie_from_request(request, param)
-            if param == 'wakaadmin':
-                try:
-                    kwargs['admin'] = kwargs.pop('wakaadmin')
-                except KeyError:
-                    kwargs['admin'] = ''
 
     if 'form' in params.keys():
         for param in params['form']:
