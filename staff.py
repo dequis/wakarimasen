@@ -158,6 +158,36 @@ class StaffMember(object):
 #       _staff[username] = staff_obj
         return staff_obj
 
+    @classmethod
+    def get_from_cookie(cls, cookie_str):
+        if not cookie_str or not cookie_str.count(','):
+            raise LoginError('Cookie data missing.')
+
+        remote = local.environ['REMOTE_ADDR']
+        (username, crypt) = cookie_str.split(',')
+        staff_entry = cls.get(username)
+        cache = staff_entry.login_data
+
+        if cache and cache.addr == remote:
+            # The host is already logged in.
+            pass
+        elif crypt != crypt_pass(staff_entry.password, remote):
+            raise LoginError(strings.WRONGPASS)
+        elif staff_entry.disabled:
+            raise LoginError('You have been disabled.')
+        else:
+            # NOTE: This will overwrite the current network address login.
+            staff_entry.login_host(remote)
+            # Needs save_login parameter. Only useful once sessions and
+            # user caches are implemented.
+            # staff_entry.login_data.make_cookie()
+
+        return staff_entry
+
+    def check_access(self, board_name):
+        if self.account == MODERATOR and board_name not in self.reign:
+            raise WakaError('Access to this board (%s) denied.' % board_name)
+
 def add_staff(username, pt_password, account, reign):
     if not username:
         raise WakaError('A username is necessary.')
@@ -225,30 +255,8 @@ def staff_exists():
 
     return row[0] != 0
 
-def check_password(cookie_str, editing=None):
-    if not cookie_str or not cookie_str.count(','):
-        raise LoginError('Cookie data missing.')
-
-    remote = local.environ['REMOTE_ADDR']
-    (username, crypt) = cookie_str.split(',')
-    staff_entry = StaffMember.get(username)
-    cache = staff_entry.login_data
-
-    if cache and cache.addr == remote:
-        # The host is already logged in.
-        pass
-    elif crypt != crypt_pass(staff_entry.password, remote):
-        raise LoginError(strings.WRONGPASS)
-    elif staff_entry.disabled:
-        raise LoginError('You have been disabled.')
-    else:
-        # NOTE: This will overwrite the current network address login.
-        staff_entry.login_host(remote)
-        # Needs save_login parameter. Only useful once sessions and
-        # user caches are implemented.
-        # staff_entry.login_data.make_cookie()
-
-    return staff_entry
+def check_password(cookie_str):
+    return StaffMember.get_from_cookie(cookie_str)
 
 def crypt_pass(cleartext, remote):
     return misc.hide_critical_data(','.join((cleartext, remote)),

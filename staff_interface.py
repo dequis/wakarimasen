@@ -74,17 +74,17 @@ class StaffInterface(Template):
     '''Specialized template.Template class for dynamic administrative
     pages served by Wakarimasen.'''
 
-    def __init__(self, admin, board=None, dest=None, page=None,
+    def __init__(self, cookie, board=None, dest=None, page=None,
                  perpage=50, **kwargs):
         try:
-            self.user = staff.check_password(admin)
+            self.user = staff.StaffMember.get_from_cookie(cookie)
         except staff.LoginError:
             Template.__init__(self, 'admin_login_template', login_task=dest)
             return
         if not dest:
             dest = HOME_PANEL
 
-        self.admin = admin
+        self.admin = cookie
 
         # TODO: Check if mod is banned.
         if not page:
@@ -123,7 +123,7 @@ class StaffInterface(Template):
         # Set global form variables.
         Template.update_parameters(self, username=self.user.username,
                                    type=self.user.account,
-                                   admin=admin,
+                                   admin=cookie,
                                    boards_select=reign,
                                    boards=reign,
                                    page=self.page,
@@ -639,7 +639,7 @@ class StaffInterface(Template):
         session = model.Session()
         table = board.table
 
-        board.check_access(self.user)
+        self.user.check_access(board.name)
 
         popup = caller != 'board'
 
@@ -769,8 +769,8 @@ class StaffInterface(Template):
     def make_delete_all_window(self, **kwargs):
         Template.__init__(self, 'delete_crap_confirm', **kwargs)
 
-def add_staff_proxy(admin, mpass, usertocreate, passtocreate, account, reign):
-    user = staff.check_password(admin)
+def add_staff_proxy(cookie, mpass, usertocreate, passtocreate, account, reign):
+    user = staff.StaffMember.get_from_cookie(cookie)
 
     if user.account != staff.ADMIN:
         raise WakaError(strings.INSUFFICIENTPRIVILEGES)
@@ -784,8 +784,8 @@ def add_staff_proxy(admin, mpass, usertocreate, passtocreate, account, reign):
     return make_http_forward(misc.make_script_url(task='staff',
         board=board.name), config.ALTERNATE_REDIRECT)
 
-def del_staff_proxy(admin, mpass, username):
-    user = staff.check_password(admin)
+def del_staff_proxy(cookie, mpass, username):
+    user = staff.StaffMember.get_from_cookie(cookie)
 
     if user.account != staff.ADMIN:
         raise WakaError(strings.INSUFFICIENTPRIVILEGES)
@@ -800,10 +800,10 @@ def del_staff_proxy(admin, mpass, username):
     return make_http_forward(misc.make_script_url(task='staff',
         board=board.name), config.ALTERNATE_REDIRECT)
 
-def edit_staff_proxy(admin, mpass, username, newpassword=None, newclass=None,
+def edit_staff_proxy(cookie, mpass, username, newpassword=None, newclass=None,
                      originalpassword='', reign=None, disable=None):
 
-    user = staff.check_password(admin)
+    user = staff.StaffMember.get_from_cookie(cookie)
 
     if user.username == username:
         if misc.hide_critical_data(originalpassword, config.SECRET) \
@@ -833,7 +833,7 @@ def clear_login_cookies():
     misc.make_cookies(wakaadmin='', wakaadminsave='0', expires=0)
 
 def do_login(username=None, password=None, save_login=False,
-             admin=None, board=None, nexttask=HOME_PANEL):
+             cookie=None, board=None, nexttask=HOME_PANEL):
 
     bad_pass = False
     staff_entry = None
@@ -854,10 +854,10 @@ def do_login(username=None, password=None, save_login=False,
                 staff_entry.login_host(remote)
             else:
                 bad_pass = True
-    elif admin:
+    elif cookie:
         # Attempt automatic login.
         try:
-            staff_entry = staff.check_password(admin)
+            staff_entry = staff.StaffMember.get_from_cookie(cookie)
         except staff.LoginError:
             clear_login_cookies()
             bad_pass = True
@@ -872,10 +872,10 @@ def do_login(username=None, password=None, save_login=False,
         login.make_cookie(save_login=save_login)
         return StaffInterface(login.cookie, dest=nexttask, board=board)
 
-def do_logout(admin):
+def do_logout(cookie):
     # Clear login cache.
     try:
-        user = staff.check_password(admin)
+        user = staff.StaffMember.get_from_cookie(cookie)
         user.logout_user()
     except staff.LoginError:
         pass
@@ -890,9 +890,9 @@ def make_first_time_setup_gateway():
     # TODO: Make sure we're in secure mode (HTTPS)
     return Template('first_time_setup')
 
-def do_first_time_setup(admin, username, password):
+def do_first_time_setup(cookie, username, password):
     # Checks.
-    if admin != staff.crypt_pass(config.ADMIN_PASS,
+    if cookie != staff.crypt_pass(config.ADMIN_PASS,
                                  local.environ['REMOTE_ADDR']):
         return make_first_time_setup_gateway()
     if not username:
@@ -907,12 +907,12 @@ def do_first_time_setup(admin, username, password):
         board=board.name), config.ALTERNATE_REDIRECT)
 
 
-def make_first_time_setup_page(admin):
+def make_first_time_setup_page(cookie):
     if not hasattr(config, 'ADMIN_PASS'):
         raise WakaError("ADMIN_PASS not set in config")
 
-    if admin == config.ADMIN_PASS:
-        admin = staff.crypt_pass(admin, local.environ['REMOTE_ADDR'])
-        return Template('account_setup', admin=admin)
+    if cookie == config.ADMIN_PASS:
+        cookie = staff.crypt_pass(cookie, local.environ['REMOTE_ADDR'])
+        return Template('account_setup', admin=cookie)
     else:
         return make_first_time_setup_gateway()

@@ -102,9 +102,7 @@ class Board(object):
             return os.path.join(base, dir) + hash
 
     def check_access(self, user):
-        if user.account == staff.MODERATOR and self.name not in user.reign:
-            raise WakaError('Access to this board (%s) denied.' % self.name)
-
+        user.check_access(self.name)
         return user
 
     def make_url(self, **kwargs):
@@ -197,7 +195,8 @@ class Board(object):
         self.build_cache()
 
     def rebuild_cache_proxy(self, task_data):
-        self.check_access(task_data.user)
+        task_data.user.check_access(self.name)
+
         task_data.contents.append(self.name)
 
         Popen([sys.executable, sys.argv[0], 'rebuild_cache', self.name],
@@ -433,7 +432,7 @@ class Board(object):
             self.build_thread_cache(row[0])
 
     def _handle_post(self, wakapost, editing=None,
-                     admin_mode=False, admin_task_data=None):
+                     admin_mode=False, admin_data=None):
         """Worst function ever"""
 
         session = model.Session()
@@ -442,9 +441,7 @@ class Board(object):
         timestamp = wakapost.timestamp = time.time()
 
         if admin_mode:
-            # check admin password - allow both encrypted and non-encrypted
-            # raises exceptions
-            self.check_access(admin_task_data.user)
+            admin_data.user.check_access(self.name)
             wakapost.admin_post = True
 
         # run several post validations - raises exceptions
@@ -553,7 +550,7 @@ class Board(object):
         return wakapost.num
 
     def post_stuff(self, wakapost,
-                   admin_mode=None, admin_task_data=None):
+                   admin_mode=None, admin_data=None):
 
         # For use with noko, below.
         parent = wakapost.parent or wakapost.num
@@ -561,7 +558,7 @@ class Board(object):
 
         try:
             post_num = self._handle_post(wakapost, None,
-                admin_mode, admin_task_data)
+                admin_mode, admin_data)
         except util.SpamError:
             forward = self.make_path(page=0, url=True)
             return util.make_http_forward(forward, config.ALTERNATE_REDIRECT)
@@ -589,7 +586,7 @@ class Board(object):
 
             forward = misc.make_script_url(**kwargs)
 
-            admin_task_data.contents.append('/%s/%d' % (self.name, post_num))
+            admin_data.contents.append('/%s/%d' % (self.name, post_num))
 
         return util.make_http_forward(forward, config.ALTERNATE_REDIRECT)
         # end of this function. fuck yeah
@@ -677,7 +674,7 @@ class Board(object):
 
     def delete_stuff(self, posts, password, file_only, archiving,
                      caller='user', admindelete=False,
-                     admin_task_data=None, from_window=False):
+                     admin_data=None, from_window=False):
         if caller == 'internal':
             # Internally called; force admin.
             admindelete = True
@@ -690,7 +687,7 @@ class Board(object):
             self.delete_post(post, password, file_only, archiving,
                              from_window=False, admin=admindelete,
                              timestampofarchival=timestamp,
-                             admin_task_data=admin_task_data)
+                             admin_data=admin_data)
 
         self.build_cache()
 
@@ -702,7 +699,7 @@ class Board(object):
             return util.make_http_forward(forward, config.ALTERNATE_REDIRECT)
 
     def delete_post(self, post, password, file_only, archiving,
-                    admin_task_data=None, from_window=False, admin=False,
+                    admin_data=None, from_window=False, admin=False,
                     timestampofarchival=None, recur=False):
         '''Delete a single post from the board. This method does not rebuild
         index cache automatically.'''
@@ -818,8 +815,8 @@ class Board(object):
             # removing a reply, or a reply's image
             self.build_thread_cache(row.parent)
 
-        if admin_task_data:
-            admin_task_data.contents.append('/%s/%d' % (self.name, int(post)))
+        if admin_data:
+            admin_data.contents.append('/%s/%d' % (self.name, int(post)))
 
     def delete_file(self, relative_file_path, relative_thumb_path,
                     archiving=False):
@@ -865,16 +862,17 @@ class Board(object):
             else:
                 os.unlink(full_thumb_path)
 
-    def remove_backup_stuff(self, admin_task_data, posts, restore=False):
-        user = self.check_access(admin_task_data.user)
+    def remove_backup_stuff(self, admin_data, posts, restore=False):
+        user = admin_data.user
+        user.check_access(self.name)
 
         if restore:
-            admin_task_data.action = 'backup_restore'
+            admin_data.action = 'backup_restore'
 
         for post in posts:
-            self.remove_backup_post(admin_task_data, post, restore=restore)
+            self.remove_backup_post(admin_data, post, restore=restore)
             # Log.
-            admin_task_data.contents.append('/%s/%d' % (self.name, int(post)))
+            admin_data.contents.append('/%s/%d' % (self.name, int(post)))
 
         # Board pages need refereshing.
         self.build_cache()
@@ -1086,7 +1084,7 @@ class Board(object):
                         error_occurred=len(errors)>0,
                         referer=referer)
 
-    def edit_window(self, post_num, admin, password, admin_mode=False):
+    def edit_window(self, post_num, cookie, password, admin_mode=False):
 
         session = model.Session()
         table = self.table
@@ -1097,7 +1095,7 @@ class Board(object):
             raise WakaError('Post not found') # TODO
 
         if admin_mode:
-            self.check_access(staff.check_password(admin))
+            staff.StaffMember.get_from_cookie(cookie).check_access(self)
         elif password != row['password']:
             raise WakaError('Wrong pass for editing') # TODO
 
@@ -1105,7 +1103,7 @@ class Board(object):
                                               admin=admin_mode)
 
     def edit_stuff(self, wakapost,
-                   admin_mode=None, admin_task_data=None):
+                   admin_mode=None, admin_data=None):
 
         session = model.Session()
 
@@ -1130,7 +1128,7 @@ class Board(object):
             return Template('edit_successful')
 
         if admin_mode:
-            admin_task_data.contents\
+            admin_data.contents\
                            .append('/%s/%d' % (self.name, int(wakapost.num)))
 
         return Template('edit_successful')
@@ -1395,14 +1393,15 @@ class Board(object):
 
     def toggle_thread_state(self, task_data, num, operation,
                             enable_state=True):
-        self.check_access(task_data.user)
+
+        task_data.user.check_access(self.name)
 
         # Check thread
         session = model.Session()
         table = self.table
         sql = select([table.c.parent], table.c.num == num, table)
         row = session.execute(sql).fetchone()
-        
+
         if not row:
             raise WakaError('Thread %s,%s not found.' % (self.name, num))
         if row['parent']:

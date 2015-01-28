@@ -380,7 +380,7 @@ def mark_resolved(task_data, delete, posts):
             try:
                 board_obj.delete_stuff(posts, '', False, False,
                                        admindelete=True,
-                                       admin_task_data=task_data)
+                                       admin_data=task_data)
             except WakaError:
                 errors.append({'error' : '%s,%d: Post already deleted.'\
                                          % (board_name, int(post))})
@@ -495,8 +495,8 @@ def move_thread(task_data, parent, src_brd_obj, dest_brd_obj):
 
     # Check administrative access rights to both boards.
     user = task_data.user
-    src_brd_obj.check_access(user)
-    dest_brd_obj.check_access(user)
+    user.check_access(src_brd_obj.name)
+    user.check_access(dest_brd_obj.name)
 
     session = model.Session()
     src_table = src_brd_obj.table

@@ -113,7 +113,7 @@ def task_delete(environ, start_response, archiving=False):
         kwargs['action'] = 'admin_delete'
         return StaffAction(**kwargs).execute()
 
-    del kwargs['admin']
+    del kwargs['cookie']
     return board.delete_stuff(**kwargs)
 
 def task_deleteall(environ, start_response):
@@ -379,13 +379,13 @@ def task_addipfrompopup(environ, start_response):
 
     try:
         if globaldelete_all:
-            StaffAction(kwargs['admin'], 'delete_by_ip_global',
+            StaffAction(kwargs['cookie'], 'delete_by_ip_global',
                         ip=kwargs['ip']).execute()
         elif delete_all:
-            StaffAction(kwargs['admin'], 'delete_by_ip',
+            StaffAction(kwargs['cookie'], 'delete_by_ip',
                         ip=kwargs['ip'], board=board).execute()
         elif delete:
-            StaffAction(kwargs['admin'], 'admin_delete', board=board,
+            StaffAction(kwargs['cookie'], 'admin_delete', board=board,
                         posts=[delete], from_window=True, password='',
                         file_only=False, archiving=False, caller='internal')\
                 .execute()
