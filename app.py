@@ -178,13 +178,13 @@ def task_editpost(environ, start_response):
 
     cookie = get_cookie_from_request(request, 'wakaadmin')
 
-    wakapost = WakaPost.from_request(request)
+    request_post = WakaPost.from_request(request)
 
-    if wakapost.admin_post:
-        return StaffAction(cookie, 'admin_edit', wakapost=wakapost,
+    if request_post.admin_post:
+        return StaffAction(cookie, 'admin_edit', request_post=request_post,
             board=board).execute()
     else:
-        return board.edit_stuff(wakapost)
+        return board.edit_stuff(request_post)
 
 
 def task_report(environ, start_response):

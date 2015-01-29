@@ -436,7 +436,7 @@ class Board(object):
         session = model.Session()
 
         # get a timestamp for future use
-        timestamp = wakapost.timestamp = time.time()
+        timestamp = time.time()
 
         if admin_data:
             admin_data.user.check_access(self.name)
@@ -481,6 +481,7 @@ class Board(object):
         # check if thread exists, and get lasthit value
         parent_res = None
         if not editing:
+            wakapost.timestamp = timestamp
             if wakapost.parent:
                 parent_res = self.get_parent_post(wakapost.parent)
                 if not parent_res:
@@ -518,7 +519,7 @@ class Board(object):
         # choose whether we need an SQL UPDATE (editing) or INSERT (posting)
         if editing:
             db_update = self.table.update().where(
-                self.table.c.num == editing.num)
+                self.table.c.num == wakapost.num)
         else:
             db_update = self.table.insert()
 
@@ -1078,33 +1079,30 @@ class Board(object):
         return Template('post_edit_template', loop=[wakapost],
                                               admin=admin_mode)
 
-    def edit_stuff(self, wakapost, admin_data=None):
+    def edit_stuff(self, request_post, admin_data=None):
 
-        session = model.Session()
+        original_post = self.get_post(request_post.num)
 
-        original_row = session.execute(
-            self.table.select(self.table.c.num == wakapost.num))\
-            .fetchone()
-
-        if original_row == None:
+        if not original_post:
             raise WakaError('Post not found')
 
-        if not admin_data and wakapost.password != original_row['password']:
+        if not admin_data and request_post.password != original_post.password:
             raise WakaError('Wrong password for editing')
 
-        original_post = WakaPost(original_row)
+        edited_post = WakaPost.copy(original_post)
+        edited_post.merge(request_post, which='request')
 
-        if wakapost.killtrip:
-            original_post.trip = ''
+        if edited_post.killtrip:
+            edited_post.trip = ''
 
         try:
-            self._handle_post(wakapost, original_post, admin_data)
+            self._handle_post(edited_post, original_post, admin_data)
         except util.SpamError:
             return Template('edit_successful')
 
         if admin_data:
-            admin_data.contents\
-                           .append('/%s/%d' % (self.name, int(wakapost.num)))
+            admin_data.contents.append(
+                '/%s/%d' % (self.name, int(request_post.num)))
 
         return Template('edit_successful')
 

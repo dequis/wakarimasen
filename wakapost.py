@@ -129,7 +129,32 @@ class WakaPost(object):
         self.locked = request.values.get('lock', '0') == '1'
         self.req_no_format = request.values.get('no_format', '0') == '1'
         self.req_file = request.files.get('file', None)
-        self.name = request.values.get('field1', '')
+
+        return self
+
+    @classmethod
+    def copy(cls, instance):
+        '''Copies all the attributes of another instance into a new one'''
+        return cls().merge(instance)
+
+    def merge(self, other, which='all'):
+        '''Merges only the attributes relevant to edited posts
+
+        which: either 'all', 'request', or a list of keys'''
+
+        keys = []
+        if which == 'all':
+            keys = WakaPost.__slots__
+        elif which == 'request':
+            keys = ['num', 'parent', 'email', 'subject', 'comment',
+                    'password', 'killtrip', 'postfix', 'ninja', 'nofile',
+                    'name', 'admin_post', 'stickied', 'locked',
+                    'req_no_format', 'req_file']
+        elif type(which) == list:
+            keys = which
+
+        for key in keys:
+            setattr(self, key, getattr(other, key, ''))
 
         return self
 
