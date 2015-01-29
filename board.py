@@ -585,24 +585,21 @@ class Board(object):
         # end of this function. fuck yeah
 
     def edit_gateway_window(self, post_num):
-        wakapost = self.get_post(post_num)
-        if not wakapost:
-            raise WakaError(strings.POSTNOTFOUND)
-
-        return self._gateway_window(post_num, 'edit',
-                                    admin_post=wakapost.admin_post)
+        return self._gateway_window(post_num, 'edit')
 
     def delete_gateway_window(self, post_num):
         return self._gateway_window(post_num, 'delete')
 
-    def _gateway_window(self, post_num, task, admin_post=''):
+    def _gateway_window(self, post_num, task):
         if not post_num.isdigit():
-            raise WakaError('Please enter post number.') # TODO
+            raise WakaError('Please enter post number.')
 
-        if task == 'edit':
-            return Template('password', admin_post=admin_post, num=post_num)
-        else:
-            return Template('delpassword', num=post_num)
+        wakapost = self.get_post(post_num)
+        if not wakapost:
+            raise WakaError(strings.POSTNOTFOUND)
+
+        template_name = 'password' if task == 'edit' else 'delpassword'
+        return Template(template_name, admin_post=wakapost.admin_post, num=post_num)
 
     def get_local_reports(self):
         session = model.Session()
