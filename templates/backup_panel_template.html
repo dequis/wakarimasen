@@ -71,7 +71,7 @@
 				<span class="filetitle">{{ post.subject }}</span>
 				{% if post.email %}<span class="postername"><a href="{{ post.email }}">{{ post.name }}</a></span>{% if post.trip %}<span class="postertrip"><a href="{{ post.email }}">{{ post.trip }}</a></span>{% endif %}{% endif %}
 				{% if not post.email %}<span class="postername">{{ post.name }}</span>{% if post.trip %}<span class="postertrip">{{ post.trip }}</span>{% endif %}{% endif %} 
-				<span class="ipaddr">(IP: {{ (post.ip)|dec_to_dot }}{% if post.admin_post == 'yes' %}; {% if not post.lastedit %}<strong>Moderator Post</strong>{% endif %}{% if post.lastedit %}<strong>Moderator Edit</strong>{% endif %}{% endif %})</span> 
+				<span class="ipaddr">(IP: {{ (post.ip)|dec_to_dot }}{% if post.admin_post %}; {% if not post.lastedit %}<strong>Moderator Post</strong>{% endif %}{% if post.lastedit %}<strong>Moderator Edit</strong>{% endif %}{% endif %})</span> 
 				{% if not post.parent %}
 					{% if post.stickied %} <img src="{{ ('/include/boards/sticky.gif')|expand_url }}" alt="{{ strings.STICKIEDALT }}" title="{{ strings.STICKIED }}" /> {% endif %}
 					{% if post.locked == 'yes' %} <img src="{{ ('/include/boards/locked.gif')|expand_url }}" alt="{{ strings.LOCKEDALT }}" title="{{ strings.LOCKED }}" /> {% endif %}
@@ -88,7 +88,7 @@
 				<blockquote>
 				{% if omit %}{{ post.comment|redirect_reply_links(min_res) }}{% else %}{{ post.comment }}{% endif %}
 				{% if post.abbrev %}<div class="abbrev">{% filter reverse_format(strings.ABBRTEXT) %}{{ get_script_name() }}?task=postbackups&amp;board={{ board.name }}&amp;page=t{{ post.postnum }}{% endfilter %}</div>{% endif %}
-				{% if post.lastedit %}<p style="font-size: small; font-style: italic">{{ strings.LASTEDITED }}{% if post.admin_post == 'yes' %} {{ strings.BYMOD }}{% endif %} {{ post.lastedit }}. (IP: {{ (post.lastedit_ip)|dec_to_dot }})</p>{% endif %}
+				{% if post.lastedit %}<p style="font-size: small; font-style: italic">{{ strings.LASTEDITED }}{% if post.admin_post  %} {{ strings.BYMOD }}{% endif %} {{ post.lastedit }}. (IP: {{ (post.lastedit_ip)|dec_to_dot }})</p>{% endif %}
 				</blockquote>
 
 				{% if currentthread.omit %}
@@ -107,7 +107,7 @@
 				<span class="replytitle">{{ post.subject }}</span>
 				{% if post.email %}<span class="commentpostername"><a href="{{ post.email }}">{{ post.name }}</a></span>{% if post.trip %}<span class="postertrip"><a href="{{ post.email }}">{{ post.trip }}</a></span>{% endif %}{% endif %}
 				{% if not post.email %}<span class="commentpostername">{{ post.name }}</span>{% if post.trip %}<span class="postertrip">{{ post.trip }}</span>{% endif %}{% endif %} 
-				<span class="ipaddr">(IP: {{ (post.ip)|dec_to_dot }}{% if post.admin_post == 'yes' %}; {% if not post.lastedit %}<strong>Moderator Post</strong>{% endif %}{% if post.lastedit %}<strong>Moderator Edit</strong>{% endif %}{% endif %})</span> 
+				<span class="ipaddr">(IP: {{ (post.ip)|dec_to_dot }}{% if post.admin_post %}; {% if not post.lastedit %}<strong>Moderator Post</strong>{% endif %}{% if post.lastedit %}<strong>Moderator Edit</strong>{% endif %}{% endif %})</span> 
 				{{ post.date }}</label>
 				<span class="reflink">
 					No.{{ post.postnum }}
@@ -136,7 +136,7 @@
 				<blockquote>
 				{% if omit %}{{ post.comment|redirect_reply_links(min_res) }}{% else %}{{ post.comment }}{% endif %}
 				{% if post.abbrev %}<div class="abbrev">{% filter reverse_format(strings.ABBRTEXT) %}{{ get_script_name() }}?task=postbackups&amp;board={{ board.name }}&amp;page=t{{ post.parent }}#{{ post.postnum }}{% endfilter %}</div>{% endif %}
-				{% if post.lastedit %}<p style="font-size: small; font-style: italic">Last edited{% if post.admin_post == 'yes' %} by moderator{% endif %} {{ post.lastedit }}. (IP: {{ (post.lastedit_ip)|dec_to_dot }})</p>{% endif %}
+				{% if post.lastedit %}<p style="font-size: small; font-style: italic">Last edited{% if post.admin_post %} by moderator{% endif %} {{ post.lastedit }}. (IP: {{ (post.lastedit_ip)|dec_to_dot }})</p>{% endif %}
 				</blockquote>
 
 				</td></tr></tbody></table>

@@ -20,9 +20,10 @@ def init_database():
 # Cache building
 def task_rebuild(environ, start_response):
     request = environ['werkzeug.request']
-    params = {'cookies': ['wakaadmin']}
-    
-    kwargs = kwargs_from_params(request, params)
+
+    kwargs = kwargs_from_params(request,
+        admin=True,
+    )
     kwargs['board'] = environ['waka.board']
     kwargs['action'] = 'rebuild'
 
@@ -30,9 +31,10 @@ def task_rebuild(environ, start_response):
 
 def task_rebuildglobal(environ, start_response):
     request = environ['werkzeug.request']
-    params = {'cookies': ['wakaadmin']}
-    
-    kwargs = kwargs_from_params(request, params)
+
+    kwargs = kwargs_from_params(request,
+        admin=True,
+    )
     kwargs['action'] = 'rebuild_global'
 
     return StaffAction(**kwargs).execute()
@@ -45,12 +47,12 @@ def task_post(environ, start_response):
     if request.method != 'POST':
         raise WakaError("POST only accepted")
 
-    admin = get_cookie_from_request(request, 'wakaadmin')
+    cookie = get_cookie_from_request(request, 'wakaadmin')
 
     wakapost = WakaPost.from_request(request)
 
     if wakapost.admin_post:
-        return StaffAction(admin, 'admin_post', wakapost=wakapost,
+        return StaffAction(cookie, 'admin_post', wakapost=wakapost,
             board=board).execute()
 
 
@@ -91,16 +93,17 @@ def task_delete(environ, start_response, archiving=False):
 
     singledelete = (request.values.get("singledelete", '') == 'OK')
 
-    params = {'form': ['password', 'file_only', 'from_window', 'admindelete'],
-              'cookies': ['wakaadmin']}
-
-    kwargs = kwargs_from_params(request, params)
+    formparams = ['password', 'file_only', 'from_window', 'admindelete']
+    kwargs = kwargs_from_params(request,
+        form=formparams,
+        admin=True,
+    )
 
     if singledelete:
         # NOTE: from_window parameter originates from pop-up windows
         #       brought up by clicking "Delete" without JS enabled.
         params_single = ['postpassword', 'postfileonly', 'from_window']
-        for param, single in map(None, params['form'][:3], params_single):
+        for param, single in map(None, formparams[:3], params_single):
             kwargs[param] = request.form.get(single, '')
 
         kwargs['posts'] = [request.values.get('deletepost', '')]
@@ -113,16 +116,16 @@ def task_delete(environ, start_response, archiving=False):
         kwargs['action'] = 'admin_delete'
         return StaffAction(**kwargs).execute()
 
-    del kwargs['admin']
+    del kwargs['cookie']
     return board.delete_stuff(**kwargs)
 
 def task_deleteall(environ, start_response):
     request = environ['werkzeug.request']
 
-    params = {'form':    ['ip', 'mask', 'global'],
-              'cookies': ['wakaadmin']}
-
-    kwargs = kwargs_from_params(request, params)
+    kwargs = kwargs_from_params(request,
+        form=['ip', 'mask', 'global'],
+        admin=True,
+    )
 
     if kwargs.pop('global'):
         kwargs['action'] = 'delete_by_ip_global'
@@ -143,9 +146,9 @@ def task_edit(environ, start_response):
     request = environ['werkzeug.request']
     board = environ['waka.board']
 
-    params = {'form': ['num']}
-   
-    kwargs = kwargs_from_params(request, params)
+    kwargs = kwargs_from_params(request,
+        form=['num'],
+    )
     kwargs['post_num'] = kwargs.pop('num')
 
     return board.edit_gateway_window(**kwargs)
@@ -157,10 +160,10 @@ def task_editpostwindow(environ, start_response):
     request = environ['werkzeug.request']
     board = environ['waka.board']
 
-    params = {'form':    ['num', 'password', 'admineditmode'],
-              'cookies': ['wakaadmin']}
-
-    kwargs = kwargs_from_params(request, params)
+    kwargs = kwargs_from_params(request,
+        form=['num', 'password', 'admineditmode'],
+        admin=True,
+    )
     kwargs['admin_mode'] = kwargs.pop('admineditmode')
     kwargs['post_num'] = kwargs.pop('num')
 
@@ -173,15 +176,15 @@ def task_editpost(environ, start_response):
     if request.method != 'POST':
         raise WakaError("POST only accepted")
 
-    admin = get_cookie_from_request(request, 'wakaadmin')
+    cookie = get_cookie_from_request(request, 'wakaadmin')
 
-    wakapost = WakaPost.from_request(request)
+    request_post = WakaPost.from_request(request)
 
-    if wakapost.admin_post:
-        return StaffAction(admin, 'admin_edit', wakapost=wakapost,
+    if request_post.admin_post:
+        return StaffAction(cookie, 'admin_edit', request_post=request_post,
             board=board).execute()
     else:
-        return board.edit_stuff(wakapost)
+        return board.edit_stuff(request_post)
 
 
 def task_report(environ, start_response):
@@ -197,18 +200,20 @@ def task_confirmreport(environ, start_response):
     request = environ['werkzeug.request']
     board = environ['waka.board']
 
-    params = {'form': ['num', 'comment', 'referer']}
-
-    kwargs = kwargs_from_params(request, params)
+    kwargs = kwargs_from_params(request,
+        form=['num', 'comment', 'referer'],
+    )
     kwargs['posts'] = kwargs.pop('num').split(', ')
-    
+
     return board.report_posts(**kwargs)
 
 def task_resolve(environ, start_response):
     request = environ['werkzeug.request']
-    params = {'cookies': ['wakaadmin'], 'form': ['delete']}
 
-    kwargs = kwargs_from_params(request, params)
+    kwargs = kwargs_from_params(request,
+        form=['delete'],
+        admin=True,
+    )
 
     posts = {}
     for post in request.form.getlist('num'):
@@ -226,10 +231,10 @@ def task_restorebackups(environ, start_response):
     request = environ['werkzeug.request']
     board = environ['waka.board']
 
-    params = {'form':    ['handle'],
-              'cookies': ['wakaadmin']}
-
-    kwargs = kwargs_from_params(request, params)
+    kwargs = kwargs_from_params(request,
+        form=['handle'],
+        admin=True,
+    )
     kwargs['posts'] = request.form.getlist('num')
     kwargs['restore'] = kwargs.pop('handle').lower() == 'restore'
     kwargs['board'] = board
@@ -241,14 +246,12 @@ def _toggle_thread_state(environ, start_response, operation):
     request = environ['werkzeug.request']
     board = environ['waka.board']
 
-    kwargs = {}
+    kwargs = kwargs_from_params(request,
+        admin=True,
+    )
     kwargs['num'] = request.values.get('thread', 0)
     kwargs['board'] = board
     kwargs['action'] = 'thread_' + operation
-    try:
-        kwargs['admin'] = get_cookie_from_request(request, 'wakaadmin')
-    except KeyError:
-        kwargs['admin'] = ''
 
     return StaffAction(**kwargs).execute()
 
@@ -276,18 +279,19 @@ def task_entersetup(environ, start_response):
 def task_setup(environ, start_response):
     request = environ['werkzeug.request']
 
-    params = {'form': ['admin', 'username', 'password']}
-    kwargs = kwargs_from_params(request, params)
+    kwargs = kwargs_from_params(request,
+        form=['admin', 'username', 'password'],
+    )
 
     return staff_interface.do_first_time_setup(**kwargs)
 
 def task_loginpanel(environ, start_response):
     request = environ['werkzeug.request']
 
-    params = {'form': ['nexttask', 'nexttask', 'berra', 'desu', 'savelogin'],
-              'cookies': ['wakaadmin', 'wakaadminsave']}
-
-    kwargs = kwargs_from_params(request, params)
+    kwargs = kwargs_from_params(request,
+        form=['nexttask', 'nexttask', 'berra', 'desu', 'savelogin'],
+        cookies=['wakaadminsave'], admin=True,
+    )
 
     # Why are we doing this again?
     kwargs['username'] = kwargs.pop('desu')
@@ -304,21 +308,18 @@ task_admin = task_loginpanel
 
 def task_logout(environ, start_response):
     request = environ['werkzeug.request']
-    
-    admin = ''
-    try:
-        admin = request.cookies['wakaadmin']
-    except KeyError:
-        pass
 
-    return staff_interface.do_logout(admin)
+    cookie = get_cookie_from_request(request, 'wakaadmin')
+    return staff_interface.do_logout(cookie)
 
 def si_task_factory(dest, *form):
     '''Factory of task functions for StaffInterface'''
     def task(environ, start_response):
         request = environ['werkzeug.request']
-        params = {'form': form, 'cookies': ['wakaadmin']}
-        kwargs = kwargs_from_params(request, params)
+        kwargs = kwargs_from_params(request,
+            form=form,
+            admin=True,
+        )
         kwargs['dest'] = getattr(staff_interface, dest)
         return StaffInterface(**kwargs)
     return task
@@ -351,11 +352,10 @@ task_deleteall_confirm = si_task_factory('DELETE_ALL_CONFIRM',
 def task_addip(environ, start_response):
     request = environ['werkzeug.request']
 
-    params = {'form':    ['type', 'comment', 'ip', 'mask', 'total',
-                          'expiration'],
-              'cookies': ['wakaadmin']}
-
-    kwargs = kwargs_from_params(request, params)
+    kwargs = kwargs_from_params(request,
+        form=['type', 'comment', 'ip', 'mask', 'total', 'expiration'],
+        admin=True,
+    )
     kwargs['option'] = kwargs.pop('type')
     kwargs['action'] = 'admin_entry'
 
@@ -365,11 +365,11 @@ def task_addipfrompopup(environ, start_response):
     request = environ['werkzeug.request']
     board = environ['waka.board']
 
-    params = {'form': ['ip', 'mask', 'total', 'expiration', 'comment', 'delete',
-                       'deleteall_confirm', 'globaldeleteall_confirm'],
-              'cookies': ['wakaadmin']}
-
-    kwargs = kwargs_from_params(request, params)
+    kwargs = kwargs_from_params(request,
+        form=['ip', 'mask', 'total', 'expiration', 'comment', 'delete',
+              'deleteall_confirm', 'globaldeleteall_confirm'],
+        admin=True,
+    )
     kwargs['action'] = 'admin_entry'
     kwargs['option'] = 'ipban'
     kwargs['caller'] = 'window'
@@ -379,13 +379,13 @@ def task_addipfrompopup(environ, start_response):
 
     try:
         if globaldelete_all:
-            StaffAction(kwargs['admin'], 'delete_by_ip_global',
+            StaffAction(kwargs['cookie'], 'delete_by_ip_global',
                         ip=kwargs['ip']).execute()
         elif delete_all:
-            StaffAction(kwargs['admin'], 'delete_by_ip',
+            StaffAction(kwargs['cookie'], 'delete_by_ip',
                         ip=kwargs['ip'], board=board).execute()
         elif delete:
-            StaffAction(kwargs['admin'], 'admin_delete', board=board,
+            StaffAction(kwargs['cookie'], 'admin_delete', board=board,
                         posts=[delete], from_window=True, password='',
                         file_only=False, archiving=False, caller='internal')\
                 .execute()
@@ -400,10 +400,10 @@ def task_addipfrompopup(environ, start_response):
 def task_addstring(environ, start_response):
     request = environ['werkzeug.request']
 
-    params = {'form': ['type', 'string', 'comment'],
-              'cookies': ['wakaadmin']}
-
-    kwargs = kwargs_from_params(request, params)
+    kwargs = kwargs_from_params(request,
+        form=['type', 'string', 'comment'],
+        admin=True,
+    )
     kwargs['action'] = 'admin_entry'
     kwargs['option'] = kwargs.pop('type')
     kwargs['sval1'] = kwargs.pop('string')
@@ -413,12 +413,12 @@ def task_addstring(environ, start_response):
 def task_adminedit(environ, start_response):
     request = environ['werkzeug.request']
 
-    params = {'form':    ['num', 'ival1', 'ival2', 'sval1', 'total', 'year',
-                          'month', 'day', 'hour', 'min', 'sec', 'comment',
-                          'noexpire'],
-              'cookies': ['wakaadmin']}
-
-    kwargs = kwargs_from_params(request, params)
+    kwargs = kwargs_from_params(request,
+        form=['num', 'ival1', 'ival2', 'sval1', 'total', 'year',
+              'month', 'day', 'hour', 'min', 'sec', 'comment',
+              'noexpire'],
+        admin=True,
+    )
     kwargs['action'] = 'edit_admin_entry'
 
     return StaffAction(**kwargs).execute()
@@ -426,9 +426,10 @@ def task_adminedit(environ, start_response):
 def task_removeban(environ, start_response):
     request = environ['werkzeug.request']
 
-    params = {'form': ['num'], 'cookies': ['wakaadmin']}
-
-    kwargs = kwargs_from_params(request, params)
+    kwargs = kwargs_from_params(request,
+        form=['num'],
+        admin=True,
+    )
     kwargs['action'] = 'remove_admin_entry'
 
     return StaffAction(**kwargs).execute()
@@ -438,9 +439,10 @@ def task_removeban(environ, start_response):
 def task_updatespam(environ, start_response):
     request = environ['werkzeug.request']
 
-    params = {'form': ['spam'], 'cookies': ['wakaadmin']}
-
-    kwargs = kwargs_from_params(request, params)
+    kwargs = kwargs_from_params(request,
+        form=['spam'],
+        admin=True,
+    )
     kwargs['action'] = 'update_spam'
 
     return StaffAction(**kwargs).execute()
@@ -448,11 +450,10 @@ def task_updatespam(environ, start_response):
 def task_createuser(environ, start_response):
     request = environ['werkzeug.request']
 
-    params = {'cookies': ['wakaadmin'],
-              'form':    ['mpass', 'usertocreate', 'passtocreate', 'account',
-                          'reign']}
-
-    kwargs = kwargs_from_params(request, params)
+    kwargs = kwargs_from_params(request,
+        form=['mpass', 'usertocreate', 'passtocreate', 'account', 'reign'],
+        admin=True,
+    )
     kwargs['reign'] = kwargs.pop('reign').split(',')
 
     return staff_interface.add_staff_proxy(**kwargs)
@@ -460,18 +461,20 @@ def task_createuser(environ, start_response):
 def task_deleteuser(environ, start_response):
     request = environ['werkzeug.request']
 
-    params = {'cookies': ['wakaadmin'], 'form': ['mpass', 'username']}
-
-    kwargs = kwargs_from_params(request, params)
+    kwargs = kwargs_from_params(request,
+        form=['mpass', 'username'],
+        admin=True,
+    )
 
     return staff_interface.del_staff_proxy(**kwargs)
 
 def task_disableuser(environ, start_response):
     request = environ['werkzeug.request']
 
-    params = {'cookies': ['wakaadmin'], 'form': ['mpass', 'username']}
-
-    kwargs = kwargs_from_params(request, params)
+    kwargs = kwargs_from_params(request,
+        form=['mpass', 'username'],
+        admin=True,
+    )
     kwargs['disable'] = True
 
     return staff_interface.edit_staff_proxy(**kwargs)
@@ -479,9 +482,10 @@ def task_disableuser(environ, start_response):
 def task_enableuser(environ, start_response):
     request = environ['werkzeug.request']
 
-    params = {'cookies': ['wakaadmin'], 'form': ['mpass', 'username']}
-
-    kwargs = kwargs_from_params(request, params)
+    kwargs = kwargs_from_params(request,
+        form=['mpass', 'username'],
+        admin=True,
+    )
     kwargs['disable'] = False
 
     return staff_interface.edit_staff_proxy(**kwargs)
@@ -489,11 +493,11 @@ def task_enableuser(environ, start_response):
 def task_edituser(environ, start_response):
     request = environ['werkzeug.request']
 
-    params = {'form': ['mpass', 'usernametoedit', 'newpassword', 'newclass',
-                       'originalpassword'], 
-              'cookies': ['wakaadmin']}
-
-    kwargs = kwargs_from_params(request, params)
+    kwargs = kwargs_from_params(request,
+        form=['mpass', 'usernametoedit', 'newpassword', 'newclass',
+              'originalpassword'],
+        admin=True,
+    )
     kwargs['username'] = kwargs.pop('usernametoedit')
     kwargs['reign'] = request.form.getlist('reign')
 
@@ -501,13 +505,11 @@ def task_edituser(environ, start_response):
 
 def task_move(environ, start_response):
     request = environ['werkzeug.request']
-    
-    kwargs = {}
+
+    kwargs = kwargs_from_params(request,
+        admin=True
+    )
     kwargs['parent'] = request.values.get('num', '')
-    try:
-        kwargs['admin'] = get_cookie_from_request(request, 'wakaadmin')
-    except KeyError:
-        kwargs['admin'] = ''
     kwargs['src_brd_obj'] = environ['waka.board']
     kwargs['dest_brd_obj'] = Board(request.values.get('destboard', ''))
     kwargs['action'] = 'thread_move'
@@ -517,11 +519,11 @@ def task_move(environ, start_response):
 def task_stafflog(environ, start_response):
     request = environ['werkzeug.request']
 
-    params = {'form':    ['sortby', 'order', 'iptoview', 'view', 'perpage',
-                          'page', 'actiontoview', 'posttoview', 'usertoview'],
-              'cookies': ['wakaadmin']}
-
-    kwargs = kwargs_from_params(request, params)
+    kwargs = kwargs_from_params(request,
+        form=['sortby', 'order', 'iptoview', 'view', 'perpage',
+              'page', 'actiontoview', 'posttoview', 'usertoview'],
+        admin=True,
+    )
     kwargs['sortby_name'] = kwargs.pop('sortby')
     kwargs['sortby_dir'] = kwargs.pop('order')
     kwargs['ip_to_view'] = kwargs.pop('iptoview')

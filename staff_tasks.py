@@ -42,19 +42,19 @@ def staff_action(action_name='', title='', content=''):
 
 @staff_action(title='Manager Post', content='Post')
 def admin_post(task_data, **kwargs):
-    return task_data.board.post_stuff(admin_task_data=task_data, **kwargs)
+    return task_data.board.post_stuff(admin_data=task_data, **kwargs)
 
 @staff_action(title='Administrative Edit', content='Post')
 def admin_edit(task_data, **kwargs):
-    return task_data.board.edit_stuff(admin_task_data=task_data, **kwargs)
+    return task_data.board.edit_stuff(admin_data=task_data, **kwargs)
 
 @staff_action(title='Administrative Deletion', content='Post')
 def admin_delete(task_data, **kwargs):
-    return task_data.board.delete_stuff(admin_task_data=task_data, **kwargs)
+    return task_data.board.delete_stuff(admin_data=task_data, **kwargs)
 
 @staff_action(title='Deletion From Trash Bin', content='Deleted Post')
 def backup_remove(task_data, **kwargs):
-    return task_data.board.remove_backup_stuff(admin_task_data=task_data,
+    return task_data.board.remove_backup_stuff(admin_data=task_data,
                                                **kwargs)
 
 @staff_action(content='Thread Parent')
@@ -152,9 +152,9 @@ staff_action('whitelist_edit', title='IP Whitelist Revision',
 
 class StaffAction(object):
 
-    def __init__(self, admin, action, **kwargs):
+    def __init__(self, cookie, action, **kwargs):
         self.action = action
-        self.user = staff.check_password(admin)
+        self.user = staff.StaffMember.get_from_cookie(cookie)
         self.board = None
         self.kwargs = kwargs
         try:
