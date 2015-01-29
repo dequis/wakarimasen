@@ -159,7 +159,7 @@
 				[<a href="{{ get_script_name() }}?task=delpostwindow&amp;num={{ post.num }}&amp;board={{ board.name }}" target="_blank" onclick="passfield('{{ post.num }}',false); return false">Delete</a>]
 				<span id="delpostcontent{{ post.num }}" style="display:inline"></span>
 			</span>&nbsp;
-			[<a href="{{ get_script_name() }}?task=edit&amp;board={{ board.name }}&amp;num={{ post.num }}{% if post.admin_post == 'yes' %}&amp;admin_post=1{% endif %}" target="_blank" onclick="popUpPost('{{ get_script_name() }}?task=edit&amp;board={{ board.name }}&amp;num={{ post.num }}{% if post.admin_post == 'yes' %}&amp;admin_post=1{% endif %}'); return false">Edit</a>]&nbsp;
+			[<a href="{{ get_script_name() }}?task=edit&amp;board={{ board.name }}&amp;num={{ post.num }}{% if post.admin_post %}&amp;admin_post=1{% endif %}" target="_blank" onclick="popUpPost('{{ get_script_name() }}?task=edit&amp;board={{ board.name }}&amp;num={{ post.num }}{% if post.admin_post %}&amp;admin_post=1{% endif %}'); return false">Edit</a>]&nbsp;
 			{% if not thread %}
 			{% if post.locked != 'yes' %}[<a href="{{ (post.num)|get_reply_link(0) }}">{{ strings.REPLY }}</a>{% if config.ENABLE_ABBREVIATED_THREAD_PAGES and currentthread.omit and currentthread.omit + board.options.REPLIES_PER_THREAD > config.POSTS_IN_ABBREVIATED_THREAD_PAGES %}/<a href="{{ (post.num)|get_reply_link(0, 1) }}">Last {{ config.POSTS_IN_ABBREVIATED_THREAD_PAGES }}</a>{% endif %}]{% endif %}
 			{% if post.locked == 'yes' %}[<a href="{{ (post.num)|get_reply_link(0) }}">{{ strings.VIEW }}</a>]{% endif %}
@@ -168,7 +168,7 @@
 			<blockquote>
 			{% if omit %}{{ post.comment|redirect_reply_links(min_res) }}{% else %}{{ post.comment }}{% endif %}
 			{% if post.abbrev %}<div class="abbrev">{{ (strings.ABBRTEXT)|format((config.ENABLE_ABBREVIATED_THREAD_PAGES and currentthread.omit and currentthread.omit + board.options.REPLIES_PER_THREAD > config.POSTS_IN_ABBREVIATED_THREAD_PAGES) and (post.num)|get_reply_link(post.parent, 1) or (post.num)|get_reply_link(post.parent)) }}</div>{% endif %}
-			{% if post.lastedit %}<p style="font-size: small; font-style: italic">{{ strings.LASTEDITED }}{% if post.admin_post == 'yes' %} {{ strings.BYMOD }}{% endif %} {{ post.lastedit }}.</p>{% endif %}
+			{% if post.lastedit %}<p style="font-size: small; font-style: italic">{{ strings.LASTEDITED }}{% if post.admin_post %} {{ strings.BYMOD }}{% endif %} {{ post.lastedit }}.</p>{% endif %}
 			</blockquote>
 
 			{% if not thread and currentthread.omit %}
@@ -212,7 +212,7 @@
 				[<a href="{{ get_script_name() }}?task=delpostwindow&amp;num={{ post.num }}&amp;board={{ board.name }}" target="_blank" onclick="passfield('{{ post.num }}', false); return false">Delete</a>]
 				<span id="delpostcontent{{ post.num }}" style="display:inline"></span>
 			</span>&nbsp;
-			[<a href="{{ get_script_name() }}?task=edit&amp;board={{ board.name }}&amp;num={{ post.num }}{% if post.admin_post == 'yes' %}&amp;admin_post=1{% endif %}" target="_blank" onclick="popUpPost('{{ get_script_name() }}?task=edit&amp;board={{ board.name }}&amp;num={{ post.num }}{% if post.admin_post == 'yes' %}&amp;admin_post=1{% endif %}'); return false">Edit</a>]
+			[<a href="{{ get_script_name() }}?task=edit&amp;board={{ board.name }}&amp;num={{ post.num }}{% if post.admin_post %}&amp;admin_post=1{% endif %}" target="_blank" onclick="popUpPost('{{ get_script_name() }}?task=edit&amp;board={{ board.name }}&amp;num={{ post.num }}{% if post.admin_post %}&amp;admin_post=1{% endif %}'); return false">Edit</a>]
 
 			{% if post.image %}
 				<br />
@@ -238,7 +238,7 @@
 			<blockquote>
 			{% if omit %}{{ post.comment|redirect_reply_links(min_res) }}{% else %}{{ post.comment }}{% endif %}
 			{% if post.abbrev %}<div class="abbrev">{{ (strings.ABBRTEXT)|format(((config.ENABLE_ABBREVIATED_THREAD_PAGES and currentthread.omit and currentthread.omit + board.options.REPLIES_PER_THREAD > config.POSTS_IN_ABBREVIATED_THREAD_PAGES) and (post.num)|get_reply_link(post.parent, 1) or (post.num)|get_reply_link(post.parent))) }}</div>{% endif %}
-			{% if post.lastedit %}<p style="font-size: small; font-style: italic">Last edited{% if post.admin_post == 'yes' %} by moderator{% endif %} {{ post.lastedit }}.</p>{% endif %}
+			{% if post.lastedit %}<p style="font-size: small; font-style: italic">Last edited{% if post.admin_post %} by moderator{% endif %} {{ post.lastedit }}.</p>{% endif %}
 			</blockquote>
 
 			</td></tr></tbody></table>

@@ -56,7 +56,7 @@
 
 	<blockquote>
 	{% if omit %}{{ post.comment|redirect_reply_links(min_res) }}{% else %}{{ post.comment }}{% endif %}
-	{% if post.lastedit %}<p style="font-size: small; font-style: italic">Last edited{% if post.admin_post == 'yes' %} by moderator{% endif %} {{ post.lastedit }}.</p>{% endif %}
+	{% if post.lastedit %}<p style="font-size: small; font-style: italic">Last edited{% if post.admin_post %} by moderator{% endif %} {{ post.lastedit }}.</p>{% endif %}
 	</blockquote>
 
 	</td></tr></tbody></table>

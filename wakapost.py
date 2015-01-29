@@ -15,10 +15,10 @@ class WakaPost(object):
         'num', 'parent', 'timestamp', 'lasthit', 'ip', 'date', 'name', 'trip',
         'email', 'subject', 'password', 'comment', 'image', 'size', 'md5',
         'width', 'height', 'thumbnail', 'tn_width', 'tn_height', 'lastedit',
-        'lastedit_ip', 'admin_post', 'stickied', 'locked',
+        'lastedit_ip', '_admin_post', 'stickied', 'locked',
         # extensions
         'abbrev', 'nofile', 'req_file', 'filename', 'req_no_format',
-        'killtrip', 'postfix', 'ninja',
+        'killtrip', 'postfix', 'ninja'
     ]
 
     def __init__(self, rowproxy=None, **kwargs):
@@ -136,6 +136,15 @@ class WakaPost(object):
     def update(self, items=None, **kwargs):
         for key, value in (items or kwargs.iteritems()):
             setattr(self, key, value)
+
+    @property
+    def admin_post(self):
+        return self._admin_post
+
+    @admin_post.setter
+    def admin_post(self, value):
+        # TODO: database migration / unfucking
+        self._admin_post = (value in (True, 1, 'yes', 'True', '1'))
 
     def set_ip(self, numip, editing=None):
         '''Sets the ip or the lastedit ip'''
