@@ -573,10 +573,10 @@ class Board(object):
                     forward = self.make_url(thread=parent, abbr=True)
         else:
             # forward back to the mod panel
-            kwargs = dict(task='mpanel', board=self.name
-                    )
+            kwargs = dict(task='mpanel', board=self.name)
+
             if noko:
-                kwargs['page'] = parent
+                kwargs['page'] = "t%s" % parent
 
             forward = misc.make_script_url(**kwargs)
 
