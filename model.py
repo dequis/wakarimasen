@@ -2,8 +2,10 @@ import config, config_defaults
 from sqlalchemy import create_engine
 from sqlalchemy import Table, Column, Integer, Text, String, MetaData
 from sqlalchemy.orm import sessionmaker, scoped_session
-from sqlalchemy.exc import OperationalError
 from sqlalchemy.sql import func
+
+# needed by other modules
+from sqlalchemy.exc import OperationalError
 
 pool_opts = {}
 

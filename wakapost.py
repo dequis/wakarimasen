@@ -15,10 +15,10 @@ class WakaPost(object):
         'num', 'parent', 'timestamp', 'lasthit', 'ip', 'date', 'name', 'trip',
         'email', 'subject', 'password', 'comment', 'image', 'size', 'md5',
         'width', 'height', 'thumbnail', 'tn_width', 'tn_height', 'lastedit',
-        'lastedit_ip', 'admin_post', 'stickied', 'locked',
+        'lastedit_ip', '_admin_post', 'stickied', 'locked',
         # extensions
         'abbrev', 'nofile', 'req_file', 'filename', 'req_no_format',
-        'killtrip', 'postfix', 'ninja',
+        'killtrip', 'postfix', 'ninja'
     ]
 
     def __init__(self, rowproxy=None, **kwargs):
@@ -129,13 +129,47 @@ class WakaPost(object):
         self.locked = request.values.get('lock', '0') == '1'
         self.req_no_format = request.values.get('no_format', '0') == '1'
         self.req_file = request.files.get('file', None)
-        self.name = request.values.get('field1', '')
+
+        return self
+
+    @classmethod
+    def copy(cls, instance):
+        '''Copies all the attributes of another instance into a new one'''
+        return cls().merge(instance)
+
+    def merge(self, other, which='all'):
+        '''Merges only the attributes relevant to edited posts
+
+        which: either 'all', 'request', or a list of keys'''
+
+        keys = []
+        if which == 'all':
+            keys = WakaPost.__slots__
+        elif which == 'request':
+            keys = ['num', 'parent', 'email', 'subject', 'comment',
+                    'password', 'killtrip', 'postfix', 'ninja', 'nofile',
+                    'name', 'admin_post', 'stickied', 'locked',
+                    'req_no_format', 'req_file']
+        elif type(which) == list:
+            keys = which
+
+        for key in keys:
+            setattr(self, key, getattr(other, key, ''))
 
         return self
 
     def update(self, items=None, **kwargs):
         for key, value in (items or kwargs.iteritems()):
             setattr(self, key, value)
+
+    @property
+    def admin_post(self):
+        return self._admin_post
+
+    @admin_post.setter
+    def admin_post(self, value):
+        # TODO: database migration / unfucking
+        self._admin_post = (value in (True, 1, 'yes', 'True', '1'))
 
     def set_ip(self, numip, editing=None):
         '''Sets the ip or the lastedit ip'''

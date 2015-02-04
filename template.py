@@ -37,10 +37,10 @@ class Template(object):
             loader=jinja2.FileSystemLoader(TEMPLATES_DIR),
             bytecode_cache=jinja2.FileSystemBytecodeCache(CACHE_DIR)
         )
-        
+
         for filter in _filters:
             self.env.filters[filter] = getattr(self, filter)
-        
+
         for function in _functions:
             self.env.globals[function] = getattr(self, function)
 
@@ -80,7 +80,7 @@ class Template(object):
                     rc.write(contents)
 
         os.chmod(filename, 0644)
-    
+
     def update_parameters(self, **kwargs):
         self.vars.update(kwargs)
 
@@ -120,7 +120,7 @@ class Template(object):
     @function
     def get_secure_script_name(self):
         return misc.get_secure_script_name()
-        
+
     @filter
     def get_reply_link(self, reply, parent, abbreviated=False,
                        force_http=False):
@@ -178,9 +178,9 @@ class Template(object):
             if pictype not in filetypes:
                 ret_list.append(pictype.upper())
         ret_list.extend(filetypes)
-        
+
         return ', '.join(ret_list)
-    
+
     def get_stylesheets(self, board=None):
         files = glob.glob(os.path.abspath\
                          (os.path.join(self.environ['DOCUMENT_ROOT'],

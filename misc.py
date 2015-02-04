@@ -125,8 +125,8 @@ def spam_engine(trap_fields, spam_files):
             spam_screen()
 
     spam_checker = compile_spam_checker(spam_files)
-    fields = request.values.keys() 
-    
+    fields = request.values.keys()
+
     fulltext = '\n'.join([str_format.decode_string(request.values[x])
                           for x in fields])
 
@@ -180,7 +180,7 @@ def make_date(timestamp, style='futaba'):
         time_str = str(timestamp)
     elif style.lower() == '2ch-sep93': # Damn AOLers! Get offa mah lawn!
         # September 1, 1993 as a timestamp.
-        SEP_1_1993 = 746884800L 
+        SEP_1_1993 = 746884800L
         seconds_past = long(timestamp) - SEP_1_1993
         days_past = seconds_past / 86400L
         time_str = '1993-09-%u' % (days_past + 1)
@@ -190,7 +190,7 @@ def make_date(timestamp, style='futaba'):
         time_str = time.strftime(style, timestamp)
 
     return time_str
-        
+
 def make_cookies(**kwargs):
     expires = kwargs.pop('expires', time.time() + 14 * 24 * 3600)
     path = kwargs.pop('path', '/')
@@ -277,7 +277,7 @@ def analyze_jpeg(file):
                 # MS GDI+ JPEG exploit uses short chunks
                 raise util.WakaError("Possible virus in image")
 
-            if mark >= 0xc0 and mark <= 0xc2: # SOF0..SOF2 - what the hell are the rest? 
+            if mark >= 0xc0 and mark <= 0xc2: # SOF0..SOF2 - what the hell are the rest?
                 bits, height, width = struct.unpack(">BHH", file.read(5))
                 return (width, height)
 
@@ -357,26 +357,28 @@ def make_thumbnail(filename, thumbnail, width, height, quality, convert):
 def get_cookie_from_request(request, key):
     return urllib.unquote(request.cookies.get(key, '')).decode('unicode-escape')
 
-def kwargs_from_params(request, params):
+def kwargs_from_params(request, params_arg=None, **params):
     '''Associate function to convert CGI request data with dictionary
     of parameter keys to a dictionary of keyword arguments for passing
     to an application function.
-    
+
     Dictonary format: {'cookies': ['cookie_keys'],
                        'form':    ['html_form_input_names'],
                        'file':    ['file_keys']}
-    
+
     Not all keys are necessary. Invalid keys are ignored.'''
 
+    if params_arg:
+        params = params_arg
+
     kwargs = {}
+
+    if 'admin' in params.keys():
+        kwargs['cookie'] = get_cookie_from_request(request, 'wakaadmin')
+
     if 'cookies' in params.keys():
         for param in params['cookies']:
             kwargs[param] = get_cookie_from_request(request, param)
-            if param == 'wakaadmin':
-                try:
-                    kwargs['admin'] = kwargs.pop('wakaadmin')
-                except KeyError:
-                    kwargs['admin'] = ''
 
     if 'form' in params.keys():
         for param in params['form']:
