@@ -241,7 +241,12 @@ def get_filestorage_size(filestorage):
     return size
 
 def analyze_image(file, name):
-    types = [("jpg", analyze_jpeg), ("png", analyze_png), ("gif", analyze_gif)]
+    types = [
+        ("jpg", analyze_jpeg),
+        ("png", analyze_png),
+        ("gif", analyze_gif),
+        ("tga", analyze_tga),
+    ]
     for ext, analyze in types:
         res = analyze(file)
         if res:
@@ -311,6 +316,16 @@ def analyze_gif(file):
     magic, width, height = struct.unpack('<6sHH', buffer)
     if magic not in GIF_MAGICS:
         return
+    return (width, height)
+
+def analyze_tga(file):
+    buffer = file.read(16)
+    file.seek(0)
+    if len(buffer) != 16:
+        return
+
+    _xorig, _yorig, width, height = struct.unpack("<3x0x0xxxxxxH3H", buffer)
+    # TGA has no magic numbers anywhere so just accept whatever
     return (width, height)
 
 def make_thumbnail(filename, thumbnail, width, height, quality, convert):
