@@ -1152,8 +1152,6 @@ class Board(object):
             thumb_ext = 'gif'
         elif file_response.find('PNG') != -1:
             thumb_ext = 'png'
-        elif file_response.find('Targa') != -1:
-            thumb_ext = 'png'
         else:
             thumb_ext = os.path.splitext(filename)[1]
         thumbnail = self.make_path(filebase + "s", dirc='THUMB_DIR',
