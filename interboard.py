@@ -435,7 +435,7 @@ def edit_admin_entry(task_data, num, comment='', ival1=None,
 
     return Template('edit_successful')
 
-def delete_by_ip(task_data, ip, mask='255.255.255.255'):
+def delete_by_ip(task_data, ip, mask='255.255.255.255', caller=''):
     task_data.contents.append(ip)
     user = task_data.user
 
@@ -450,7 +450,8 @@ def delete_by_ip(task_data, ip, mask='255.255.255.255'):
     board_name = local.environ['waka.board'].name
     redir = misc.make_script_url(task='mpanel', board=board_name)
 
-    return util.make_http_forward(redir, config.ALTERNATE_REDIRECT)
+    if caller != 'internal':
+        return util.make_http_forward(redir, config.ALTERNATE_REDIRECT)
 
 def trim_reported_posts(date=0):
     mintime = 0
