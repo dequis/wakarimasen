@@ -380,7 +380,7 @@ def task_addipfrompopup(environ, start_response):
     try:
         if globaldelete_all:
             StaffAction(kwargs['cookie'], 'delete_by_ip_global',
-                        ip=kwargs['ip']).execute()
+                        ip=kwargs['ip'], caller='internal').execute()
         elif delete_all:
             StaffAction(kwargs['cookie'], 'delete_by_ip',
                         ip=kwargs['ip'], board=board).execute()

@@ -215,7 +215,7 @@ class Board(object):
             else:
                 parent, replies = postlist[0], []
 
-            images = [x for x in replies if x.image]
+            images = [x for x in replies if x.filename]
 
             if parent.stickied:
                 max_replies = config.REPLIES_PER_STICKY
@@ -231,7 +231,7 @@ class Board(object):
             while len(replies) > max_replies or len(images) > max_images:
                 post = replies.pop(0)
                 thread['omit'] += 1
-                if post.image:
+                if post.filename:
                     thread['omitimages'] += 1
 
             thread['posts'] = [parent] + replies
@@ -726,7 +726,7 @@ class Board(object):
                                                subject=row.subject,
                                                password=row.password,
                                                comment=row.comment,
-                                               image=row.image,
+                                               image=row.filename,
                                                size=row.size,
                                                md5=row.md5,
                                                width=row.width,
