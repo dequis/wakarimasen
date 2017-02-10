@@ -104,6 +104,8 @@ staff_action('delete_by_ip_global', title='Delete By IP (Global or Reign-Wide)',
 staff_action('rebuild_global', title='Global Rebuild',
     content='Referer')(interboard.global_cache_rebuild_proxy)
 
+staff_action('add_proxy_entry')(interboard.add_proxy_entry)
+staff_action('remove_proxy_entry')(interboard.remove_proxy_entry)
 
 # Unimplemented
 

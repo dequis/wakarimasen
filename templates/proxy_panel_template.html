@@ -22,22 +22,16 @@
 <table align="center"><tbody>
 <tr class="managehead">{{ strings.PROXYTABLE }}</tr>
 
+{% set prevtype = None %}
 {% for proxy in scanned %}
-        {% if proxy.divider %}<tr class="managehead"><th colspan="6"></th></tr>{% endif %}
+        {% if prevtype != proxy.type %}<tr class="managehead"><th colspan="6"></th></tr>{% endif %}
+        {% set prevtype = proxy.type %}
 
-        <tr class="row{{ proxy.rowtype }}">
+        <tr class="row{{ loop.cycle(1, 2) }}">
 
-        {% if proxy.type == 'white' %}
-                <td>White</td>
-	        <td>{{ proxy.ip }}</td>
-        	<td>{{ proxy.timestamp + config.PROXY_WHITE_AGE - time() }}</td>
-        {% endif %}
-        {% if proxy.type == 'black' %}
-                <td>Black</td>
-	        <td>{{ proxy.ip }}</td>
-        	<td>{{ proxy.timestamp + config.PROXY_BLACK_AGE - time() }}</td>
-        {% endif %}
-
+        <td>{{ proxy.type|capitalize }}</td>
+        <td>{{ proxy.ip }}</td>
+        <td>{{ (proxy.timestamp + (config.PROXY_WHITE_AGE if proxy.type == 'white' else config.PROXY_BLACK_AGE) - now) | int }}</td>
         <td>{{ proxy.date }}</td>
         <td><a href="{{ get_script_name() }}?task=removeproxy&amp;board={{ board.name }}&amp;num={{ proxy.num }}">{{ strings.PROXYREMOVEBLACK }}</a></td>
         </tr>

@@ -434,6 +434,29 @@ def task_removeban(environ, start_response):
 
     return StaffAction(**kwargs).execute()
 
+def task_addproxy(environ, start_response):
+    request = environ['werkzeug.request']
+
+    kwargs = kwargs_from_params(request,
+        form=['type', 'ip', 'timestamp'],
+        admin=True,
+    )
+    kwargs['action'] = 'add_proxy_entry'
+
+    return StaffAction(**kwargs).execute()
+
+def task_removeproxy(environ, start_response):
+    request = environ['werkzeug.request']
+
+    kwargs = kwargs_from_params(request,
+        form=['num'],
+        admin=True,
+    )
+    kwargs['action'] = 'remove_proxy_entry'
+
+    return StaffAction(**kwargs).execute()
+
+
 # Interboard management.
 
 def task_updatespam(environ, start_response):

@@ -591,3 +591,44 @@ def move_thread(task_data, parent, src_brd_obj, dest_brd_obj):
 
     return util.make_http_forward(forward_url)
 
+
+# proxy
+
+def add_proxy_entry(task_data, type, ip, timestamp):
+    session = model.Session()
+    table = model.proxy
+
+    if not misc.validate_ip(ip):
+        raise WakaError(strings.BADIP)
+
+    age = config.PROXY_WHITE_AGE if type == 'white' else config.PROXY_BLACK_AGE
+    timestamp = int(timestamp or '0') - age + time.time()
+    date = misc.make_date(time.time(), style=config.DATE_STYLE)
+
+    query = table.delete().where(table.c.ip == ip)
+    session.execute(query)
+
+    query = table.insert().values(
+        type=type,
+        ip=ip,
+        timestamp=timestamp,
+        date=date
+    )
+    session.execute(query)
+
+    board = local.environ['waka.board']
+    forward_url = misc.make_script_url(task='proxy', board=board.name)
+
+    return util.make_http_forward(forward_url, config.ALTERNATE_REDIRECT)
+
+def remove_proxy_entry(task_data, num):
+    session = model.Session()
+    table = model.proxy
+
+    query = table.delete().where(table.c.num == num)
+    session.execute(query)
+
+    board = local.environ['waka.board']
+    forward_url = misc.make_script_url(task='proxy', board=board.name)
+
+    return util.make_http_forward(forward_url, config.ALTERNATE_REDIRECT)

@@ -29,6 +29,14 @@ def dec_to_dot(numip):
     except ValueError:
         return numip
 
+def validate_ip(ip):
+    try:
+        if isinstance(dot_to_dec(ip), int):
+            return True
+    except:
+        pass
+    return False
+
 def is_whitelisted(numip):
     return False
 

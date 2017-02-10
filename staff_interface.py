@@ -741,7 +741,13 @@ class StaffInterface(Template):
 
     @interface_for(PROXY_PANEL)
     def make_admin_proxy_panel(self):
-        Template.__init__(self, 'proxy_panel_template')
+        session = model.Session()
+        table = model.proxy
+        query = table.select().order_by(table.c.timestamp.asc())
+        rows = session.execute(query)
+
+        Template.__init__(self, 'proxy_panel_template',
+            scanned=rows, now=time.time())
 
     @interface_for(SECURITY_PANEL)
     def make_admin_script_security_panel(self):
